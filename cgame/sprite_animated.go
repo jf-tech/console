@@ -6,6 +6,14 @@ import (
 	"github.com/jf-tech/console/cwin"
 )
 
+func StringsToFrames(ss []string, attr cwin.ChAttr) [][]Cell {
+	var ret [][]Cell
+	for _, s := range ss {
+		ret = append(ret, StringToCells(s, attr))
+	}
+	return ret
+}
+
 type SpriteAnimatedCfg struct {
 	Name       string
 	Frames     [][]Cell
@@ -51,6 +59,7 @@ func (sa *SpriteAnimated) setFrame(frame int) {
 		return
 	}
 	if frame >= len(sa.Config.Frames) && !sa.Config.Loop {
+		sa.Mgr.AddEvent(NewSpriteEventDelete(sa))
 		return
 	}
 	sa.curFrame = frame % len(sa.Config.Frames)

@@ -17,7 +17,7 @@ var (
 	alphaAttr         = cwin.ChAttr{Fg: termbox.ColorLightYellow}
 	alphaBullet1Name  = "alpha_bullet1"
 	alphaBullet1Attr  = cwin.ChAttr{Fg: termbox.ColorLightYellow}
-	alphaBullet1Speed = cgame.ActionPerSec(25)
+	alphaBullet1Speed = cgame.ActionPerSec(30)
 )
 
 type spriteAlpha struct {

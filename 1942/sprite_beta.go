@@ -14,7 +14,8 @@ var (
 	betaImgTxt = strings.Trim(`
 \┃┃/
  \/
- `, "\n")
+`, "\n")
+
 	betaAttr  = cwin.ChAttr{Fg: termbox.ColorLightCyan}
 	betaSpeed = cgame.ActionPerSec(4)
 
@@ -28,6 +29,7 @@ var (
 
 type spriteBeta struct {
 	*cgame.SpriteAnimated
+	g *cgame.Game
 }
 
 func (b *spriteBeta) Collided(other cgame.Sprite) {
@@ -36,6 +38,8 @@ func (b *spriteBeta) Collided(other cgame.Sprite) {
 	}
 	if other.Cfg().Name == alphaBullet1Name || other.Cfg().Name == alphaName {
 		b.Mgr.AddEvent(cgame.NewSpriteEventDelete(b))
+		b.Mgr.AddEvent(cgame.NewSpriteEventCreate(
+			newSpriteBetaDeath(b.g, b.W.Parent(), b.W.Rect().X, b.W.Rect().Y)))
 		b.Mgr.FindByName(alphaName).(*spriteAlpha).betaKills++
 	}
 }
@@ -75,6 +79,50 @@ func newSpriteBeta(g *cgame.Game, parent *cwin.Win, x, y int) *spriteBeta {
 						1, 1, betaBullet1Speed, r.X+r.W/2, r.Y+r.H)))
 
 				},
+			},
+			x, y),
+		g}
+}
+
+var (
+	betaDeathName    = "beta_death"
+	betaDeathImgTxts = []string{
+		betaImgTxt,
+		strings.Trim(`
+_┃┃_
+ \/
+`, "\n"),
+		strings.Trim(`
+_\/_
+ \/
+`, "\n"),
+		strings.Trim(`
+_\/_
+ ||
+`, "\n"),
+		strings.Trim(`
+_\/_
+ /\
+`, "\n"),
+		strings.Trim(`
+'  '
+'  '
+`, "\n"),
+	}
+	betaDeathSpeed = cgame.ActionPerSec(5)
+)
+
+type spriteBetaDeath struct {
+	*cgame.SpriteAnimated
+}
+
+func newSpriteBetaDeath(g *cgame.Game, parent *cwin.Win, x, y int) *spriteBetaDeath {
+	return &spriteBetaDeath{
+		cgame.NewSpriteAnimated(g, parent,
+			cgame.SpriteAnimatedCfg{
+				Name:       betaDeathName,
+				Frames:     cgame.StringsToFrames(betaDeathImgTxts, betaAttr),
+				FrameSpeed: betaDeathSpeed,
 			},
 			x, y)}
 }
