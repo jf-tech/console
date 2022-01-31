@@ -84,23 +84,44 @@ func (s *Sys) CenterBanner(parent *Win, title, format string, a ...interface{}) 
 	return w
 }
 
-// MessageBox displays a message window centered in the client area of parent window, and
-// synchronously waiting for either Enter or ESC key press, and return true if Enter
-// is pressed or false if ESC is pressed.
-func (s *Sys) MessageBox(parent *Win, title, format string, a ...interface{}) bool {
+// MessageBoxEx displays a blue-background message window centered in the client area of parent
+// window, and synchronously waiting for a set of user specified keys, and return if any of the
+// keys are pressed.
+func (s *Sys) MessageBoxEx(
+	parent *Win, keys []termbox.Event, title, format string, a ...interface{}) termbox.Event {
+
 	w := s.CenterBanner(parent, title, format, a...)
 	s.Update()
-	var ret bool
-	SyncGetKey(func(k termbox.Key, ch rune) bool {
-		if k == termbox.KeyEsc || k == termbox.KeyEnter {
-			ret = k == termbox.KeyEnter
-			return true
+
+	ret := termbox.Event{Type: termbox.EventKey}
+	SyncExpectKey(func(k termbox.Key, ch rune) bool {
+		for _, e := range keys {
+			if ch != 0 {
+				if e.Ch == ch {
+					ret.Ch = ch
+					return true
+				}
+				continue
+			}
+			if e.Key == k {
+				ret.Key = k
+				return true
+			}
 		}
 		return false
 	})
 	s.RemoveWin(w)
 	s.Update()
 	return ret
+}
+
+// MessageBox is mostly similar to MessageBoxEx but only with 2 expected keys: Enter or ESC
+// It returns true if Enter is pressed or false if ESC is pressed.
+func (s *Sys) MessageBox(parent *Win, title, format string, a ...interface{}) bool {
+	e := s.MessageBoxEx(parent,
+		[]termbox.Event{{Key: termbox.KeyEnter}, {Key: termbox.KeyEsc}},
+		title, format, a...)
+	return e.Key == termbox.KeyEnter
 }
 
 func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w *Win, sysRect Rect) {

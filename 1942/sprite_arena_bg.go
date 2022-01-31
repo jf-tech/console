@@ -38,7 +38,7 @@ d8888  d88P  Y88b    d8P888  d88P  Y88b
 8888888 "Y8888P"        888  888888888`, "\n")
 
 	bgAttr        = cwin.ChAttr{Fg: termbox.ColorDarkGray}
-	bgSpeed       = cgame.ActionPerSec(100)
+	bgSpeed       = cgame.ActionPerSec(500)
 	bgInitialWait = 2 * time.Second
 )
 

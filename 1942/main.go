@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	exitCodeNormalQuit int = iota
-	exitCodeGameInit
+	codeQuit int = iota
+	codeReplay
+	codeGameInitFailure
 )
 
 type myGame struct {
@@ -24,11 +25,11 @@ type myGame struct {
 	bgWW1942AnimationDone bool
 }
 
-func (m *myGame) main() (int, error) {
+func (m *myGame) main() int {
 	var err error
 	m.g, err = cgame.Init()
 	if err != nil {
-		return exitCodeGameInit, err
+		return codeGameInitFailure
 	}
 	defer m.g.Close()
 
@@ -36,7 +37,13 @@ func (m *myGame) main() (int, error) {
 	m.initSprites()
 	m.g.Pause()
 	m.g.WinSys.Update()
-	if !m.g.WinSys.MessageBox(nil, "WWII - 1942", `
+	e := m.g.WinSys.MessageBoxEx(nil,
+		[]termbox.Event{
+			{Key: termbox.KeyEnter},
+			{Key: termbox.KeyEsc},
+			{Ch: 'q'},
+		},
+		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
 fighting is quickly approaching the final stage. Both sides have suffered
 extremely heavy losses. As a newly-recruited pilot, your assignment is to
@@ -46,9 +53,10 @@ final battle!
 
 Good luck, solider!
 
-Press Enter to start the game; ESC to quit.
-`) {
-		return exitCodeNormalQuit, nil
+Press Enter to start the game; ESC or 'q' to quit.
+`)
+	if e.Key != termbox.KeyEnter {
+		return codeQuit
 	}
 	m.g.Resume()
 
@@ -66,7 +74,12 @@ loop:
 				} else {
 					m.g.Pause()
 				}
-			} else if ev.Key == termbox.KeyArrowUp {
+				continue
+			}
+			if m.g.IsPaused() {
+				continue
+			}
+			if ev.Key == termbox.KeyArrowUp {
 				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
 			} else if ev.Key == termbox.KeyArrowDown {
 				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 1))
@@ -86,7 +99,31 @@ loop:
 
 	m.g.ShutdownEventListening()
 
-	return exitCodeNormalQuit, nil
+	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
+	e = m.g.WinSys.MessageBoxEx(nil,
+		[]termbox.Event{
+			{Key: termbox.KeyEsc},
+			{Ch: 'q'},
+			{Ch: 'r'},
+		},
+		"Uh oh...", `
+
+ .d8888b.                                        .d88888b.                                 888
+d88P  Y88b                                      d88P" "Y88b                                888
+888    888                                      888     888                                888
+888         8888b.  88888b.d88b.   .d88b.       888     888 888  888  .d88b.  888d888      888
+888  88888     "88b 888 "888 "88b d8P  Y8b      888     888 888  888 d8P  Y8b 888P"        888
+888    888 .d888888 888  888  888 88888888      888     888 Y88  88P 88888888 888          Y8P
+Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     888           "
+ "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
+
+
+                             Press ESC or 'q' to quit, 'r' to replay.
+`)
+	if e.Ch == 'r' {
+		return codeReplay
+	}
+	return codeQuit
 }
 
 const (
@@ -95,8 +132,8 @@ const (
 	winInstructionsH = 7
 	winGameW         = 3 + winArenaW + 2 + winStatsW + 2
 
-	textInstructions = `Press ESC or 'q' at anytime to quit the game.
-Press arrow keys to move your airplane.
+	textInstructions = `Press ESC or 'q' to quit the game.
+Press arrows to move your airplane.
 Press space bar to fire your weapon.
 Press 'b' to launch a bomb.
 Press 'p' to pause/unpause the game.`
@@ -222,9 +259,9 @@ Alpha Position: %s
 }
 
 func main() {
-	code, err := (&myGame{}).main()
-	if err != nil {
-		fmt.Fprint(os.Stderr, err.Error())
+	code := codeReplay
+	for code == codeReplay {
+		code = (&myGame{}).main()
 	}
 	os.Exit(code)
 }
