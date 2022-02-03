@@ -9,17 +9,14 @@ import (
 )
 
 type Game struct {
-	WinSys    *cwin.Sys
-	Clock     *GameClock
-	SpriteMgr *SpriteManager
+	WinSys      *cwin.Sys
+	MasterClock *Clock
+	SpriteMgr   *SpriteManager
 
 	stopEventListening chan struct{}
 	evChan             chan termbox.Event
 
-	// false: the entire world (incl. time) freezes;
-	// true: time freezes, sprites still might be moved around by keys (if key binded)
-	timePauseOnly bool
-	gameOver      bool
+	gameOver bool
 }
 
 func Init() (*Game, error) {
@@ -30,8 +27,8 @@ func Init() (*Game, error) {
 		return nil, err
 	}
 	g := &Game{
-		WinSys: winSys,
-		Clock:  newGameClock(),
+		WinSys:      winSys,
+		MasterClock: newClock(),
 	}
 	g.SpriteMgr = newSpriteManager(g)
 	return g, nil
@@ -96,31 +93,22 @@ func (g *Game) TryGetEvent() termbox.Event {
 	}
 }
 
-func (g *Game) SetTimePauseOnly() {
-	g.timePauseOnly = true
-}
-
 func (g *Game) Pause() {
-	g.Clock.pause()
-	if !g.timePauseOnly {
-		g.SpriteMgr.pause()
-	}
+	g.MasterClock.pause()
+	g.SpriteMgr.pauseAllSprites()
 }
 
 func (g *Game) Resume() {
-	g.Clock.resume()
-	if !g.timePauseOnly {
-		g.SpriteMgr.resume()
-	}
+	g.MasterClock.resume()
+	g.SpriteMgr.resumeAllSprites()
 }
 
 func (g *Game) IsPaused() bool {
-	return g.Clock.isPaused()
+	return g.MasterClock.isPaused()
 }
 
 func (g *Game) GameOver() {
 	g.gameOver = true
-	g.timePauseOnly = false // Game over, freeze the world regardless what the initial setting is
 	g.Pause()
 }
 

@@ -21,7 +21,7 @@ type SpriteAnimatedCfg struct {
 	Loop       bool
 	DX, DY     int
 	MoveSpeed  ActionPerSec
-	AfterMove  func(Sprite)
+	AfterMove  func()
 }
 
 type SpriteAnimated struct {
@@ -43,14 +43,14 @@ func (sa *SpriteAnimated) Act() {
 		return
 	}
 	dx, dy := sa.Config.DX*moves, sa.Config.DY*moves
-	newR := sa.W.Rect().MoveDelta(dx, dy)
-	if overlapped, _ := sa.W.Parent().ClientRect().Overlap(newR); !overlapped {
-		sa.Mgr.AddEvent(NewSpriteEventDelete(sa))
+	newR := sa.win.Rect().MoveDelta(dx, dy)
+	if overlapped, _ := sa.win.Parent().ClientRect().Overlap(newR); !overlapped {
+		sa.mgr.AddEvent(NewSpriteEventDelete(sa))
 		return
 	}
-	sa.W.SetPosRelative(dx, dy)
+	sa.win.SetPosRelative(dx, dy)
 	if sa.Config.AfterMove != nil {
-		sa.Config.AfterMove(sa)
+		sa.Config.AfterMove()
 	}
 }
 
@@ -59,11 +59,11 @@ func (sa *SpriteAnimated) setFrame(frame int) {
 		return
 	}
 	if frame >= len(sa.Config.Frames) && !sa.Config.Loop {
-		sa.Mgr.AddEvent(NewSpriteEventDelete(sa))
+		sa.mgr.AddEvent(NewSpriteEventDelete(sa))
 		return
 	}
 	sa.curFrame = frame % len(sa.Config.Frames)
-	putNormalizedCellsToWin(sa.Config.Frames[sa.curFrame], sa.W)
+	putNormalizedCellsToWin(sa.Config.Frames[sa.curFrame], sa.win)
 }
 
 func NewSpriteAnimated(g *Game, parent *cwin.Win, c SpriteAnimatedCfg, x, y int) *SpriteAnimated {
@@ -72,11 +72,12 @@ func NewSpriteAnimated(g *Game, parent *cwin.Win, c SpriteAnimatedCfg, x, y int)
 		Name:  c.Name,
 		Cells: c.Frames[0],
 	}
+	sb := NewSpriteBase(g, parent, *baseCfg, x, y)
 	sa := &SpriteAnimated{
-		NewSpriteBase(g, parent, *baseCfg, x, y),
+		sb,
 		c,
-		NewActionPerSecTicker(g.Clock, c.FrameSpeed, true),
-		NewActionPerSecTicker(g.Clock, c.MoveSpeed, true),
+		NewActionPerSecTicker(sb.clock, c.FrameSpeed, true),
+		NewActionPerSecTicker(sb.clock, c.MoveSpeed, true),
 		0,
 	}
 	return sa

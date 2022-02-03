@@ -26,29 +26,29 @@ func (t SpriteEventType) String() string {
 }
 
 type SpriteEvent struct {
-	Type SpriteEventType
-	S    Sprite
-	Body interface{}
+	eventType SpriteEventType
+	s         Sprite
+	body      interface{}
 }
 
 func NewSpriteEventCreate(s Sprite) *SpriteEvent {
 	return &SpriteEvent{
-		Type: SpriteEventCreate,
-		S:    s,
+		eventType: SpriteEventCreate,
+		s:         s,
 	}
 }
 
 func NewSpriteEventDelete(s Sprite) *SpriteEvent {
 	return &SpriteEvent{
-		Type: SpriteEventDelete,
-		S:    s,
+		eventType: SpriteEventDelete,
+		s:         s,
 	}
 }
 
 func NewSpriteEventSetPosRelative(s Sprite, dx, dy int) *SpriteEvent {
 	return &SpriteEvent{
-		Type: SpriteEventSetPosRelative,
-		S:    s,
-		Body: pairInt{a: dx, b: dy},
+		eventType: SpriteEventSetPosRelative,
+		s:         s,
+		body:      pairInt{a: dx, b: dy},
 	}
 }

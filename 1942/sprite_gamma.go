@@ -32,54 +32,53 @@ var (
 
 type spriteGamma struct {
 	*cgame.SpriteAnimated
-	g *cgame.Game
 }
 
 func (g *spriteGamma) Collided(other cgame.Sprite) {
-	if other.Cfg().Name == alphaBulletName || other.Cfg().Name == alphaName {
-		g.Mgr.AddEvent(cgame.NewSpriteEventDelete(g))
-		g.Mgr.AddEvent(cgame.NewSpriteEventCreate(
-			newSpriteGammaDeath(g.g, g.W.Parent(), g.W.Rect().X, g.W.Rect().Y))) // TODO
-		g.Mgr.FindByName(alphaName).(*spriteAlpha).gammaKills++
+	if other.Name() == alphaBulletName || other.Name() == alphaName {
+		g.Mgr().AddEvent(cgame.NewSpriteEventDelete(g))
+		g.Mgr().AddEvent(cgame.NewSpriteEventCreate(
+			newSpriteGammaDeath(g.Game(), g.Win().Parent(), g.Win().Rect().X, g.Win().Rect().Y)))
+		a, _ := g.Mgr().FindByName(alphaName)
+		a.(*spriteAlpha).gammaKills++
 	}
 }
 
 func newSpriteGamma(g *cgame.Game, parent *cwin.Win, x, y int) *spriteGamma {
-	return &spriteGamma{
-		cgame.NewSpriteAnimated(g, parent,
-			cgame.SpriteAnimatedCfg{
-				Name: gammaName,
-				Frames: [][]cgame.Cell{
-					cgame.StringToCells(gammaImgTxt, gammaAttr),
-				},
-				DY:        1,
-				MoveSpeed: gammaSpeed,
-				AfterMove: func(s cgame.Sprite) {
-					newFiringProb := maths.MaxInt(
-						gammaFiringMinProb-int(g.Clock.SinceOrigin()/(5*time.Second)),
-						gammaFiringMaxProb)
-					if newFiringProb < gammaFiringCurProb {
-						gammaFiringCurProb = newFiringProb
-					}
-					if !testProb(gammaFiringCurProb) {
-						return
-					}
-					b := s.(*cgame.SpriteAnimated)
-					r := b.W.Rect()
-					for y := -1; y <= 1; y++ {
-						for x := -1; x <= 1; x++ {
-							if x == 0 && y == 0 {
-								continue
-							}
-							b.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
-								g, parent, gammaBulletName, gammaBulletAttr,
-								x, y, gammaBulletSpeed, r.X+r.W/2, r.Y+r.H/2)))
-						}
-					}
-				},
+	s := &spriteGamma{}
+	s.SpriteAnimated = cgame.NewSpriteAnimated(g, parent,
+		cgame.SpriteAnimatedCfg{
+			Name: gammaName,
+			Frames: [][]cgame.Cell{
+				cgame.StringToCells(gammaImgTxt, gammaAttr),
 			},
-			x, y),
-		g}
+			DY:        1,
+			MoveSpeed: gammaSpeed,
+			AfterMove: func() {
+				newFiringProb := maths.MaxInt(
+					gammaFiringMinProb-int(s.Clock().Now()/(5*time.Second)),
+					gammaFiringMaxProb)
+				if newFiringProb < gammaFiringCurProb {
+					gammaFiringCurProb = newFiringProb
+				}
+				if !testProb(gammaFiringCurProb) {
+					return
+				}
+				r := s.Win().Rect()
+				for y := -1; y <= 1; y++ {
+					for x := -1; x <= 1; x++ {
+						if x == 0 && y == 0 {
+							continue
+						}
+						s.Mgr().AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
+							g, parent, gammaBulletName, gammaBulletAttr,
+							x, y, gammaBulletSpeed, r.X+r.W/2, r.Y+r.H/2)))
+					}
+				}
+			},
+		},
+		x, y)
+	return s
 }
 
 var (

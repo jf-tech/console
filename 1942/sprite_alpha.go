@@ -30,20 +30,20 @@ type spriteAlpha struct {
 }
 
 func (a *spriteAlpha) SetPosRelative(dx, dy int) {
-	newR := a.W.Rect()
+	newR := a.Win().Rect()
 	newR.X += dx
 	newR.Y += dy
 	if _, r := a.m.winArena.ClientRect().Overlap(newR); r == newR {
-		a.W.SetPosRelative(dx, dy)
+		a.Win().SetPosRelative(dx, dy)
 	}
 }
 
 func (a *spriteAlpha) fireWeapon() {
-	x := a.W.Rect().X + a.W.Rect().W/2
-	y := a.W.Rect().Y - 1
+	x := a.Win().Rect().X + a.Win().Rect().W/2
+	y := a.Win().Rect().Y - 1
 	if a.gpWeapon == nil || a.gpWeapon.remainingLife() <= 0 {
 		a.gpWeapon = nil
-		a.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
+		a.Mgr().AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
 			a.m.g, a.m.winArena, alphaBulletName, alphaBulletAttr, 0, -1, alphaBulletSpeed, x, y)))
 	} else {
 		switch a.gpWeapon.name {
@@ -53,7 +53,7 @@ func (a *spriteAlpha) fireWeapon() {
 				pellets = 5
 			}
 			for i := -pellets / 2; i <= pellets/2; i++ {
-				a.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
+				a.Mgr().AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
 					a.m.g, a.m.winArena, alphaBulletName, alphaBulletAttr, i, -1, alphaBulletSpeed, x, y)))
 			}
 		default:
@@ -63,7 +63,7 @@ func (a *spriteAlpha) fireWeapon() {
 }
 
 func (a *spriteAlpha) displayWeaponInfo() {
-	name := "Basic"
+	name := "Basic Gun"
 	remaining := "Infinite"
 	if a.gpWeapon != nil && a.gpWeapon.remainingLife() > 0 {
 		name = a.gpWeapon.name
@@ -73,14 +73,14 @@ func (a *spriteAlpha) displayWeaponInfo() {
 }
 
 func (a *spriteAlpha) Collided(other cgame.Sprite) {
-	switch other.Cfg().Name {
+	switch other.Name() {
 	case alphaBulletName:
 	case giftPackSpriteName:
 		switch other.(*spriteGiftPack).gpSym {
 		case gpShotgunSym:
-			a.gpWeapon = newGiftPackShotgun(a.m.g.Clock)
+			a.gpWeapon = newGiftPackShotgun(a.Clock())
 		case gpShotgun2Sym:
-			a.gpWeapon = newGiftPackShotgun2(a.m.g.Clock)
+			a.gpWeapon = newGiftPackShotgun2(a.Clock())
 		}
 	default:
 		a.m.g.Pause()

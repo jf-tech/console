@@ -21,7 +21,7 @@ func (s *Sys) CreateWin(parent *Win, cfg WinCfg) *Win {
 	if parent == nil {
 		parent = s.sysWin
 	}
-	w := newWin(parent, cfg)
+	w := NewWin(parent, cfg)
 	if parent.childn == nil {
 		parent.child1 = w
 		parent.childn = w
@@ -194,7 +194,7 @@ func Init() (*Sys, error) {
 		return nil, err
 	}
 	w, h := termbox.Size()
-	s := &Sys{sysWin: newWin(nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})}
+	s := &Sys{sysWin: NewWin(nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})}
 	n := w * h
 	s.scrBuf = make([]Chx, n)
 	s.offScrBuf = make([]Chx, n)

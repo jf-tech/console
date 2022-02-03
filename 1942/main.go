@@ -25,6 +25,7 @@ type myGame struct {
 	winStats  *cwin.Win
 
 	bgWW1942AnimationDone bool
+	easyMode              bool
 }
 
 func (m *myGame) main() int {
@@ -44,6 +45,7 @@ func (m *myGame) main() int {
 			{Key: termbox.KeyEnter},
 			{Key: termbox.KeyEsc},
 			{Ch: 'q'},
+			{Ch: 'e'},
 		},
 		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
@@ -57,12 +59,14 @@ Good luck, solider!
 
 Press Enter to start the game; ESC or 'q' to quit.
 `)
-	if e.Key != termbox.KeyEnter {
+	if e.Key == termbox.KeyEsc || e.Ch == 'q' {
 		return codeQuit
 	}
+	m.easyMode = e.Ch == 'e'
 	m.g.Resume()
 
-	alpha := m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
+	a, _ := m.g.SpriteMgr.FindByName(alphaName)
+	alpha := a.(*spriteAlpha)
 
 	m.g.SetupEventListening()
 
@@ -96,7 +100,7 @@ loop:
 		}
 		m.moreSprites()
 		m.g.SpriteMgr.ProcessAll()
-		alpha.W.ToTop()
+		alpha.Win().ToTop()
 		alpha.displayWeaponInfo()
 		alpha.displayKills()
 		m.stats()
@@ -264,12 +268,12 @@ func (m *myGame) moreSprites() {
 }
 
 func (m *myGame) bgWW1942Animation() {
-	if m.g.Clock.SinceOrigin() > bgInitialWait && !m.bgWW1942AnimationDone {
-		s1 := m.g.SpriteMgr.FindByName(bgWWStaticName)
+	if m.g.MasterClock.Now() > bgInitialWait && !m.bgWW1942AnimationDone {
+		s1, _ := m.g.SpriteMgr.FindByName(bgWWStaticName)
 		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s1))
 		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundAnimated(
 			m.g, m.winArena, s1.Win().Rect().X, s1.Win().Rect().Y, bgWWAnimatedName, bgWWImgTxt, 1)))
-		s2 := m.g.SpriteMgr.FindByName(bg1942StaticName)
+		s2, _ := m.g.SpriteMgr.FindByName(bg1942StaticName)
 		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s2))
 		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundAnimated(
 			m.g, m.winArena, s2.Win().Rect().X, s2.Win().Rect().Y, bg1942AnimatedName, bg1942ImgTxt, -1)))
@@ -293,7 +297,7 @@ func (m *myGame) betas() {
 }
 
 func (m *myGame) gamma() {
-	if testProb(gammaGenProb) {
+	if !m.easyMode && testProb(gammaGenProb) {
 		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
 		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteGamma(m.g, m.winArena, x, 0)))
 	}
@@ -310,21 +314,19 @@ func (m *myGame) stats() {
 	m.winStats.SetText(fmt.Sprintf(`
 Game stats:
 ----------------------------
-Time passed: %s %s
+Time in game: %s %s
 
 Internals:
 ----------------------------
-Alpha Position: %s
 Beta Firing Prob: %.0f％
 %s`,
-		time.Duration(m.g.Clock.SinceOrigin()/(time.Second))*(time.Second),
+		time.Duration(m.g.MasterClock.Now()/(time.Second))*(time.Second),
 		func() string {
 			if m.g.IsPaused() {
 				return "(paused)"
 			}
 			return ""
 		}(),
-		m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha).W.Rect(),
 		float64(100)/float64(betaFiringCurProb),
 		m.g.SpriteMgr.DbgStats()))
 }

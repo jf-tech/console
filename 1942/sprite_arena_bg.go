@@ -83,6 +83,6 @@ func newSpriteBackgroundStar(g *cgame.Game, parent *cwin.Win, x, y int) *cgame.S
 			MoveSpeed: bgStarSpeed,
 		},
 		x, y)
-	s.W.ToBottom()
+	s.Win().ToBottom()
 	return s
 }

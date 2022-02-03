@@ -9,9 +9,12 @@ import (
 )
 
 type Sprite interface {
-	Cfg() SpriteCfg
+	Name() string
 	UID() int64
 	Win() *cwin.Win
+	Clock() *Clock
+	Mgr() *SpriteManager
+	Game() *Game
 }
 
 type PositionSettable interface {
@@ -65,48 +68,58 @@ type SpriteCfg struct {
 	Cells []Cell
 }
 
-// SpriteBase represents a basic sprite that
-//  - possess a region (rectangle)
-//  - always visible
-//  - not PositionSettable
-// It forms a basis for all user defined sprites that can have additional
-// capabilities such as PositionSettable, Collidable etc.
 type SpriteBase struct {
-	Config   SpriteCfg
-	UniqueID int64
-	Mgr      *SpriteManager
-	W        *cwin.Win
+	cfg   SpriteCfg
+	uid   int64
+	win   *cwin.Win
+	clock *Clock
+	mgr   *SpriteManager
+	g     *Game
 }
 
-func (sb *SpriteBase) Cfg() SpriteCfg {
-	return sb.Config
+func (sb *SpriteBase) Name() string {
+	return sb.cfg.Name
 }
 
 func (sb *SpriteBase) UID() int64 {
-	return sb.UniqueID
+	return sb.uid
 }
 
 func (sb *SpriteBase) Win() *cwin.Win {
-	return sb.W
+	return sb.win
 }
 
-func NewSpriteBase(g *Game, parent *cwin.Win, c SpriteCfg, x, y int) *SpriteBase {
-	sb := &SpriteBase{
-		Config:   c,
-		UniqueID: cwin.GenUID(),
-		Mgr:      g.SpriteMgr,
-	}
-	if len(sb.Config.Cells) <= 0 {
+func (sb *SpriteBase) Clock() *Clock {
+	return sb.clock
+}
+
+func (sb *SpriteBase) Mgr() *SpriteManager {
+	return sb.mgr
+}
+
+func (sb *SpriteBase) Game() *Game {
+	return sb.g
+}
+
+func NewSpriteBase(g *Game, parent *cwin.Win, cfg SpriteCfg, x, y int) *SpriteBase {
+	if len(cfg.Cells) <= 0 {
 		panic("cells cannot be empty")
 	}
-	w, h := normalizeCells(sb.Config.Cells)
+	sb := &SpriteBase{
+		cfg:   cfg,
+		uid:   cwin.GenUID(),
+		clock: g.SpriteMgr.clockMgr.createClock(),
+		mgr:   g.SpriteMgr,
+		g:     g,
+	}
+	w, h := normalizeCells(sb.cfg.Cells)
 	winCfg := cwin.WinCfg{
 		R:        cwin.Rect{X: x, Y: y, W: w, H: h},
-		Name:     sb.Config.Name,
+		Name:     sb.cfg.Name,
 		NoBorder: true,
 	}
-	sb.W = g.WinSys.CreateWin(parent, winCfg)
-	putNormalizedCellsToWin(sb.Config.Cells, sb.W)
+	sb.win = g.WinSys.CreateWin(parent, winCfg)
+	putNormalizedCellsToWin(sb.cfg.Cells, sb.win)
 	return sb
 }
 

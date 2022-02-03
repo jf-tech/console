@@ -32,49 +32,48 @@ var (
 
 type spriteBeta struct {
 	*cgame.SpriteAnimated
-	g *cgame.Game
 }
 
 func (b *spriteBeta) Collided(other cgame.Sprite) {
-	if other.Cfg().Name == alphaBulletName || other.Cfg().Name == alphaName {
-		b.Mgr.AddEvent(cgame.NewSpriteEventDelete(b))
-		b.Mgr.AddEvent(cgame.NewSpriteEventCreate(
-			newSpriteBetaDeath(b.g, b.W.Parent(), b.W.Rect().X, b.W.Rect().Y)))
-		b.Mgr.FindByName(alphaName).(*spriteAlpha).betaKills++
+	if other.Name() == alphaBulletName || other.Name() == alphaName {
+		b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
+		b.Mgr().AddEvent(cgame.NewSpriteEventCreate(
+			newSpriteBetaDeath(b.Game(), b.Win().Parent(), b.Win().Rect().X, b.Win().Rect().Y)))
+		a, _ := b.Mgr().FindByName(alphaName)
+		a.(*spriteAlpha).betaKills++
 	}
 }
 
 func newSpriteBeta(g *cgame.Game, parent *cwin.Win, x, y int) *spriteBeta {
-	return &spriteBeta{
-		cgame.NewSpriteAnimated(g, parent,
-			cgame.SpriteAnimatedCfg{
-				Name: betaName,
-				Frames: [][]cgame.Cell{
-					cgame.StringToCells(betaImgTxt, betaAttr), // single frame
-				},
-				DY:        1,
-				MoveSpeed: betaSpeed,
-				AfterMove: func(s cgame.Sprite) {
-					newFiringProb := maths.MaxInt(
-						betaFiringMinProb-int(g.Clock.SinceOrigin()/(5*time.Second)),
-						betaFiringMaxProb)
-					if newFiringProb < betaFiringCurProb {
-						betaFiringCurProb = newFiringProb
-					}
-					if !testProb(betaFiringCurProb) {
-						return
-					}
-					b := s.(*cgame.SpriteAnimated)
-					r := b.W.Rect()
-					for i := -1; i <= 1; i++ {
-						b.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
-							g, parent, betaBulletName, betaBulletAttr,
-							i, 1, betaBulletSpeed, r.X+r.W/2, r.Y+r.H)))
-					}
-				},
+	s := &spriteBeta{}
+	s.SpriteAnimated = cgame.NewSpriteAnimated(g, parent,
+		cgame.SpriteAnimatedCfg{
+			Name: betaName,
+			Frames: [][]cgame.Cell{
+				cgame.StringToCells(betaImgTxt, betaAttr), // single frame
 			},
-			x, y),
-		g}
+			DY:        1,
+			MoveSpeed: betaSpeed,
+			AfterMove: func() {
+				newFiringProb := maths.MaxInt(
+					betaFiringMinProb-int(s.Clock().Now()/(5*time.Second)),
+					betaFiringMaxProb)
+				if newFiringProb < betaFiringCurProb {
+					betaFiringCurProb = newFiringProb
+				}
+				if !testProb(betaFiringCurProb) {
+					return
+				}
+				r := s.Win().Rect()
+				for i := -1; i <= 1; i++ {
+					s.Mgr().AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
+						g, parent, betaBulletName, betaBulletAttr,
+						i, 1, betaBulletSpeed, r.X+r.W/2, r.Y+r.H)))
+				}
+			},
+		},
+		x, y)
+	return s
 }
 
 var (

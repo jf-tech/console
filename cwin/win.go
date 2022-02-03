@@ -66,7 +66,6 @@ type WinCfg struct {
 	NoTitle         bool // in case user sets Name (for debug purpose) and border, but doesn't want actual Title
 	NoHPaddingTitle bool // most cases, have a one-space padding on each side of title looks nice
 	NoHPaddingText  bool // most cases, have a one-space padding on each side of text block looks nice
-	StartHidden     bool
 }
 
 func hidden_s(hidden bool) string {
@@ -162,8 +161,16 @@ func (w *Win) bufIdx(x, y int) int {
 	return y*w.cfg.R.W + x
 }
 
+func (w *Win) get(x, y int) Chx {
+	return w.buf[w.bufIdx(x, y)]
+}
+
 func (w *Win) put(x, y int, chx Chx) {
 	w.buf[w.bufIdx(x, y)] = chx
+}
+
+func (w *Win) GetClient(cx, cy int) Chx {
+	return w.get(w.clientR.X+cx, w.clientR.Y+cy)
 }
 
 func (w *Win) PutClient(cx, cy int, chx Chx) {
@@ -323,7 +330,7 @@ func (w *Win) DumpTree(indent int) string {
 	return s
 }
 
-func newWin(parent *Win, c WinCfg) *Win {
+func NewWin(parent *Win, c WinCfg) *Win {
 	cw := &Win{cfg: c, parent: parent}
 	cw.clientR = Rect{0, 0, cw.cfg.R.W, cw.cfg.R.H}
 	if !cw.cfg.NoBorder {

@@ -14,12 +14,12 @@ type spriteBullet struct {
 }
 
 func (b *spriteBullet) Collided(other cgame.Sprite) {
-	if b.Cfg().Name == alphaBulletName {
-		if other.Cfg().Name == betaName || other.Cfg().Name == gammaName {
-			b.Mgr.AddEvent(cgame.NewSpriteEventDelete(b))
+	if b.Name() == alphaBulletName {
+		if other.Name() == betaName || other.Name() == gammaName {
+			b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
 		}
-	} else if other.Cfg().Name == alphaName {
-		b.Mgr.AddEvent(cgame.NewSpriteEventDelete(b))
+	} else if other.Name() == alphaName {
+		b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
 	}
 }
 

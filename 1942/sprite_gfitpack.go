@@ -46,8 +46,8 @@ type spriteGiftPack struct {
 }
 
 func (g *spriteGiftPack) Collided(other cgame.Sprite) {
-	if other.Cfg().Name == alphaName {
-		g.Mgr.AddEvent(cgame.NewSpriteEventDelete(g))
+	if other.Name() == alphaName {
+		g.Mgr().AddEvent(cgame.NewSpriteEventDelete(g))
 	}
 }
 
@@ -114,7 +114,7 @@ var (
 	gpShotgun2Prob    = gpShotgunProb * 2
 )
 
-func newGiftPackShotgun(clock *cgame.GameClock) *giftPack {
+func newGiftPackShotgun(clock *cgame.Clock) *giftPack {
 	return &giftPack{
 		name:          gpShotgunName,
 		sym:           gpShotgunSym,
@@ -123,7 +123,7 @@ func newGiftPackShotgun(clock *cgame.GameClock) *giftPack {
 	}
 }
 
-func newGiftPackShotgun2(clock *cgame.GameClock) *giftPack {
+func newGiftPackShotgun2(clock *cgame.Clock) *giftPack {
 	return &giftPack{
 		name:          gpShotgun2Name,
 		sym:           gpShotgun2Sym,
