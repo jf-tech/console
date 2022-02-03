@@ -101,6 +101,63 @@ func (w *Win) Parent() *Win {
 	return w.parent
 }
 
+func (w *Win) removeFromParent() {
+	if w.parent == nil {
+		return
+	}
+	prev := w.prev
+	next := w.next
+	if prev != nil {
+		prev.next = next
+	}
+	if next != nil {
+		next.prev = prev
+	}
+	if w.parent.child1 == w {
+		w.parent.child1 = next
+	}
+	if w.parent.childn == w {
+		w.parent.childn = prev
+	}
+	w.parent = nil
+	w.prev = nil
+	w.next = nil
+}
+
+func (w *Win) ToBottom() {
+	parent := w.parent
+	if parent == nil {
+		return
+	}
+	w.removeFromParent()
+	w.parent = parent
+	w.next = parent.child1
+	if parent.child1 != nil {
+		parent.child1.prev = w
+	}
+	parent.child1 = w
+	if parent.childn == nil {
+		parent.childn = w
+	}
+}
+
+func (w *Win) ToTop() {
+	parent := w.parent
+	if parent == nil {
+		return
+	}
+	w.removeFromParent()
+	w.parent = parent
+	w.prev = parent.childn
+	if parent.childn != nil {
+		parent.childn.next = w
+	}
+	parent.childn = w
+	if parent.child1 == nil {
+		parent.child1 = w
+	}
+}
+
 func (w *Win) bufIdx(x, y int) int {
 	return y*w.cfg.R.W + x
 }

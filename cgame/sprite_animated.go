@@ -75,8 +75,8 @@ func NewSpriteAnimated(g *Game, parent *cwin.Win, c SpriteAnimatedCfg, x, y int)
 	sa := &SpriteAnimated{
 		NewSpriteBase(g, parent, *baseCfg, x, y),
 		c,
-		NewMovePerSecTicker(g.Clock, c.FrameSpeed, true),
-		NewMovePerSecTicker(g.Clock, c.MoveSpeed, true),
+		NewActionPerSecTicker(g.Clock, c.FrameSpeed, true),
+		NewActionPerSecTicker(g.Clock, c.MoveSpeed, true),
 		0,
 	}
 	return sa

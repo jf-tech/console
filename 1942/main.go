@@ -18,9 +18,11 @@ const (
 )
 
 type myGame struct {
-	g        *cgame.Game
-	winArena *cwin.Win
-	winStats *cwin.Win
+	g         *cgame.Game
+	winWeapon *cwin.Win
+	winKills  *cwin.Win
+	winArena  *cwin.Win
+	winStats  *cwin.Win
 
 	bgWW1942AnimationDone bool
 }
@@ -61,6 +63,7 @@ Press Enter to start the game; ESC or 'q' to quit.
 	m.g.Resume()
 
 	alpha := m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
+
 	m.g.SetupEventListening()
 
 loop:
@@ -82,7 +85,7 @@ loop:
 			if ev.Key == termbox.KeyArrowUp {
 				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
 			} else if ev.Key == termbox.KeyArrowDown {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 1))
+				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 2))
 			} else if ev.Key == termbox.KeyArrowLeft {
 				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
 			} else if ev.Key == termbox.KeyArrowRight {
@@ -93,7 +96,10 @@ loop:
 		}
 		m.moreSprites()
 		m.g.SpriteMgr.ProcessAll()
-		m.setStats()
+		alpha.W.ToTop()
+		alpha.displayWeaponInfo()
+		alpha.displayKills()
+		m.stats()
 		m.g.WinSys.Update()
 	}
 
@@ -127,10 +133,12 @@ Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     88
 }
 
 const (
-	winArenaW        = 101
+	winHeaderW       = 103
+	winHeaderH       = 1
+	winArenaW        = winHeaderW - 2
 	winStatsW        = 40
 	winInstructionsH = 7
-	winGameW         = 3 + winArenaW + 2 + winStatsW + 2
+	winGameW         = 1 /*border*/ + 1 /*space*/ + winHeaderW + 1 /*space*/ + winStatsW + 1 /*space*/ + 1 /*border*/
 
 	textInstructions = `Press ESC or 'q' to quit the game.
 Press arrows to move your airplane.
@@ -151,22 +159,52 @@ func (m *myGame) winSetup() {
 		NoTitle: true,
 	})
 	winGameClientR := winGame.ClientRect()
+	winHeader := m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
+		R: cwin.Rect{
+			X: 1,
+			Y: 0,
+			W: winHeaderW,
+			H: winHeaderH},
+		Name:       "header",
+		NoBorder:   true,
+		ClientAttr: cwin.ChAttr{Bg: termbox.ColorBlue},
+	})
+	m.winWeapon = m.g.WinSys.CreateWin(winHeader, cwin.WinCfg{
+		R: cwin.Rect{
+			X: 0,
+			Y: 0,
+			W: winHeaderW / 2,
+			H: winHeaderH},
+		Name:       "header_weapon",
+		NoBorder:   true,
+		ClientAttr: cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue},
+	})
+	m.winKills = m.g.WinSys.CreateWin(winHeader, cwin.WinCfg{
+		R: cwin.Rect{
+			X: winHeaderW / 2,
+			Y: 0,
+			W: winHeaderW / 2,
+			H: winHeaderH},
+		Name:       "header_kills",
+		NoBorder:   true,
+		ClientAttr: cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue},
+	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
-		R:          cwin.Rect{X: 1, Y: 0, W: 1, H: winGameClientR.H},
+		R:          cwin.Rect{X: 1, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
 		ClientAttr: cwin.ChAttr{Bg: termbox.ColorRed},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
-		R:          cwin.Rect{X: winArenaW + 2, Y: 0, W: 1, H: winGameClientR.H},
+		R:          cwin.Rect{X: winHeaderW, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
 		ClientAttr: cwin.ChAttr{Bg: termbox.ColorRed},
 	})
 	m.winArena = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R: cwin.Rect{
 			X: 2,
-			Y: 0,
+			Y: winHeaderH,
 			W: winArenaW,
-			H: winGameClientR.H},
+			H: winGameClientR.H - winHeaderH},
 		Name:     "arena",
 		NoBorder: true,
 	})
@@ -206,11 +244,11 @@ func (m *myGame) initSprites() {
 			bg1942StaticName, bg1942ImgTxt)))
 	// alpha - player airplane
 	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
-		cgame.NewSpriteBase(m.g, m.winArena,
+		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena,
 			cgame.SpriteCfg{Name: alphaName, Cells: cgame.StringToCells(alphaImgTxt, alphaAttr)},
 			(m.winArena.ClientRect().W-cwin.TextDimension(alphaImgTxt).W)/2,
 			m.winArena.ClientRect().H-cwin.TextDimension(alphaImgTxt).H),
-		m, 0}))
+		m: m}))
 	m.g.SpriteMgr.ProcessAll()
 }
 
@@ -218,6 +256,14 @@ func (m *myGame) moreSprites() {
 	if m.g.IsPaused() {
 		return
 	}
+	m.bgWW1942Animation()
+	m.bgStars()
+	m.betas()
+	m.gamma()
+	m.giftPacks()
+}
+
+func (m *myGame) bgWW1942Animation() {
 	if m.g.Clock.SinceOrigin() > bgInitialWait && !m.bgWW1942AnimationDone {
 		s1 := m.g.SpriteMgr.FindByName(bgWWStaticName)
 		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s1))
@@ -229,22 +275,47 @@ func (m *myGame) moreSprites() {
 			m.g, m.winArena, s2.Win().Rect().X, s2.Win().Rect().Y, bg1942AnimatedName, bg1942ImgTxt, -1)))
 		m.bgWW1942AnimationDone = true
 	}
-	if shouldGenBeta() {
+}
+
+func (m *myGame) bgStars() {
+	if testProb(bgStarGenProb) {
+		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
+		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundStar(m.g, m.winArena, x,
+			rand.Int()%10)))
+	}
+}
+
+func (m *myGame) betas() {
+	if testProb(betaGenProb) {
 		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
 		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBeta(m.g, m.winArena, x, 0)))
 	}
 }
 
-func (m *myGame) setStats() {
+func (m *myGame) gamma() {
+	if testProb(gammaGenProb) {
+		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
+		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteGamma(m.g, m.winArena, x, 0)))
+	}
+}
+
+func (m *myGame) giftPacks() {
+	if sym, attr, ok := genGiftPack(); ok {
+		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(giftPackImgTxts[0]).W)
+		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteGiftPack(m.g, m.winArena, x, 0, sym, attr)))
+	}
+}
+
+func (m *myGame) stats() {
 	m.winStats.SetText(fmt.Sprintf(`
 Game stats:
 ----------------------------
 Time passed: %s %s
-Total Beta Kills: %d
 
 Internals:
 ----------------------------
 Alpha Position: %s
+Beta Firing Prob: %.0f％
 %s`,
 		time.Duration(m.g.Clock.SinceOrigin()/(time.Second))*(time.Second),
 		func() string {
@@ -253,8 +324,8 @@ Alpha Position: %s
 			}
 			return ""
 		}(),
-		m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha).betaKills,
 		m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha).W.Rect(),
+		float64(100)/float64(betaFiringCurProb),
 		m.g.SpriteMgr.DbgStats()))
 }
 

@@ -37,7 +37,7 @@ func (a *ActionPerSecTicker) IsRunning() bool {
 	return a.startTime >= 0
 }
 
-func NewMovePerSecTicker(c *GameClock, aps ActionPerSec, autoStart bool) *ActionPerSecTicker {
+func NewActionPerSecTicker(c *GameClock, aps ActionPerSec, autoStart bool) *ActionPerSecTicker {
 	a := &ActionPerSecTicker{clock: c, aps: aps, startTime: -1}
 	if autoStart {
 		a.Start()

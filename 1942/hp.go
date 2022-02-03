@@ -1,5 +1,7 @@
 package main
 
+/*
+TODO
 import (
 	"math"
 
@@ -41,3 +43,4 @@ type hitDamageEntry struct {
 	s1, s2 string
 	damage int
 }
+*/
