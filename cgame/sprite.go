@@ -8,6 +8,18 @@ import (
 	"github.com/jf-tech/go-corelib/maths"
 )
 
+// - Merge Sprite and PositionSettable - SpriteBase always support setting position
+// - SpriteMgr directly set position on Sprite.
+// - Add pre-/post event hook for SpriteEventSetPosRelative in SpriteCfg
+// - Add built-in Pre set pos event hook to prevent out of bound
+// - Add built-in post set pos event hook to do auto delete.
+// - Rename Animated to Dynamic; Act to Update -- scratch that. shouldn't we just remove Animated interface?
+// - Instead, add utility (animator) to help SpriteMgr to animate sprites via the Sprite.SetPosRelative()
+//    - LinearAnimator(Sprite, init x/y, target x/y, speed)
+//    - FrameAnimator
+// - cgame.Run(func())
+// - cgame.FPS(), Mem() etc
+
 type Sprite interface {
 	Name() string
 	UID() int64

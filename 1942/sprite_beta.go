@@ -39,8 +39,7 @@ func (b *spriteBeta) Collided(other cgame.Sprite) {
 		b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
 		b.Mgr().AddEvent(cgame.NewSpriteEventCreate(
 			newSpriteBetaDeath(b.Game(), b.Win().Parent(), b.Win().Rect().X, b.Win().Rect().Y)))
-		a, _ := b.Mgr().FindByName(alphaName)
-		a.(*spriteAlpha).betaKills++
+		b.Mgr().FindByName(alphaName).(*spriteAlpha).betaKills++
 	}
 }
 

@@ -33,7 +33,6 @@ func (m *myGame) main() int {
 		return codeGameInitFailure
 	}
 	defer m.g.Close()
-	m.g.Pause()
 
 	m.winSetup()
 	m.g.WinSys.Update()
@@ -62,32 +61,29 @@ Press Enter to start the game; ESC or 'q' to quit.
 	}
 	m.easyMode = e.Ch == 'e'
 
-	m.g.Resume()
-
-	alpha := &spriteAlpha{
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
 		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena,
 			cgame.SpriteCfg{Name: alphaName, Cells: cgame.StringToCells(alphaImgTxt, alphaAttr)},
 			(m.winArena.ClientRect().W-cwin.TextDimension(alphaImgTxt).W)/2,
 			m.winArena.ClientRect().H-cwin.TextDimension(alphaImgTxt).H),
-		m: m}
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(alpha))
-
-	m.g.SetupEventListening()
-
+		m: m}))
 	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteStageBanner(m.g, m.winArena, 0)))
+	m.g.SpriteMgr.ProcessAll()
 
-loop:
-	for !m.g.IsGameOver() {
+	m.g.Run(func() {
+		alpha := m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
 		if ev := m.g.TryGetEvent(); ev.Type == termbox.EventKey {
 			if ev.Key == termbox.KeyEsc || ev.Ch == 'q' {
-				break loop
-			} else if ev.Ch == 'p' {
+				m.g.GameOver()
+				return
+			}
+			if ev.Ch == 'p' {
 				if m.g.IsPaused() {
 					m.g.Resume()
 				} else {
 					m.g.Pause()
 				}
-				continue
+				return
 			}
 			if !m.g.IsPaused() {
 				if ev.Key == termbox.KeyArrowUp {
@@ -109,10 +105,7 @@ loop:
 		alpha.displayWeaponInfo()
 		alpha.displayKills()
 		m.stats()
-		m.g.WinSys.Update()
-	}
-
-	m.g.ShutdownEventListening()
+	})
 
 	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
 	e = m.g.WinSys.MessageBoxEx(nil,

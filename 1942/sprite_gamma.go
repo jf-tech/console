@@ -39,8 +39,7 @@ func (g *spriteGamma) Collided(other cgame.Sprite) {
 		g.Mgr().AddEvent(cgame.NewSpriteEventDelete(g))
 		g.Mgr().AddEvent(cgame.NewSpriteEventCreate(
 			newSpriteGammaDeath(g.Game(), g.Win().Parent(), g.Win().Rect().X, g.Win().Rect().Y)))
-		a, _ := g.Mgr().FindByName(alphaName)
-		a.(*spriteAlpha).gammaKills++
+		g.Mgr().FindByName(alphaName).(*spriteAlpha).gammaKills++
 	}
 }
 

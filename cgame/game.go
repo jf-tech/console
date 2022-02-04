@@ -21,7 +21,6 @@ type Game struct {
 
 func Init() (*Game, error) {
 	rand.Seed(time.Now().UnixNano())
-
 	winSys, err := cwin.Init()
 	if err != nil {
 		return nil, err
@@ -31,53 +30,22 @@ func Init() (*Game, error) {
 		MasterClock: newClock(),
 	}
 	g.SpriteMgr = newSpriteManager(g)
+	g.setupEventListening()
+	g.Pause()
 	return g, nil
 }
 
 func (g *Game) Close() {
+	g.Pause()
+	g.shutdownEventListening()
 	g.WinSys.Close()
-	if g.stopEventListening != nil {
-		close(g.stopEventListening)
-	}
-	if g.evChan != nil {
-		close(g.evChan)
-	}
 }
 
-func (g *Game) SetupEventListening() {
-	if g.stopEventListening != nil {
-		panic("SetupEventListening called twice")
+func (g *Game) Run(f func()) {
+	for !g.IsGameOver() {
+		f()
+		g.WinSys.Update()
 	}
-	g.stopEventListening = make(chan struct{})
-	g.evChan = make(chan termbox.Event, 100)
-
-	// main go routine listening for stop signal and termbox event polling.
-	go func() {
-	loop:
-		for {
-			select {
-			case <-g.stopEventListening:
-				break loop
-			default:
-				g.evChan <- termbox.PollEvent()
-			}
-		}
-	}()
-}
-
-func (g *Game) ShutdownEventListening() {
-	if g.stopEventListening == nil {
-		panic("SetupEventListening not called")
-	}
-	close(g.stopEventListening)
-	g.stopEventListening = nil
-	// importantly need to call termbox.Interrupt() before closing the evChan because
-	// termbox.Interrupt() synchronously waits for termbox.PollEvent finishes so there
-	// might be one last event coming through into the evChan. If we close it before
-	// calling termbox.Interrupt(), we might get a panic.
-	termbox.Interrupt()
-	close(g.evChan)
-	g.evChan = nil
 }
 
 // This is a non-blocking call
@@ -115,4 +83,40 @@ func (g *Game) GameOver() {
 
 func (g *Game) IsGameOver() bool {
 	return g.gameOver
+}
+
+func (g *Game) setupEventListening() {
+	if g.stopEventListening != nil {
+		panic("SetupEventListening called twice")
+	}
+	g.stopEventListening = make(chan struct{})
+	g.evChan = make(chan termbox.Event, 100)
+
+	// main go routine listening for stop signal and termbox event polling.
+	go func() {
+	loop:
+		for {
+			select {
+			case <-g.stopEventListening:
+				break loop
+			default:
+				g.evChan <- termbox.PollEvent()
+			}
+		}
+	}()
+}
+
+func (g *Game) shutdownEventListening() {
+	if g.stopEventListening == nil {
+		return
+	}
+	close(g.stopEventListening)
+	g.stopEventListening = nil
+	// importantly need to call termbox.Interrupt() before closing the evChan because
+	// termbox.Interrupt() synchronously waits for termbox.PollEvent finishes so there
+	// might be one last event coming through into the evChan. If we close it before
+	// calling termbox.Interrupt(), we might get a panic.
+	termbox.Interrupt()
+	close(g.evChan)
+	g.evChan = nil
 }

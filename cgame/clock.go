@@ -1,7 +1,6 @@
 package cgame
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -9,7 +8,7 @@ type Clock struct {
 	originTime           time.Time
 	totalPausedDuration  time.Duration
 	latestPauseStartTime time.Time
-	pauseCounter         int
+	paused               bool
 }
 
 func newClock() *Clock {
@@ -24,25 +23,22 @@ func (c *Clock) Now() time.Duration {
 }
 
 func (c *Clock) Pause() {
-	if c.pauseCounter == 0 {
+	if !c.IsPaused() {
 		c.latestPauseStartTime = time.Now()
+		c.paused = true
 	}
-	c.pauseCounter++
 }
 
 func (c *Clock) Resume() {
-	c.pauseCounter--
-	if c.pauseCounter < 0 {
-		panic(fmt.Sprintf("clock pause counter less than zero: %d", c.pauseCounter))
-	}
-	if c.pauseCounter == 0 {
+	if c.IsPaused() {
 		c.totalPausedDuration += time.Since(c.latestPauseStartTime)
 		c.latestPauseStartTime = time.Time{}
+		c.paused = false
 	}
 }
 
 func (c *Clock) IsPaused() bool {
-	return c.pauseCounter > 0
+	return c.paused
 }
 
 type clockManager struct {

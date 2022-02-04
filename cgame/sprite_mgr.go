@@ -18,7 +18,16 @@ type SpriteManager struct {
 
 // Note the names of sprite instances are not required to be unique, this method
 // return the first matching one, if any.
-func (sm *SpriteManager) FindByName(name string) (Sprite, bool) {
+func (sm *SpriteManager) FindByName(name string) Sprite {
+	for i := 0; i < len(sm.ss); i++ {
+		if sm.ss[i].Name() == name {
+			return sm.ss[i]
+		}
+	}
+	panic(fmt.Sprintf("Cannot find sprite named '%s'", name))
+}
+
+func (sm *SpriteManager) TryFindByName(name string) (Sprite, bool) {
 	for i := 0; i < len(sm.ss); i++ {
 		if sm.ss[i].Name() == name {
 			return sm.ss[i], true
@@ -27,7 +36,7 @@ func (sm *SpriteManager) FindByName(name string) (Sprite, bool) {
 	return nil, false
 }
 
-func (sm *SpriteManager) FindByUID(uid int64) (Sprite, bool) {
+func (sm *SpriteManager) TryFindByUID(uid int64) (Sprite, bool) {
 	for i := 0; i < len(sm.ss); i++ {
 		if sm.ss[i].UID() == uid {
 			return sm.ss[i], true
