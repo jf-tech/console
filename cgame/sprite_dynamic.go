@@ -21,7 +21,7 @@ type SpriteAnimatedCfg struct {
 	Loop       bool
 	DX, DY     int
 	MoveSpeed  ActionPerSec
-	AfterMove  func()
+	AfterMove  func(Sprite)
 }
 
 type SpriteAnimated struct {
@@ -50,7 +50,7 @@ func (sa *SpriteAnimated) Act() {
 	}
 	sa.win.SetPosRelative(dx, dy)
 	if sa.Config.AfterMove != nil {
-		sa.Config.AfterMove()
+		sa.Config.AfterMove(sa)
 	}
 }
 

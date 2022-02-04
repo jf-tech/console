@@ -94,17 +94,18 @@ func (g *Game) TryGetEvent() termbox.Event {
 }
 
 func (g *Game) Pause() {
-	g.MasterClock.pause()
-	g.SpriteMgr.pauseAllSprites()
+	g.SpriteMgr.PauseAllSprites()
+	g.MasterClock.Pause()
+
 }
 
 func (g *Game) Resume() {
-	g.MasterClock.resume()
-	g.SpriteMgr.resumeAllSprites()
+	g.MasterClock.Resume()
+	g.SpriteMgr.ResumeAllSprites()
 }
 
 func (g *Game) IsPaused() bool {
-	return g.MasterClock.isPaused()
+	return g.MasterClock.IsPaused()
 }
 
 func (g *Game) GameOver() {

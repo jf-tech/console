@@ -1,11 +1,15 @@
 package cgame
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Clock struct {
 	originTime           time.Time
 	totalPausedDuration  time.Duration
 	latestPauseStartTime time.Time
+	pauseCounter         int
 }
 
 func newClock() *Clock {
@@ -13,57 +17,62 @@ func newClock() *Clock {
 }
 
 func (c *Clock) Now() time.Duration {
-	if c.isPaused() {
+	if c.IsPaused() {
 		return c.latestPauseStartTime.Sub(c.originTime) - c.totalPausedDuration
 	}
 	return time.Since(c.originTime) - c.totalPausedDuration
 }
 
-func (c *Clock) pause() {
-	if !c.isPaused() {
+func (c *Clock) Pause() {
+	if c.pauseCounter == 0 {
 		c.latestPauseStartTime = time.Now()
 	}
+	c.pauseCounter++
 }
 
-func (c *Clock) resume() {
-	if c.isPaused() {
+func (c *Clock) Resume() {
+	c.pauseCounter--
+	if c.pauseCounter < 0 {
+		panic(fmt.Sprintf("clock pause counter less than zero: %d", c.pauseCounter))
+	}
+	if c.pauseCounter == 0 {
 		c.totalPausedDuration += time.Since(c.latestPauseStartTime)
 		c.latestPauseStartTime = time.Time{}
 	}
 }
 
-func (c *Clock) isPaused() bool {
-	return c.latestPauseStartTime != time.Time{}
+func (c *Clock) IsPaused() bool {
+	return c.pauseCounter > 0
 }
 
-type ClockManager struct {
+type clockManager struct {
 	clocks map[*Clock]bool
 }
 
-func (cm *ClockManager) createClock() *Clock {
+func (cm *clockManager) createClock() *Clock {
 	c := newClock()
 	cm.clocks[c] = true
 	return c
 }
 
-func (cm *ClockManager) deleteClock(c *Clock) {
+func (cm *clockManager) deleteClock(c *Clock) {
 	delete(cm.clocks, c)
 }
 
-func (cm *ClockManager) PauseAll() {
-	for c, _ := range cm.clocks {
-		c.pause()
+func (cm *clockManager) pauseAll() {
+	for c := range cm.clocks {
+		c.Pause()
 	}
 }
 
-func (cm *ClockManager) ResumeAll() {
-	for c, _ := range cm.clocks {
-		c.resume()
+func (cm *clockManager) resumeAll() {
+	for c := range cm.clocks {
+		c.Resume()
 	}
 }
 
-func newClockManager() *ClockManager {
-	return &ClockManager{
+func newClockManager() *clockManager {
+	return &clockManager{
 		clocks: make(map[*Clock]bool),
 	}
 }

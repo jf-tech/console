@@ -54,7 +54,7 @@ func newSpriteGamma(g *cgame.Game, parent *cwin.Win, x, y int) *spriteGamma {
 			},
 			DY:        1,
 			MoveSpeed: gammaSpeed,
-			AfterMove: func() {
+			AfterMove: func(cgame.Sprite) {
 				newFiringProb := maths.MaxInt(
 					gammaFiringMinProb-int(s.Clock().Now()/(5*time.Second)),
 					gammaFiringMaxProb)

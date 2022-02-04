@@ -9,7 +9,7 @@ import (
 
 type SpriteManager struct {
 	g                     *Game
-	clockMgr              *ClockManager
+	clockMgr              *clockManager
 	ss                    []Sprite
 	eventQ                *threadSafeFIFO
 	collisionDetectionBuf []bool
@@ -46,6 +46,14 @@ func (sm *SpriteManager) ProcessAll() {
 	sm.processEvents()     // consequences from self-movements
 	sm.processCollisions() // collisions
 	sm.processEvents()     // consequences of collisions
+}
+
+func (sm *SpriteManager) PauseAllSprites() {
+	sm.clockMgr.pauseAll()
+}
+
+func (sm *SpriteManager) ResumeAllSprites() {
+	sm.clockMgr.resumeAll()
 }
 
 func (sm *SpriteManager) DbgStats() string {
@@ -139,14 +147,6 @@ func (sm *SpriteManager) spriteIndex(s Sprite) int {
 		}
 	}
 	return -1
-}
-
-func (sm *SpriteManager) pauseAllSprites() {
-	sm.clockMgr.PauseAll()
-}
-
-func (sm *SpriteManager) resumeAllSprites() {
-	sm.clockMgr.ResumeAll()
 }
 
 func (sm *SpriteManager) detectCollision(w1, w2 *cwin.Win) bool {

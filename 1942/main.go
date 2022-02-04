@@ -23,9 +23,7 @@ type myGame struct {
 	winKills  *cwin.Win
 	winArena  *cwin.Win
 	winStats  *cwin.Win
-
-	bgWW1942AnimationDone bool
-	easyMode              bool
+	easyMode  bool
 }
 
 func (m *myGame) main() int {
@@ -35,11 +33,11 @@ func (m *myGame) main() int {
 		return codeGameInitFailure
 	}
 	defer m.g.Close()
+	m.g.Pause()
 
 	m.winSetup()
-	m.initSprites()
-	m.g.Pause()
 	m.g.WinSys.Update()
+
 	e := m.g.WinSys.MessageBoxEx(nil,
 		[]termbox.Event{
 			{Key: termbox.KeyEnter},
@@ -63,12 +61,20 @@ Press Enter to start the game; ESC or 'q' to quit.
 		return codeQuit
 	}
 	m.easyMode = e.Ch == 'e'
+
 	m.g.Resume()
 
-	a, _ := m.g.SpriteMgr.FindByName(alphaName)
-	alpha := a.(*spriteAlpha)
+	alpha := &spriteAlpha{
+		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena,
+			cgame.SpriteCfg{Name: alphaName, Cells: cgame.StringToCells(alphaImgTxt, alphaAttr)},
+			(m.winArena.ClientRect().W-cwin.TextDimension(alphaImgTxt).W)/2,
+			m.winArena.ClientRect().H-cwin.TextDimension(alphaImgTxt).H),
+		m: m}
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(alpha))
 
 	m.g.SetupEventListening()
+
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteStageBanner(m.g, m.winArena, 0)))
 
 loop:
 	for !m.g.IsGameOver() {
@@ -83,19 +89,18 @@ loop:
 				}
 				continue
 			}
-			if m.g.IsPaused() {
-				continue
-			}
-			if ev.Key == termbox.KeyArrowUp {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
-			} else if ev.Key == termbox.KeyArrowDown {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 2))
-			} else if ev.Key == termbox.KeyArrowLeft {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
-			} else if ev.Key == termbox.KeyArrowRight {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
-			} else if ev.Key == termbox.KeySpace {
-				alpha.fireWeapon()
+			if !m.g.IsPaused() {
+				if ev.Key == termbox.KeyArrowUp {
+					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
+				} else if ev.Key == termbox.KeyArrowDown {
+					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 2))
+				} else if ev.Key == termbox.KeyArrowLeft {
+					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
+				} else if ev.Key == termbox.KeyArrowRight {
+					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
+				} else if ev.Key == termbox.KeySpace {
+					alpha.fireWeapon()
+				}
 			}
 		}
 		m.moreSprites()
@@ -128,8 +133,7 @@ Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     88
  "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
 
 
-                             Press ESC or 'q' to quit, 'r' to replay.
-`)
+                             Press ESC or 'q' to quit, 'r' to replay.`)
 	if e.Ch == 'r' {
 		return codeReplay
 	}
@@ -233,52 +237,14 @@ func (m *myGame) winSetup() {
 	winInstructions.SetText(textInstructions)
 }
 
-func (m *myGame) initSprites() {
-	// background text: "WW II"
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(
-		newSpriteBackgroundStatic(m.g, m.winArena,
-			(m.winArena.ClientRect().W-cwin.TextDimension(bgWWImgTxt).W)/2,
-			(m.winArena.ClientRect().H/2-cwin.TextDimension(bgWWImgTxt).H)/2,
-			bgWWStaticName, bgWWImgTxt)))
-	// background text: "1942"
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(
-		newSpriteBackgroundStatic(m.g, m.winArena,
-			(m.winArena.ClientRect().W-cwin.TextDimension(bg1942ImgTxt).W)/2,
-			(m.winArena.ClientRect().H*3/2-cwin.TextDimension(bg1942ImgTxt).H)/2,
-			bg1942StaticName, bg1942ImgTxt)))
-	// alpha - player airplane
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
-		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena,
-			cgame.SpriteCfg{Name: alphaName, Cells: cgame.StringToCells(alphaImgTxt, alphaAttr)},
-			(m.winArena.ClientRect().W-cwin.TextDimension(alphaImgTxt).W)/2,
-			m.winArena.ClientRect().H-cwin.TextDimension(alphaImgTxt).H),
-		m: m}))
-	m.g.SpriteMgr.ProcessAll()
-}
-
 func (m *myGame) moreSprites() {
 	if m.g.IsPaused() {
 		return
 	}
-	m.bgWW1942Animation()
 	m.bgStars()
 	m.betas()
 	m.gamma()
 	m.giftPacks()
-}
-
-func (m *myGame) bgWW1942Animation() {
-	if m.g.MasterClock.Now() > bgInitialWait && !m.bgWW1942AnimationDone {
-		s1, _ := m.g.SpriteMgr.FindByName(bgWWStaticName)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s1))
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundAnimated(
-			m.g, m.winArena, s1.Win().Rect().X, s1.Win().Rect().Y, bgWWAnimatedName, bgWWImgTxt, 1)))
-		s2, _ := m.g.SpriteMgr.FindByName(bg1942StaticName)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s2))
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundAnimated(
-			m.g, m.winArena, s2.Win().Rect().X, s2.Win().Rect().Y, bg1942AnimatedName, bg1942ImgTxt, -1)))
-		m.bgWW1942AnimationDone = true
-	}
 }
 
 func (m *myGame) bgStars() {
@@ -314,8 +280,8 @@ func (m *myGame) stats() {
 	m.winStats.SetText(fmt.Sprintf(`
 Game stats:
 ----------------------------
-Time in game: %s %s
-
+Time: %s %s
+%s
 Internals:
 ----------------------------
 Beta Firing Prob: %.0f％
@@ -324,6 +290,12 @@ Beta Firing Prob: %.0f％
 		func() string {
 			if m.g.IsPaused() {
 				return "(paused)"
+			}
+			return ""
+		}(),
+		func() string {
+			if m.easyMode {
+				return "Easy Mode: On\n"
 			}
 			return ""
 		}(),

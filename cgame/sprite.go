@@ -108,7 +108,7 @@ func NewSpriteBase(g *Game, parent *cwin.Win, cfg SpriteCfg, x, y int) *SpriteBa
 	sb := &SpriteBase{
 		cfg:   cfg,
 		uid:   cwin.GenUID(),
-		clock: g.SpriteMgr.clockMgr.createClock(),
+		clock: g.SpriteMgr.g.SpriteMgr.clockMgr.createClock(),
 		mgr:   g.SpriteMgr,
 		g:     g,
 	}

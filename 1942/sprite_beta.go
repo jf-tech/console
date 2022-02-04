@@ -54,7 +54,7 @@ func newSpriteBeta(g *cgame.Game, parent *cwin.Win, x, y int) *spriteBeta {
 			},
 			DY:        1,
 			MoveSpeed: betaSpeed,
-			AfterMove: func() {
+			AfterMove: func(cgame.Sprite) {
 				newFiringProb := maths.MaxInt(
 					betaFiringMinProb-int(s.Clock().Now()/(5*time.Second)),
 					betaFiringMaxProb)
