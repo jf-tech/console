@@ -274,6 +274,8 @@ func (m *myGame) stats() {
 Game stats:
 ----------------------------
 Time: %s %s
+FPS: %.0f
+Total "Pixels" rendered: %d
 %s
 Internals:
 ----------------------------
@@ -286,6 +288,8 @@ Beta Firing Prob: %.0f％
 			}
 			return ""
 		}(),
+		m.g.FPS(),
+		m.g.WinSys.TotalChxRendered(),
 		func() string {
 			if m.easyMode {
 				return "Easy Mode: On\n"

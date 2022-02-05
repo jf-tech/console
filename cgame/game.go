@@ -16,7 +16,8 @@ type Game struct {
 	stopEventListening chan struct{}
 	evChan             chan termbox.Event
 
-	gameOver bool
+	loopsDone int64
+	gameOver  bool
 }
 
 func Init() (*Game, error) {
@@ -45,6 +46,7 @@ func (g *Game) Run(f func()) {
 	for !g.IsGameOver() {
 		f()
 		g.WinSys.Update()
+		g.loopsDone++
 	}
 }
 
@@ -83,6 +85,18 @@ func (g *Game) GameOver() {
 
 func (g *Game) IsGameOver() bool {
 	return g.gameOver
+}
+
+func (g *Game) TotalLoops() int64 {
+	return g.loopsDone
+}
+
+func (g *Game) FPS() float64 {
+	now := g.MasterClock.Now()
+	if now == 0 {
+		return float64(0)
+	}
+	return float64(g.loopsDone) / (float64(now) / float64(time.Second))
 }
 
 func (g *Game) setupEventListening() {

@@ -11,6 +11,7 @@ import (
 type Sys struct {
 	sysWin            *Win
 	scrBuf, offScrBuf []Chx
+	totalChxRendered  int64
 }
 
 func (s *Sys) GetSysWin() *Win {
@@ -171,14 +172,20 @@ func (s *Sys) doUpdate(differential bool) {
 				s.scrBuf[idx] = s.offScrBuf[idx]
 				termbox.SetCell(x, y,
 					s.scrBuf[idx].Ch, s.scrBuf[idx].Attr.Fg, s.scrBuf[idx].Attr.Bg)
+				s.totalChxRendered++
 			}
 		}
 	}
 }
 
+// return the number of "pixels" updated
 func (s *Sys) Update() {
-	s.doUpdate(false)
+	s.doUpdate(true)
 	termbox.Flush()
+}
+
+func (s *Sys) TotalChxRendered() int64 {
+	return s.totalChxRendered
 }
 
 func (s *Sys) DumpTree() string {
