@@ -9,20 +9,6 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-var (
-	gameOverKeys  = cgame.Keys(termbox.KeyEsc, 'q')
-	pauseGameKeys = cgame.Keys('p')
-
-	stageDurations = []time.Duration{time.Minute, time.Minute}
-
-	betaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
-		cgame.NewPeriodicProbabilityChecker("0.6%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("1%", 10*time.Millisecond),
-	}
-	betaFiringProbPerStage    = []string{"10%", "12%"}
-	betaFiringPelletsPerStage = []int{3, 5}
-)
-
 type stage struct {
 	m              *myGame
 	stageIdx       int
@@ -66,6 +52,7 @@ func (s *stage) init() {
 	gpShotgun2ProbEasy.Reset(s.m.g.MasterClock)
 
 	betaGenProbPerStage[s.stageIdx].Reset(s.m.g.MasterClock)
+	gammaGenProbPerStage[s.stageIdx].Reset(s.m.g.MasterClock)
 }
 
 func (s *stage) runStageIntroBanner() {
@@ -97,7 +84,7 @@ func (s *stage) genSprites() {
 	}
 	s.genBackgroundStar()
 	s.genBeta()
-	// s.genGamma()
+	s.genGamma()
 	s.genGiftPack()
 }
 
@@ -113,6 +100,13 @@ func (s *stage) genBeta() {
 		return
 	}
 	createBeta(s.m, s.stageIdx)
+}
+
+func (s *stage) genGamma() {
+	if !gammaGenProbPerStage[s.stageIdx].Check() {
+		return
+	}
+	createGamma(s.m, s.stageIdx)
 }
 
 func (s *stage) genGiftPack() {
@@ -141,7 +135,8 @@ func (s *stage) checkStageDone() bool {
 	for _, name := range []string{
 		betaName,
 		betaBulletName,
-		// TODO add gamma, etc.
+		gammaName,
+		gammaBulletName,
 	} {
 		if _, found := s.m.g.SpriteMgr.TryFindByName(name); found {
 			return false
@@ -154,14 +149,13 @@ func (s *stage) displayStats(alpha *spriteAlpha) {
 	weaponName, weaponLife := alpha.weaponStats()
 	killStats := alpha.killStats()
 	s.m.winWeapon.SetText("WEAPON: %s (%s)", weaponName, weaponLife)
-	s.m.winKills.SetText("KILLS: Beta: %s",
-		func() string {
-			if n, ok := killStats["Beta"]; ok {
-				return fmt.Sprint(n)
-			}
-			return "N/A"
-		}())
-
+	killStat := func(name string) string {
+		if n, ok := killStats[name]; ok {
+			return fmt.Sprint(n)
+		}
+		return "N/A"
+	}
+	s.m.winKills.SetText("KILLS: Beta: %s | Gamma: %s", killStat(betaName), killStat(gammaName))
 	s.m.winStats.SetText(fmt.Sprintf(`
 Game stats:
 ----------------------------

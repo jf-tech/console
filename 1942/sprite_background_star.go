@@ -10,10 +10,8 @@ import (
 )
 
 var (
-	bgStarName    = "background_star"
-	bgStarFrame   = cgame.FrameFromString(".", cwin.ChAttr{Fg: termbox.ColorDarkGray})
-	bgStarSpeed   = cgame.CharPerSec(25)
-	bgStarGenProb = cgame.NewPeriodicProbabilityChecker("50%", 100*time.Millisecond)
+	bgStarName  = "background_star"
+	bgStarFrame = cgame.FrameFromString(".", cwin.ChAttr{Fg: termbox.ColorDarkGray})
 )
 
 func createBackgroundStar(m *myGame) {

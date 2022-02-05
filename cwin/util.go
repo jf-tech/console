@@ -7,7 +7,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/jf-tech/go-corelib/maths"
-	"github.com/nsf/termbox-go"
 )
 
 func TextDimension(s string) Rect {
@@ -28,17 +27,6 @@ var (
 
 func GenUID() int64 {
 	return atomic.AddInt64(&globalUIDCounter, 1)
-}
-
-// if f == nil, SyncExpectKey waits for any single key and then returns
-// if f != nil, SyncExpectKey repeatedly waits for a key & has it processed by f, if f returns false
-func SyncExpectKey(f func(termbox.Key, rune) bool) {
-	for {
-		ev := termbox.PollEvent()
-		if ev.Type == termbox.EventKey && (f == nil || f(ev.Key, ev.Ch)) {
-			break
-		}
-	}
 }
 
 var (

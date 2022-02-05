@@ -2,7 +2,6 @@ package main
 
 import (
 	"strings"
-	"time"
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cwin"
@@ -53,9 +52,7 @@ var (
       ▀▀▀▀▀▀▀▀▀▀▀
 `, "\n"),
 	}
-	stageIntroBannerAttr          = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue}
-	stageIntroBannerInOutDuration = 300 * time.Millisecond
-	stageIntroBannerStayDuration  = 1 * time.Second
+	stageIntroBannerAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue}
 )
 
 func createStageIntroBanner(m *myGame, stageIdx int, afterFinish func()) {
@@ -87,8 +84,6 @@ var (
 ▐░▌          ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌
  ▀            ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀
 `, "\n"), stageIntroBannerAttr, false)
-	stagePassedBannerInOutDuration = stageIntroBannerInOutDuration
-	stagePassedBannerStayDuration  = 2 * time.Second
 )
 
 func createStagePassedBanner(m *myGame, afterFinish func()) {

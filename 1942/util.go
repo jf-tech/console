@@ -2,12 +2,14 @@ package main
 
 import (
 	"io/ioutil"
-	"math/rand"
 	"os"
 )
 
-func testProb(prob int) bool {
-	return rand.Int()%prob == 0
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
 }
 
 func createTempFile(dir, pattern, content string) *os.File {

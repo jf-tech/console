@@ -1,85 +1,73 @@
 package main
 
-/*
 import (
+	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cwin"
-	"github.com/jf-tech/go-corelib/maths"
 	"github.com/nsf/termbox-go"
 )
 
 var (
-	gammaName   = "gamma"
-	gammaImgTxt = strings.Trim(`
+	gammaName  = "gamma"
+	gammaFrame = cgame.FrameFromString(strings.Trim(`
 /^#^\
 \vvv/
-`, "\n")
+`, "\n"), cwin.ChAttr{Fg: termbox.ColorLightBlue})
 
-	gammaAttr  = cwin.ChAttr{Fg: termbox.ColorLightBlue}
-	gammaSpeed = betaSpeed
-
-	gammaGenProb       = betaGenProb * 3
-	gammaFiringMinProb = 30
-	gammaFiringCurProb = gammaFiringMinProb
-	gammaFiringMaxProb = 15
-
-	gammaBulletName  = "gamma_bullet"
-	gammaBulletAttr  = betaBulletAttr
-	gammaBulletSpeed = betaBulletSpeed
+	gammaBulletName = "gamma_bullet"
+	gammaBulletAttr = betaBulletAttr
 )
 
 type spriteGamma struct {
-	*cgame.SpriteAnimated
+	*cgame.SpriteBase
 }
 
 func (g *spriteGamma) Collided(other cgame.Sprite) {
 	if other.Name() == alphaBulletName || other.Name() == alphaName {
 		g.Mgr().AddEvent(cgame.NewSpriteEventDelete(g))
-		g.Mgr().AddEvent(cgame.NewSpriteEventCreate(
-			newSpriteGammaDeath(g.Game(), g.Win().Parent(), g.Win().Rect().X, g.Win().Rect().Y)))
 		g.Mgr().FindByName(alphaName).(*spriteAlpha).gammaKills++
 	}
 }
 
-func newSpriteGamma(g *cgame.Game, parent *cwin.Win, x, y int) *spriteGamma {
-	s := &spriteGamma{}
-	s.SpriteAnimated = cgame.NewSpriteAnimated(g, parent,
-		cgame.SpriteAnimatedCfg{
-			Name: gammaName,
-			Frames: [][]cgame.Cell{
-				cgame.FrameFromString(gammaImgTxt, gammaAttr),
-			},
-			DY:        1,
-			MoveSpeed: gammaSpeed,
-			AfterMove: func(cgame.Sprite) {
-				newFiringProb := maths.MaxInt(
-					gammaFiringMinProb-int(s.Clock().Now()/(5*time.Second)),
-					gammaFiringMaxProb)
-				if newFiringProb < gammaFiringCurProb {
-					gammaFiringCurProb = newFiringProb
-				}
-				if !testProb(gammaFiringCurProb) {
-					return
-				}
-				r := s.Win().Rect()
-				for y := -1; y <= 1; y++ {
-					for x := -1; x <= 1; x++ {
-						if x == 0 && y == 0 {
-							continue
-						}
-						s.Mgr().AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
-							g, parent, gammaBulletName, gammaBulletAttr,
-							x, y, gammaBulletSpeed, r.X+r.W/2, r.Y+r.H/2)))
+func createGamma(m *myGame, stageIdx int) {
+	dist := 1000 // large enough to go out of window (and auto destroy)
+	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+		Waypoints: []cgame.Waypoint{
+			{
+				Type: cgame.WaypointRelative,
+				X:    0,
+				Y:    1 * dist,
+				T:    time.Duration((float64(dist) / float64(gammaSpeed)) * float64(time.Second)),
+			}},
+		AfterMove: func(s cgame.Sprite) {
+			if !cgame.CheckProbability(gammaFiringProbPerStage[stageIdx]) {
+				return
+			}
+			centerX := s.Win().Rect().X + s.Win().Rect().W/2
+			centerY := s.Win().Rect().Y + s.Win().Rect().H/2
+			for y := -1; y <= 1; y++ {
+				for x := -1; x <= 1; x++ {
+					if x == 0 && y == 0 {
+						continue
 					}
+					if m.easyMode && abs(x)+abs(y) == 1 {
+						continue
+					}
+					createBullet(m, gammaBulletName, gammaBulletAttr,
+						x, y, gammaBulletSpeed, centerX, centerY)
 				}
-			},
+			}
 		},
-		x, y)
-	return s
+	})
+	s := &spriteGamma{cgame.NewSpriteBase(m.g, m.winArena, gammaName, gammaFrame,
+		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(gammaFrame).W), 0)}
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
 }
+
+/*
 
 var (
 	gammaDeathName    = "gamma_death"

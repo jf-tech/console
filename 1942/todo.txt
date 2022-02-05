@@ -1,2 +1,3 @@
-- add gamma back
-- pass kill stats between stages
+- add delta
+- add stage 3
+- add x-wing boss in stage 3

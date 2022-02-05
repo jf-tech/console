@@ -119,9 +119,7 @@ func (s *Sys) MessageBoxEx(
 // MessageBox is mostly similar to MessageBoxEx but only with 2 expected keys: Enter or ESC
 // It returns true if Enter is pressed or false if ESC is pressed.
 func (s *Sys) MessageBox(parent *Win, title, format string, a ...interface{}) bool {
-	e := s.MessageBoxEx(parent,
-		[]termbox.Event{{Key: termbox.KeyEnter}, {Key: termbox.KeyEsc}},
-		title, format, a...)
+	e := s.MessageBoxEx(parent, Keys(termbox.KeyEnter, termbox.KeyEsc), title, format, a...)
 	return e.Key == termbox.KeyEnter
 }
 

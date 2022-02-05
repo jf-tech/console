@@ -12,6 +12,36 @@ const (
 	codeQuit int = iota
 	codeReplay
 	codeGameInitFailure
+
+	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
+	gameOverTxt = `
+
+ .d8888b.                                        .d88888b.                                 888
+d88P  Y88b                                      d88P" "Y88b                                888
+888    888                                      888     888                                888
+888         8888b.  88888b.d88b.   .d88b.       888     888 888  888  .d88b.  888d888      888
+888  88888     "88b 888 "888 "88b d8P  Y8b      888     888 888  888 d8P  Y8b 888P"        888
+888    888 .d888888 888  888  888 88888888      888     888 Y88  88P 88888888 888          Y8P
+Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     888           "
+ "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
+
+
+                             Press ESC or 'q' to quit, 'r' to replay.`
+
+	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=You%20Won%20!
+	youWonTxt = `
+
+Y88b   d88P                     888       888                        888
+ Y88b d88P                      888   o   888                        888
+  Y88o88P                       888  d8b  888                        888
+   Y888P  .d88b.  888  888      888 d888b 888  .d88b.  88888b.       888
+    888  d88""88b 888  888      888d88888b888 d88""88b 888 "88b      888
+    888  888  888 888  888      88888P Y88888 888  888 888  888      Y8P
+    888  Y88..88P Y88b 888      8888P   Y8888 Y88..88P 888  888       "
+    888   "Y88P"   "Y88888      888P     Y888  "Y88P"  888  888      888
+
+
+                  Press ESC or 'q' to quit, 'r' to replay.`
 )
 
 type myGame struct {
@@ -35,12 +65,7 @@ func (m *myGame) main() int {
 	m.g.WinSys.Update()
 
 	e := m.g.WinSys.MessageBoxEx(nil,
-		[]termbox.Event{
-			{Key: termbox.KeyEnter},
-			{Key: termbox.KeyEsc},
-			{Ch: 'q'},
-			{Ch: 'e'},
-		},
+		cwin.Keys(termbox.KeyEnter, termbox.KeyEsc, 'q', 'e'),
 		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
 fighting is quickly approaching the final stage. Both sides have suffered
@@ -65,26 +90,13 @@ Press Enter to start the game; ESC or 'q' to quit.
 		newStage(m, 1).Run()
 	}
 
-	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
-	e = m.g.WinSys.MessageBoxEx(nil,
-		[]termbox.Event{
-			{Key: termbox.KeyEsc},
-			{Ch: 'q'},
-			{Ch: 'r'},
-		},
-		"Uh oh...", `
-
- .d8888b.                                        .d88888b.                                 888
-d88P  Y88b                                      d88P" "Y88b                                888
-888    888                                      888     888                                888
-888         8888b.  88888b.d88b.   .d88b.       888     888 888  888  .d88b.  888d888      888
-888  88888     "88b 888 "888 "88b d8P  Y8b      888     888 888  888 d8P  Y8b 888P"        888
-888    888 .d888888 888  888  888 88888888      888     888 Y88  88P 88888888 888          Y8P
-Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     888           "
- "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
-
-
-                             Press ESC or 'q' to quit, 'r' to replay.`)
+	e = m.g.WinSys.MessageBoxEx(nil, cwin.Keys(termbox.KeyEsc, 'q', 'r'), "Result",
+		func() string {
+			if m.g.IsGameOver() {
+				return gameOverTxt
+			}
+			return youWonTxt
+		}())
 	if e.Ch == 'r' {
 		return codeReplay
 	}

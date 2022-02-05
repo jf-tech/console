@@ -17,7 +17,7 @@ type spriteBullet struct {
 
 func (b *spriteBullet) Collided(other cgame.Sprite) {
 	if b.Name() == alphaBulletName {
-		if other.Name() == betaName /*|| other.Name() == gammaName */ {
+		if other.Name() == betaName || other.Name() == gammaName {
 			b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
 		}
 	} else if other.Name() == alphaName {

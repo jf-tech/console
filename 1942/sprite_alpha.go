@@ -16,9 +16,8 @@ var (
   ┃
 -█-█-
 `, "\n"), cwin.ChAttr{Fg: termbox.ColorLightYellow})
-	alphaBulletName  = "alpha_bullet"
-	alphaBulletAttr  = cwin.ChAttr{Fg: termbox.ColorLightYellow}
-	alphaBulletSpeed = cgame.CharPerSec(30)
+	alphaBulletName = "alpha_bullet"
+	alphaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow}
 )
 
 type spriteAlpha struct {
@@ -69,7 +68,8 @@ func (a *spriteAlpha) weaponStats() (name, remaining string) {
 
 func (a *spriteAlpha) killStats() map[string]int {
 	return map[string]int{
-		"Beta": a.betaKills,
+		betaName:  a.betaKills,
+		gammaName: a.gammaKills,
 	}
 }
 

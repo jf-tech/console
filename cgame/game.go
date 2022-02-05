@@ -47,11 +47,11 @@ func (g *Game) Run(
 	for !stop && !g.IsGameOver() {
 		var ev termbox.Event
 		if ev = g.TryGetEvent(); ev.Type == termbox.EventKey {
-			if FindKey(gameOverKeys, ev) {
+			if cwin.FindKey(gameOverKeys, ev) {
 				g.GameOver()
 				return
 			}
-			if FindKey(pauseKeys, ev) {
+			if cwin.FindKey(pauseKeys, ev) {
 				if g.IsPaused() {
 					g.Resume()
 				} else {

@@ -21,7 +21,6 @@ var (
 	giftPackFrameTxt = strings.Trim(`
 ⸨⸨???⸩⸩
 `, "\n")
-	giftPackMoveSpeed = cgame.CharPerSec(5)
 )
 
 type spriteGiftPack struct {
@@ -75,15 +74,10 @@ var (
 	gpShotgunName    = "Shotgun"
 	gpShotgunSym     = giftPackSymbol{'-', 'S', '-'}
 	gpShotgunSymAttr = cwin.ChAttr{Fg: termbox.ColorWhite, Bg: termbox.ColorBlack}
-	gpShotgunLife    = time.Minute
-	gpShotgunProb    = cgame.NewPeriodicProbabilityChecker("8%", time.Second)
 
-	gpShotgun2Name     = "Shotgun++"
-	gpShotgun2Sym      = giftPackSymbol{'S', '+', '+'}
-	gpShotgun2SymAttr  = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlack}
-	gpShotgun2Life     = time.Minute
-	gpShotgun2Prob     = cgame.NewPeriodicProbabilityChecker("2%", time.Second)
-	gpShotgun2ProbEasy = cgame.NewPeriodicProbabilityChecker("10%", time.Second)
+	gpShotgun2Name    = "Shotgun++"
+	gpShotgun2Sym     = giftPackSymbol{'S', '+', '+'}
+	gpShotgun2SymAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlack}
 )
 
 func newGiftPackShotgun(clock *cgame.Clock) *giftPack {

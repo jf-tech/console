@@ -16,11 +16,9 @@ var (
 \┃┃/
  \/
 `, "\n"), cwin.ChAttr{Fg: termbox.ColorLightCyan})
-	betaSpeed = cgame.CharPerSec(4)
 
-	betaBulletName  = "beta_bullet"
-	betaBulletAttr  = cwin.ChAttr{Fg: termbox.ColorLightCyan}
-	betaBulletSpeed = cgame.CharPerSec(10)
+	betaBulletName = "beta_bullet"
+	betaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightCyan}
 )
 
 type spriteBeta struct {
@@ -55,6 +53,9 @@ func createBeta(m *myGame, stageIdx int) {
 				pellets /= 2
 			}
 			for dx := -(pellets / 2); dx <= pellets/2; dx++ {
+				if pellets%2 == 0 && dx == 0 {
+					continue
+				}
 				createBullet(m, betaBulletName, betaBulletAttr, dx, 1, betaBulletSpeed, x, y)
 			}
 		},
