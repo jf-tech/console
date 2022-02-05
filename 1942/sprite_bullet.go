@@ -1,21 +1,23 @@
 package main
 
 import (
+	"time"
+
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cwin"
 )
 
 var (
-	bulletImgTxt = '•'
+	bulletFrameTxt = "•"
 )
 
 type spriteBullet struct {
-	*cgame.SpriteAnimated
+	*cgame.SpriteBase
 }
 
 func (b *spriteBullet) Collided(other cgame.Sprite) {
 	if b.Name() == alphaBulletName {
-		if other.Name() == betaName || other.Name() == gammaName {
+		if other.Name() == betaName /*|| other.Name() == gammaName */ {
 			b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
 		}
 	} else if other.Name() == alphaName {
@@ -23,18 +25,18 @@ func (b *spriteBullet) Collided(other cgame.Sprite) {
 	}
 }
 
-func newSpriteBullet(g *cgame.Game, parent *cwin.Win, name string, attr cwin.ChAttr,
-	dx, dy int, speed cgame.ActionPerSec, x, y int) *spriteBullet {
-	return &spriteBullet{
-		cgame.NewSpriteAnimated(g, parent,
-			cgame.SpriteAnimatedCfg{
-				Name: name,
-				Frames: [][]cgame.Cell{
-					cgame.StringToCells(string(bulletImgTxt), attr), // single frame
-				},
-				DX:        dx,
-				DY:        dy,
-				MoveSpeed: speed,
-			},
-			x, y)}
+func createBullet(m *myGame, name string, attr cwin.ChAttr,
+	dx, dy int, speed cgame.CharPerSec, x, y int) {
+	dist := 1000 // large enough to go out of window (and auto destroy)
+	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{Waypoints: []cgame.Waypoint{
+		{
+			Type: cgame.WaypointRelative,
+			X:    dx * dist,
+			Y:    dy * dist,
+			T:    time.Duration((float64(dist) / float64(speed)) * float64(time.Second)),
+		},
+	}})
+	s := &spriteBullet{cgame.NewSpriteBase(
+		m.g, m.winArena, name, cgame.FrameFromString(bulletFrameTxt, attr), x, y)}
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
 }

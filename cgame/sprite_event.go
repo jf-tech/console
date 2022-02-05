@@ -31,10 +31,11 @@ type SpriteEvent struct {
 	body      interface{}
 }
 
-func NewSpriteEventCreate(s Sprite) *SpriteEvent {
+func NewSpriteEventCreate(s Sprite, animators ...Animator) *SpriteEvent {
 	return &SpriteEvent{
 		eventType: SpriteEventCreate,
 		s:         s,
+		body:      animators,
 	}
 }
 

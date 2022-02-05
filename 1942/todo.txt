@@ -1,0 +1,2 @@
+- add gamma back
+- pass kill stats between stages

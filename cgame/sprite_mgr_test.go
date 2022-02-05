@@ -19,14 +19,14 @@ func TestDetectCollision(t *testing.T) {
 
 	// case 2: rects overlapping, but only transparent cells intersect
 	w1 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 0, Y: 0, W: 5, H: 5}, NoBorder: true})
-	putNormalizedCellsToWin(StringToCells(strings.Trim(`
+	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
 12345
 12
 1234
 12
 12345`, "\n"), cwin.ChAttr{}), w1)
 	w2 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 2, Y: 1, W: 3, H: 3}, NoBorder: true})
-	putNormalizedCellsToWin(StringToCells(strings.Trim(`
+	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
 abc
   c
 abc`, "\n"), cwin.ChAttr{}), w2)
@@ -34,13 +34,13 @@ abc`, "\n"), cwin.ChAttr{}), w2)
 
 	// case 3: rects overlapping, and one non-transparent cell intersects
 	w1 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 0, Y: 0, W: 3, H: 3}, NoBorder: true})
-	putNormalizedCellsToWin(StringToCells(strings.Trim(`
+	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
 123
 1 3
 123
 `, "\n"), cwin.ChAttr{}), w1)
 	w2 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 2, Y: 2, W: 2, H: 2}, NoBorder: true})
-	putNormalizedCellsToWin(StringToCells(strings.Trim(`
+	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
 ab
 ab
 `, "\n"), cwin.ChAttr{}), w2)

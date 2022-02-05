@@ -6,18 +6,18 @@ type pairInt struct {
 	a, b int
 }
 
-type threadSafeFIFO struct {
+type ThreadSafeFIFO struct {
 	sync.Mutex
 	elems []interface{}
 }
 
-func (f *threadSafeFIFO) push(e interface{}) {
+func (f *ThreadSafeFIFO) Push(e interface{}) {
 	f.Lock()
 	defer f.Unlock()
 	f.elems = append(f.elems, e)
 }
 
-func (f *threadSafeFIFO) tryPop() (interface{}, bool) {
+func (f *ThreadSafeFIFO) TryPop() (interface{}, bool) {
 	f.Lock()
 	defer f.Unlock()
 	n := len(f.elems)
@@ -33,8 +33,8 @@ func (f *threadSafeFIFO) tryPop() (interface{}, bool) {
 	return ret, true
 }
 
-func newFIFO(cap int) *threadSafeFIFO {
-	return &threadSafeFIFO{
+func NewThreadSafeFIFO(cap int) *ThreadSafeFIFO {
+	return &ThreadSafeFIFO{
 		elems: make([]interface{}, 0, cap),
 	}
 }

@@ -7,11 +7,15 @@ import (
 	"github.com/jf-tech/console/cwin"
 )
 
+type spriteEntry struct {
+	s         Sprite
+	animators []Animator
+}
+
 type SpriteManager struct {
 	g                     *Game
-	clockMgr              *clockManager
-	ss                    []Sprite
-	eventQ                *threadSafeFIFO
+	ss                    []spriteEntry
+	eventQ                *ThreadSafeFIFO
 	collisionDetectionBuf []bool
 	spriteEventsProcessed int64
 }
@@ -20,8 +24,8 @@ type SpriteManager struct {
 // return the first matching one, if any.
 func (sm *SpriteManager) FindByName(name string) Sprite {
 	for i := 0; i < len(sm.ss); i++ {
-		if sm.ss[i].Name() == name {
-			return sm.ss[i]
+		if sm.ss[i].s.Name() == name {
+			return sm.ss[i].s
 		}
 	}
 	panic(fmt.Sprintf("Cannot find sprite named '%s'", name))
@@ -29,8 +33,8 @@ func (sm *SpriteManager) FindByName(name string) Sprite {
 
 func (sm *SpriteManager) TryFindByName(name string) (Sprite, bool) {
 	for i := 0; i < len(sm.ss); i++ {
-		if sm.ss[i].Name() == name {
-			return sm.ss[i], true
+		if sm.ss[i].s.Name() == name {
+			return sm.ss[i].s, true
 		}
 	}
 	return nil, false
@@ -38,44 +42,40 @@ func (sm *SpriteManager) TryFindByName(name string) (Sprite, bool) {
 
 func (sm *SpriteManager) TryFindByUID(uid int64) (Sprite, bool) {
 	for i := 0; i < len(sm.ss); i++ {
-		if sm.ss[i].UID() == uid {
-			return sm.ss[i], true
+		if sm.ss[i].s.UID() == uid {
+			return sm.ss[i].s, true
 		}
 	}
 	return nil, false
 }
 
 func (sm *SpriteManager) AddEvent(e *SpriteEvent) {
-	sm.eventQ.push(e)
+	sm.eventQ.Push(e)
 }
 
-func (sm *SpriteManager) ProcessAll() {
+func (sm *SpriteManager) Process() {
 	sm.processEvents()     // keyboards triggered events (move, sprite creation, etc)
-	sm.processSprites()    // Animated sprite self movements
+	sm.processAnimators()  // Animated sprite self movements
 	sm.processEvents()     // consequences from self-movements
 	sm.processCollisions() // collisions
 	sm.processEvents()     // consequences of collisions
 }
 
-func (sm *SpriteManager) PauseAllSprites() {
-	sm.clockMgr.pauseAll()
-}
-
-func (sm *SpriteManager) ResumeAllSprites() {
-	sm.clockMgr.resumeAll()
-}
-
 func (sm *SpriteManager) DbgStats() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("Active sprites: %d\n", len(sm.ss)))
-	sb.WriteString(fmt.Sprintf("Active sprite clocks: %d\n", len(sm.clockMgr.clocks)))
+	animatorN := 0
+	for _, e := range sm.ss {
+		animatorN += len(e.animators)
+	}
+	sb.WriteString(fmt.Sprintf("Active animators: %d\n", animatorN))
 	sb.WriteString(fmt.Sprintf("Sprite Events processed: %d\n", sm.spriteEventsProcessed))
 	return sb.String()
 }
 
 func (sm *SpriteManager) processEvents() {
 	for {
-		se, ok := sm.eventQ.tryPop()
+		se, ok := sm.eventQ.TryPop()
 		if !ok {
 			break
 		}
@@ -100,17 +100,15 @@ func (sm *SpriteManager) processEvent(e *SpriteEvent) {
 				panic(fmt.Sprintf("Sprite['%s',%d] is being re-added",
 					e.s.Name(), e.s.UID()))
 			}
-			sm.ss = append(sm.ss, e.s)
+			sm.ss = append(sm.ss, spriteEntry{s: e.s, animators: e.body.([]Animator)})
 		case SpriteEventDelete:
 			if idx < 0 {
 				return
 			}
-			sm.clockMgr.deleteClock(sm.ss[idx].Clock())
-			sm.g.WinSys.RemoveWin(sm.ss[idx].Win())
+			sm.g.WinSys.RemoveWin(sm.ss[idx].s.Win())
 			for ; idx < len(sm.ss)-1; idx++ {
 				sm.ss[idx] = sm.ss[idx+1]
 			}
-			sm.ss[idx] = nil
 			sm.ss = sm.ss[:len(sm.ss)-1]
 		case SpriteEventSetPosRelative:
 			existsCheck()
@@ -122,10 +120,15 @@ func (sm *SpriteManager) processEvent(e *SpriteEvent) {
 	}
 }
 
-func (sm *SpriteManager) processSprites() {
-	for i := 0; i < len(sm.ss); i++ {
-		if s, ok := sm.ss[i].(Animated); ok {
-			s.Act()
+func (sm *SpriteManager) processAnimators() {
+	for _, e := range sm.ss {
+		for i := 0; i < len(e.animators); i++ {
+			if e.animators[i].Animate(e.s) == AnimatorCompleted {
+				for j := i; j < len(e.animators)-1; j++ {
+					e.animators[j] = e.animators[j+1]
+				}
+				e.animators = e.animators[:len(e.animators)-1]
+			}
 		}
 	}
 }
@@ -135,15 +138,15 @@ func (sm *SpriteManager) processCollisions() {
 		for j := i + 1; j < len(sm.ss); j++ {
 			var ci, cj Collidable
 			var ok bool
-			if ci, ok = sm.ss[i].(Collidable); !ok {
+			if ci, ok = sm.ss[i].s.(Collidable); !ok {
 				continue
 			}
-			if cj, ok = sm.ss[j].(Collidable); !ok {
+			if cj, ok = sm.ss[j].s.(Collidable); !ok {
 				continue
 			}
-			if sm.detectCollision(sm.ss[i].Win(), sm.ss[j].Win()) {
-				ci.Collided(sm.ss[j])
-				cj.Collided(sm.ss[i])
+			if sm.detectCollision(sm.ss[i].s.Win(), sm.ss[j].s.Win()) {
+				ci.Collided(sm.ss[j].s)
+				cj.Collided(sm.ss[i].s)
 			}
 		}
 	}
@@ -151,7 +154,7 @@ func (sm *SpriteManager) processCollisions() {
 
 func (sm *SpriteManager) spriteIndex(s Sprite) int {
 	for i := 0; i < len(sm.ss); i++ {
-		if sm.ss[i].UID() == s.UID() {
+		if sm.ss[i].s.UID() == s.UID() {
 			return i
 		}
 	}
@@ -191,9 +194,8 @@ const (
 func newSpriteManager(g *Game) *SpriteManager {
 	return &SpriteManager{
 		g:                     g,
-		clockMgr:              newClockManager(),
-		ss:                    make([]Sprite, 0, defaultSpriteBufCap),
-		eventQ:                newFIFO(defaultSpriteBufCap),
+		ss:                    make([]spriteEntry, 0, defaultSpriteBufCap),
+		eventQ:                NewThreadSafeFIFO(defaultSpriteBufCap),
 		collisionDetectionBuf: make([]bool, 0, defaultCollisionDetectionBufCap),
 	}
 }

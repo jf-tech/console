@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStringToCells(t *testing.T) {
+func TestStringToFrame(t *testing.T) {
 	testAttr := cwin.ChAttr{Fg: termbox.ColorBlue, Bg: termbox.ColorWhite}
 	for _, test := range []struct {
 		name string
 		s    string
 		attr cwin.ChAttr
-		exp  []Cell
+		exp  SpriteFrame
 	}{
 		{
 			name: "4x2",
@@ -24,7 +24,7 @@ func TestStringToCells(t *testing.T) {
  \/
 `,
 			attr: testAttr,
-			exp: []Cell{
+			exp: []SpriteCell{
 				{X: 0, Y: 0, Chx: cwin.Chx{Ch: '\\', Attr: testAttr}},
 				{X: 1, Y: 0, Chx: cwin.Chx{Ch: '┃', Attr: testAttr}},
 				{X: 2, Y: 0, Chx: cwin.Chx{Ch: '┃', Attr: testAttr}},
@@ -38,7 +38,7 @@ func TestStringToCells(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.exp,
-				StringToCells(strings.Trim(test.s, "\n"), test.attr))
+				FrameFromString(strings.Trim(test.s, "\n"), test.attr))
 		})
 	}
 }

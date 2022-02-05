@@ -201,16 +201,27 @@ func (w *Win) FillClient(cr Rect, chx Chx) {
 	}
 }
 
-func (w *Win) SetHidden(hidden bool) {
-	w.hidden = hidden
-}
-
 func (w *Win) Rect() Rect {
 	return w.cfg.R
 }
 
 func (w *Win) ClientRect() Rect {
 	return w.clientR
+}
+
+func (w *Win) VisibleInParentClientRect() bool {
+	if w.hidden {
+		return false
+	}
+	if w.parent == nil {
+		return true
+	}
+	overlapped, _ := w.parent.ClientRect().ToOrigin().Overlap(w.Rect())
+	return overlapped
+}
+
+func (w *Win) SetHidden(hidden bool) {
+	w.hidden = hidden
 }
 
 func (w *Win) SetPosAbs(x, y int) {

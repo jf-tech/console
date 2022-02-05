@@ -27,10 +27,7 @@ func Init() (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
-	g := &Game{
-		WinSys:      winSys,
-		MasterClock: newClock(),
-	}
+	g := &Game{WinSys: winSys, MasterClock: newClock()}
 	g.SpriteMgr = newSpriteManager(g)
 	g.setupEventListening()
 	g.Pause()
@@ -43,9 +40,29 @@ func (g *Game) Close() {
 	g.WinSys.Close()
 }
 
-func (g *Game) Run(f func()) {
-	for !g.IsGameOver() {
-		f()
+func (g *Game) Run(
+	gameOverKeys, pauseKeys []termbox.Event, optionalRunFunc func(ev termbox.Event) bool) {
+
+	stop := false
+	for !stop && !g.IsGameOver() {
+		var ev termbox.Event
+		if ev = g.TryGetEvent(); ev.Type == termbox.EventKey {
+			if FindKey(gameOverKeys, ev) {
+				g.GameOver()
+				return
+			}
+			if FindKey(pauseKeys, ev) {
+				if g.IsPaused() {
+					g.Resume()
+				} else {
+					g.Pause()
+				}
+			}
+		}
+		if optionalRunFunc != nil {
+			stop = optionalRunFunc(ev)
+		}
+		g.SpriteMgr.Process()
 		g.WinSys.Update()
 		g.loopsDone++
 	}
@@ -65,14 +82,11 @@ func (g *Game) TryGetEvent() termbox.Event {
 }
 
 func (g *Game) Pause() {
-	g.SpriteMgr.PauseAllSprites()
 	g.MasterClock.Pause()
-
 }
 
 func (g *Game) Resume() {
 	g.MasterClock.Resume()
-	g.SpriteMgr.ResumeAllSprites()
 }
 
 func (g *Game) IsPaused() bool {

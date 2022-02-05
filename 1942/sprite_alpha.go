@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cwin"
@@ -10,15 +11,14 @@ import (
 )
 
 var (
-	alphaName   = "alpha"
-	alphaImgTxt = strings.Trim(`
+	alphaName  = "alpha"
+	alphaFrame = cgame.FrameFromString(strings.Trim(`
   ┃
 -█-█-
-`, "\n")
-	alphaAttr        = cwin.ChAttr{Fg: termbox.ColorLightYellow}
+`, "\n"), cwin.ChAttr{Fg: termbox.ColorLightYellow})
 	alphaBulletName  = "alpha_bullet"
 	alphaBulletAttr  = cwin.ChAttr{Fg: termbox.ColorLightYellow}
-	alphaBulletSpeed = cgame.ActionPerSec(30)
+	alphaBulletSpeed = cgame.CharPerSec(30)
 )
 
 type spriteAlpha struct {
@@ -33,7 +33,7 @@ func (a *spriteAlpha) SetPosRelative(dx, dy int) {
 	newR := a.Win().Rect()
 	newR.X += dx
 	newR.Y += dy
-	if _, r := a.m.winArena.ClientRect().Overlap(newR); r == newR {
+	if _, r := a.m.winArena.ClientRect().ToOrigin().Overlap(newR); r == newR {
 		a.Win().SetPosRelative(dx, dy)
 	}
 }
@@ -43,8 +43,7 @@ func (a *spriteAlpha) fireWeapon() {
 	y := a.Win().Rect().Y - 1
 	if a.gpWeapon == nil || a.gpWeapon.remainingLife() <= 0 {
 		a.gpWeapon = nil
-		a.Mgr().AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
-			a.m.g, a.m.winArena, alphaBulletName, alphaBulletAttr, 0, -1, alphaBulletSpeed, x, y)))
+		createBullet(a.m, alphaBulletName, alphaBulletAttr, 0, -1, alphaBulletSpeed, x, y)
 	} else {
 		switch a.gpWeapon.name {
 		case gpShotgunName, gpShotgun2Name:
@@ -53,8 +52,7 @@ func (a *spriteAlpha) fireWeapon() {
 				pellets = 5
 			}
 			for i := -pellets / 2; i <= pellets/2; i++ {
-				a.Mgr().AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet(
-					a.m.g, a.m.winArena, alphaBulletName, alphaBulletAttr, i, -1, alphaBulletSpeed, x, y)))
+				createBullet(a.m, alphaBulletName, alphaBulletAttr, i, -1, alphaBulletSpeed, x, y)
 			}
 		default:
 			panic(fmt.Sprintf("unknown weapon name: %s", a.gpWeapon.name))
@@ -62,32 +60,39 @@ func (a *spriteAlpha) fireWeapon() {
 	}
 }
 
-func (a *spriteAlpha) displayWeaponInfo() {
-	name := "Basic Gun"
-	remaining := "Infinite"
-	if a.gpWeapon != nil && a.gpWeapon.remainingLife() > 0 {
-		name = a.gpWeapon.name
-		remaining = a.gpWeapon.lifeRemaining.String()
+func (a *spriteAlpha) weaponStats() (name, remaining string) {
+	if a.gpWeapon != nil {
+		return a.gpWeapon.name, (a.gpWeapon.remainingLife() / time.Second * time.Second).String()
 	}
-	a.m.winWeapon.SetText("WEAPON: %s  REMAINING TIME: %s", name, remaining)
+	return "Basic Gun", "Infinite"
+}
+
+func (a *spriteAlpha) killStats() map[string]int {
+	return map[string]int{
+		"Beta": a.betaKills,
+	}
 }
 
 func (a *spriteAlpha) Collided(other cgame.Sprite) {
+	a.Win().ToBottom()
 	switch other.Name() {
 	case alphaBulletName:
-	case giftPackSpriteName:
+	case giftPackName:
 		switch other.(*spriteGiftPack).gpSym {
 		case gpShotgunSym:
-			a.gpWeapon = newGiftPackShotgun(a.Clock())
+			a.gpWeapon = newGiftPackShotgun(a.m.g.MasterClock)
 		case gpShotgun2Sym:
-			a.gpWeapon = newGiftPackShotgun2(a.Clock())
+			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
 		}
 	default:
-		a.m.g.Pause()
 		a.m.g.GameOver()
 	}
 }
 
-func (a *spriteAlpha) displayKills() {
-	a.m.winKills.SetText("KILLS: Beta:%d  Gamma:%d", a.betaKills, a.gammaKills)
+func createAlpha(m *myGame) {
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
+		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, alphaName, alphaFrame,
+			(m.winArena.ClientRect().W-cgame.FrameRect(alphaFrame).W)/2,
+			m.winArena.ClientRect().H-cgame.FrameRect(alphaFrame).H),
+		m: m}))
 }

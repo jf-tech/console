@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"strings"
 	"time"
@@ -49,7 +50,7 @@ func newSpriteGamma(g *cgame.Game, parent *cwin.Win, x, y int) *spriteGamma {
 		cgame.SpriteAnimatedCfg{
 			Name: gammaName,
 			Frames: [][]cgame.Cell{
-				cgame.StringToCells(gammaImgTxt, gammaAttr),
+				cgame.FrameFromString(gammaImgTxt, gammaAttr),
 			},
 			DY:        1,
 			MoveSpeed: gammaSpeed,
@@ -117,8 +118,9 @@ func newSpriteGammaDeath(g *cgame.Game, parent *cwin.Win, x, y int) *spriteGamma
 		cgame.NewSpriteAnimated(g, parent,
 			cgame.SpriteAnimatedCfg{
 				Name:       gammaDeathName,
-				Frames:     cgame.StringsToFrames(gammaDeathImgTxts, gammaAttr),
+				Frames:     cgame.FramesFromString(gammaDeathImgTxts, gammaAttr),
 				FrameSpeed: gammaDeathSpeed,
 			},
 			x, y)}
 }
+*/

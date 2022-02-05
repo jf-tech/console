@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cwin"
@@ -61,51 +58,12 @@ Press Enter to start the game; ESC or 'q' to quit.
 	}
 	m.easyMode = e.Ch == 'e'
 
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
-		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena,
-			cgame.SpriteCfg{Name: alphaName, Cells: cgame.StringToCells(alphaImgTxt, alphaAttr)},
-			(m.winArena.ClientRect().W-cwin.TextDimension(alphaImgTxt).W)/2,
-			m.winArena.ClientRect().H-cwin.TextDimension(alphaImgTxt).H),
-		m: m}))
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteStageBanner(m.g, m.winArena, 0)))
-	m.g.SpriteMgr.ProcessAll()
+	m.g.Resume()
 
-	m.g.Run(func() {
-		alpha := m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
-		if ev := m.g.TryGetEvent(); ev.Type == termbox.EventKey {
-			if ev.Key == termbox.KeyEsc || ev.Ch == 'q' {
-				m.g.GameOver()
-				return
-			}
-			if ev.Ch == 'p' {
-				if m.g.IsPaused() {
-					m.g.Resume()
-				} else {
-					m.g.Pause()
-				}
-				return
-			}
-			if !m.g.IsPaused() {
-				if ev.Key == termbox.KeyArrowUp {
-					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
-				} else if ev.Key == termbox.KeyArrowDown {
-					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 2))
-				} else if ev.Key == termbox.KeyArrowLeft {
-					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
-				} else if ev.Key == termbox.KeyArrowRight {
-					m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
-				} else if ev.Key == termbox.KeySpace {
-					alpha.fireWeapon()
-				}
-			}
-		}
-		m.moreSprites()
-		m.g.SpriteMgr.ProcessAll()
-		alpha.Win().ToTop()
-		alpha.displayWeaponInfo()
-		alpha.displayKills()
-		m.stats()
-	})
+	newStage(m, 0).Run()
+	if !m.g.IsGameOver() {
+		newStage(m, 1).Run()
+	}
 
 	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
 	e = m.g.WinSys.MessageBoxEx(nil,
@@ -228,78 +186,6 @@ func (m *myGame) winSetup() {
 		ClientAttr: cwin.ChAttr{Bg: termbox.ColorBlue},
 	})
 	winInstructions.SetText(textInstructions)
-}
-
-func (m *myGame) moreSprites() {
-	if m.g.IsPaused() {
-		return
-	}
-	m.bgStars()
-	m.betas()
-	m.gamma()
-	m.giftPacks()
-}
-
-func (m *myGame) bgStars() {
-	if testProb(bgStarGenProb) {
-		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundStar(m.g, m.winArena, x,
-			rand.Int()%10)))
-	}
-}
-
-func (m *myGame) betas() {
-	if testProb(betaGenProb) {
-		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBeta(m.g, m.winArena, x, 0)))
-	}
-}
-
-func (m *myGame) gamma() {
-	if !m.easyMode && testProb(gammaGenProb) {
-		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteGamma(m.g, m.winArena, x, 0)))
-	}
-}
-
-func (m *myGame) giftPacks() {
-	if sym, attr, ok := genGiftPack(); ok {
-		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(giftPackImgTxts[0]).W)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteGiftPack(m.g, m.winArena, x, 0, sym, attr)))
-	}
-}
-
-func (m *myGame) stats() {
-	m.winStats.SetText(fmt.Sprintf(`
-Game stats:
-----------------------------
-Time: %s %s
-FPS: %.0f
-Total "Pixels" rendered: %s
-Memory usage: %s
-%s
-Internals:
-----------------------------
-Beta Firing Prob: %.0f％
-%s`,
-		time.Duration(m.g.MasterClock.Now()/(time.Second))*(time.Second),
-		func() string {
-			if m.g.IsPaused() {
-				return "(paused)"
-			}
-			return ""
-		}(),
-		m.g.FPS(),
-		cwin.ByteSizeStr(m.g.WinSys.TotalChxRendered()),
-		cwin.ByteSizeStr(m.g.HeapUsageInBytes()),
-		func() string {
-			if m.easyMode {
-				return "Easy Mode: On\n"
-			}
-			return ""
-		}(),
-		float64(100)/float64(betaFiringCurProb),
-		m.g.SpriteMgr.DbgStats()))
 }
 
 func main() {
