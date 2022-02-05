@@ -2,6 +2,7 @@ package cgame
 
 import (
 	"math/rand"
+	"runtime"
 	"time"
 
 	"github.com/jf-tech/console/cwin"
@@ -97,6 +98,12 @@ func (g *Game) FPS() float64 {
 		return float64(0)
 	}
 	return float64(g.loopsDone) / (float64(now) / float64(time.Second))
+}
+
+func (g *Game) HeapUsageInBytes() int64 {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return int64(m.HeapAlloc)
 }
 
 func (g *Game) setupEventListening() {
