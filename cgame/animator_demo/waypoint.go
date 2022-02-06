@@ -20,6 +20,8 @@ func main() {
 	}
 	defer g.Close()
 	sysWinR := g.WinSys.GetSysWin().Rect()
+	// create a demo window that is 3/4 of the system window (which is the same size
+	// of the current terminal/console) and center it.
 	demoWin := g.WinSys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
 			X: sysWinR.W / 8,
@@ -29,8 +31,8 @@ func main() {
 		},
 		Name: "Demo",
 	})
-	g.WinSys.Update()
-	g.Resume()
+	g.WinSys.Update() // nothing shows onto screen unless Update() is called.
+	g.Resume()        // game (master clock) is always paused right after init.
 
 	doDemo(g, demoWin)
 
@@ -71,7 +73,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 		},
 	})
 
-	// add sprite to the sprite manager
+	// add the sprite and its animator to the sprite manager
 	g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
 
 	// run the demo
