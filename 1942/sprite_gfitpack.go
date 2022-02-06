@@ -37,14 +37,13 @@ func (g *spriteGiftPack) Collided(other cgame.Sprite) {
 func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.ChAttr) {
 	dist := 1000 // large enough to go out of window (and auto destroy)
 	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
-		Waypoints: []cgame.Waypoint{
+		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
 				X:    0,
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(giftPackMoveSpeed)) * float64(time.Second)),
-			}},
-	})
+			}})})
 	frame := cgame.FrameFromString(strings.ReplaceAll(
 		giftPackFrameTxt, string(giftPackSymbolPlaceholder[:]), string(sym[:])), symAttr)
 	s := &spriteGiftPack{

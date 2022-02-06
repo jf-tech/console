@@ -113,8 +113,8 @@ func (sm *SpriteManager) processEvent(e *SpriteEvent) {
 		case SpriteEventSetPosRelative:
 			existsCheck()
 			if ps, ok := e.s.(PositionSettable); ok {
-				xy := e.body.(pairInt)
-				ps.SetPosRelative(xy.a, xy.b)
+				xy := e.body.(PairInt)
+				ps.SetPosRelative(xy.A, xy.B)
 			}
 		}
 	case SpriteEventDeleteAll:

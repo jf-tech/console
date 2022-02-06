@@ -9,17 +9,22 @@ import (
 )
 
 var (
-	gameOverKeys   = cwin.Keys(termbox.KeyEsc, 'q')
-	pauseGameKeys  = cwin.Keys('p')
-	replayGameKeys = cwin.Keys('r')
-	skipStageKeys  = cwin.Keys('s')
-	easyModeKeys   = cwin.Keys('e')
+	gameOverKeys       = cwin.Keys(termbox.KeyEsc, 'q')
+	pauseGameKeys      = cwin.Keys('p')
+	replayGameKeys     = cwin.Keys('r')
+	skipStageKeys      = cwin.Keys('s')
+	easyModeKeys       = cwin.Keys('e')
+	invincibleModeKeys = cwin.Keys('i')
 
+	totalStages                    = 3
 	stageDurations                 = []time.Duration{time.Minute, time.Minute, time.Minute}
 	stageIntroBannerInOutDuration  = 300 * time.Millisecond
 	stageIntroBannerStayDuration   = 1 * time.Second
 	stagePassedBannerInOutDuration = stageIntroBannerInOutDuration
 	stagePassedBannerStayDuration  = 2 * time.Second
+
+	alphaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow}
+	enemyBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightCyan}
 
 	bgStarSpeed   = cgame.CharPerSec(25)
 	bgStarGenProb = cgame.NewPeriodicProbabilityChecker("50%", 100*time.Millisecond)
@@ -34,7 +39,7 @@ var (
 		cgame.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
 	}
 	betaFiringProbPerStage    = []string{"10%", "10%", "10%"}
-	betaFiringPelletsPerStage = []int{3, 4, 5}
+	betaFiringPelletsPerStage = []int{2, 3, 3}
 
 	gammaSpeed           = cgame.CharPerSec(4)
 	gammaBulletSpeed     = cgame.CharPerSec(10)
@@ -45,14 +50,22 @@ var (
 	}
 	gammaFiringProbPerStage = []string{"0%", "10%", "10%"}
 
-	deltaVerticalSpeed   = cgame.CharPerSec(35)
-	deltaHorizontalSpeed = deltaVerticalSpeed * 2
-	deltaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
+	deltaVerticalSpeed     = cgame.CharPerSec(35)
+	deltaHorizontalSpeed   = deltaVerticalSpeed * 2
+	deltaSpeedDiscountEasy = 0.6
+	deltaGenProbPerStage   = []*cgame.PeriodicProbabilityChecker{
 		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
 	}
 	deltaVerticalProb = "50%"
+
+	bossSpeed                      = cgame.CharPerSec(2)
+	bossMinDistToGoBeforeDirChange = 8
+	bossMaxDistToGoBeforeDirChange = 20
+	bossHP                         = 200
+	bossBulletFiringProb           = "20%"
+	bossBulletSpeed                = cgame.CharPerSec(10)
 
 	giftPackMoveSpeed  = cgame.CharPerSec(5)
 	gpShotgunLife      = time.Minute

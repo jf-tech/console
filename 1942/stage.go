@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -14,16 +15,23 @@ type stage struct {
 	stageIdx       int
 	stageStartTime time.Duration
 	stageSkipped   bool
+	bossCreated    bool
 }
 
 func (s *stage) Run() {
 	s.init()
 	s.runStageIntroBanner()
+	alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
 	s.m.g.Run(gameOverKeys, pauseGameKeys,
 		func(ev termbox.Event) bool {
-			alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
+			if s.checkStageDone() {
+				return true
+			}
 			if ev.Type == termbox.EventKey {
 				if !s.m.g.IsPaused() {
+					// due to console aspect ration, make left/right move a bit faster.
+					// also let retreat (down) a bit faster than up to make the game exp
+					// better.
 					if ev.Key == termbox.KeyArrowUp {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
 					} else if ev.Key == termbox.KeyArrowDown {
@@ -36,12 +44,14 @@ func (s *stage) Run() {
 						alpha.fireWeapon()
 					} else if cwin.FindKey(skipStageKeys, ev) {
 						s.stageSkipped = true
+					} else if cwin.FindKey(invincibleModeKeys, ev) {
+						s.m.invincible = !s.m.invincible
 					}
 				}
 			}
 			s.genSprites()
 			s.displayStats(alpha)
-			return s.checkStageDone()
+			return false
 		})
 	if !s.m.g.IsGameOver() {
 		s.runStagePassedBanner()
@@ -82,6 +92,10 @@ func (s *stage) genSprites() {
 		return
 	}
 	if s.checkStageWindingDown() {
+		if s.stageIdx == totalStages-1 && !s.bossCreated {
+			s.genBoss()
+			s.bossCreated = true
+		}
 		return
 	}
 	s.genBackgroundStar()
@@ -119,6 +133,12 @@ func (s *stage) genDelta() {
 	createDelta(s.m)
 }
 
+func (s *stage) genBoss() {
+	if _, ok := s.m.g.SpriteMgr.TryFindByName(bossName); !ok {
+		createBoss(s.m)
+	}
+}
+
 func (s *stage) genGiftPack() {
 	if gpShotgunProb.Check() {
 		createGiftPack(s.m, gpShotgunSym, gpShotgunSymAttr)
@@ -150,7 +170,8 @@ func (s *stage) checkStageDone() bool {
 		gammaName,
 		gammaBulletName,
 		deltaName,
-		// TODO: add more enemy sprite names here for proper stage shutdown wait.
+		bossName,
+		bossBulletName,
 	} {
 		if _, found := s.m.g.SpriteMgr.TryFindByName(name); found {
 			return false
@@ -162,9 +183,14 @@ func (s *stage) checkStageDone() bool {
 }
 
 func (s *stage) displayStats(alpha *spriteAlpha) {
+	const spacer = " -- "
+	var headerSB strings.Builder
+
 	weaponName, weaponLife := alpha.weaponStats()
 	killStats := alpha.killStats()
-	s.m.winWeapon.SetText("WEAPON: %s (%s)", weaponName, weaponLife)
+	headerSB.WriteString(fmt.Sprintf("WEAPON: %s (%s)", weaponName, weaponLife))
+	headerSB.WriteString(spacer)
+
 	killStat := func(name string) string {
 		if n, ok := killStats[name]; ok {
 			return fmt.Sprint(n)
@@ -178,15 +204,24 @@ func (s *stage) displayStats(alpha *spriteAlpha) {
 	if s.stageIdx > 1 {
 		killStatsText += fmt.Sprintf(" | Delta: %s", killStat(deltaName))
 	}
-	s.m.winKills.SetText(killStatsText)
+	headerSB.WriteString(killStatsText)
+	headerSB.WriteString(spacer)
+	headerSB.WriteString(fmt.Sprintf("STAGE TIME LEFT: %s", func() string {
+		timeLeft := stageDurations[s.stageIdx] - (s.m.g.MasterClock.Now() - s.stageStartTime)
+		if timeLeft < 0 {
+			timeLeft = time.Duration(0)
+		}
+		if s.stageIdx < totalStages-1 || timeLeft > 0 {
+			return (timeLeft / time.Second * time.Second).String()
+		}
+		return "Until BOSS dies!"
+	}()))
+	s.m.winHeader.SetText(headerSB.String())
+
 	s.m.winStats.SetText(fmt.Sprintf(`
-Game stats:
-----------------------------
-Time: %s %s
-%s
-Internals:
-----------------------------
-Arena Rect: %s
+Master clock: %s %s
+Stage index: %d
+%sArena Rect: %s
 FPS: %.0f
 Total "pixels" rendered: %s
 Memory usage: %s
@@ -198,11 +233,19 @@ Memory usage: %s
 			}
 			return ""
 		}(),
+		s.stageIdx+1,
 		func() string {
+			var ss []string
 			if s.m.easyMode {
-				return "Easy Mode: On\n"
+				ss = append(ss, "Easy Mode: On")
 			}
-			return ""
+			if s.m.invincible {
+				ss = append(ss, "Invincible Mode: On")
+			}
+			if len(ss) <= 0 {
+				return ""
+			}
+			return strings.Join(ss, "\n") + "\n"
 		}(),
 		s.m.winArena.Rect(),
 		s.m.g.FPS(),

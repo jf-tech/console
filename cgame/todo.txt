@@ -1,8 +1,8 @@
 must have:
-- abstrat termbox out so i can eventually switch to something else if needed
-- animator_frame
 - figure out a way to do gift pack force shield
-  - bind multiple sprite togeter? this can also enable HP bar on sprite.
+  - bind multipl
+- abstrat termbox out so i can eventually switch to something else (like tcell) if needed
+- animator_framee sprite togeter? this can also enable HP bar on sprite.
 
 nice to have:
 - auto explosion

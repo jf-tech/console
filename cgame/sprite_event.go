@@ -57,6 +57,6 @@ func NewSpriteEventSetPosRelative(s Sprite, dx, dy int) *SpriteEvent {
 	return &SpriteEvent{
 		eventType: SpriteEventSetPosRelative,
 		s:         s,
-		body:      pairInt{a: dx, b: dy},
+		body:      PairInt{A: dx, B: dy},
 	}
 }

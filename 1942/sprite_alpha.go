@@ -17,7 +17,6 @@ var (
 -█-█-
 `, "\n"), cwin.ChAttr{Fg: termbox.ColorLightYellow})
 	alphaBulletName = "alpha_bullet"
-	alphaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow}
 )
 
 type spriteAlpha struct {
@@ -33,7 +32,7 @@ func (a *spriteAlpha) SetPosRelative(dx, dy int) {
 	newR := a.Win().Rect()
 	newR.X += dx
 	newR.Y += dy
-	if _, r := a.m.winArena.ClientRect().ToOrigin().Overlap(newR); r == newR {
+	if overlapped, r := a.m.winArena.ClientRect().ToOrigin().Overlap(newR); overlapped && r == newR {
 		a.Win().SetPosRelative(dx, dy)
 	}
 }
@@ -87,7 +86,9 @@ func (a *spriteAlpha) Collided(other cgame.Sprite) {
 			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
 		}
 	default:
-		a.m.g.GameOver()
+		if !a.m.invincible {
+			a.m.g.GameOver()
+		}
 	}
 }
 

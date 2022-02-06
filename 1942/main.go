@@ -45,12 +45,12 @@ Y88b   d88P                     888       888                        888
 )
 
 type myGame struct {
-	g         *cgame.Game
-	winWeapon *cwin.Win
-	winKills  *cwin.Win
-	winArena  *cwin.Win
-	winStats  *cwin.Win
-	easyMode  bool
+	g          *cgame.Game
+	winHeader  *cwin.Win
+	winArena   *cwin.Win
+	winStats   *cwin.Win
+	easyMode   bool
+	invincible bool
 }
 
 func (m *myGame) main() int {
@@ -85,12 +85,8 @@ Press Enter to start the game; ESC or 'q' to quit.
 
 	m.g.Resume()
 
-	newStage(m, 0).Run()
-	if !m.g.IsGameOver() {
-		newStage(m, 1).Run()
-	}
-	if !m.g.IsGameOver() {
-		newStage(m, 2).Run()
+	for i := 0; i < totalStages && !m.g.IsGameOver(); i++ {
+		newStage(m, i).Run()
 	}
 
 	e = m.g.WinSys.MessageBoxEx(nil,
@@ -135,33 +131,13 @@ func (m *myGame) winSetup() {
 		NoTitle: true,
 	})
 	winGameClientR := winGame.ClientRect()
-	winHeader := m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
+	m.winHeader = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R: cwin.Rect{
 			X: 1,
 			Y: 0,
 			W: winHeaderW,
 			H: winHeaderH},
 		Name:       "header",
-		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: termbox.ColorBlue},
-	})
-	m.winWeapon = m.g.WinSys.CreateWin(winHeader, cwin.WinCfg{
-		R: cwin.Rect{
-			X: 0,
-			Y: 0,
-			W: winHeaderW / 2,
-			H: winHeaderH},
-		Name:       "header_weapon",
-		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue},
-	})
-	m.winKills = m.g.WinSys.CreateWin(winHeader, cwin.WinCfg{
-		R: cwin.Rect{
-			X: winHeaderW / 2,
-			Y: 0,
-			W: winHeaderW / 2,
-			H: winHeaderH},
-		Name:       "header_kills",
 		NoBorder:   true,
 		ClientAttr: cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue},
 	})

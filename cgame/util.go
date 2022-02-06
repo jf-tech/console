@@ -2,8 +2,8 @@ package cgame
 
 import "sync"
 
-type pairInt struct {
-	a, b int
+type PairInt struct {
+	A, B int
 }
 
 type ThreadSafeFIFO struct {

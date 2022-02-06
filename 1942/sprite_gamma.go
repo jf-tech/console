@@ -18,7 +18,6 @@ var (
 `, "\n"), cwin.ChAttr{Fg: termbox.ColorLightBlue})
 
 	gammaBulletName = "gamma_bullet"
-	gammaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightCyan}
 )
 
 type spriteGamma struct {
@@ -35,13 +34,13 @@ func (g *spriteGamma) Collided(other cgame.Sprite) {
 func createGamma(m *myGame, stageIdx int) {
 	dist := 1000 // large enough to go out of window (and auto destroy)
 	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
-		Waypoints: []cgame.Waypoint{
+		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
 				X:    0,
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(gammaSpeed)) * float64(time.Second)),
-			}},
+			}}),
 		AfterMove: func(s cgame.Sprite) {
 			if !cgame.CheckProbability(gammaFiringProbPerStage[stageIdx]) {
 				return
@@ -56,7 +55,7 @@ func createGamma(m *myGame, stageIdx int) {
 					if m.easyMode && abs(x)+abs(y) == 1 {
 						continue
 					}
-					createBullet(m, gammaBulletName, gammaBulletAttr,
+					createBullet(m, gammaBulletName, enemyBulletAttr,
 						x, y, gammaBulletSpeed, centerX, centerY)
 				}
 			}

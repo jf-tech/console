@@ -65,10 +65,42 @@ var (
       ▀▀▀▀▀▀▀▀▀▀▀
 `, "\n"),
 	}
+	stageIntroBannerFinalStageImgTxt = strings.Trim(`
+ ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄        ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄
+▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░▌      ▐░▌▐░░░░░░░░░░░▌▐░▌
+▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀█░█▀▀▀▀ ▐░▌░▌     ▐░▌▐░█▀▀▀▀▀▀▀█░▌▐░▌
+▐░▌               ▐░▌     ▐░▌▐░▌    ▐░▌▐░▌       ▐░▌▐░▌
+▐░█▄▄▄▄▄▄▄▄▄      ▐░▌     ▐░▌ ▐░▌   ▐░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌
+▐░░░░░░░░░░░▌     ▐░▌     ▐░▌  ▐░▌  ▐░▌▐░░░░░░░░░░░▌▐░▌
+▐░█▀▀▀▀▀▀▀▀▀      ▐░▌     ▐░▌   ▐░▌ ▐░▌▐░█▀▀▀▀▀▀▀█░▌▐░▌
+▐░▌               ▐░▌     ▐░▌    ▐░▌▐░▌▐░▌       ▐░▌▐░▌
+▐░▌           ▄▄▄▄█░█▄▄▄▄ ▐░▌     ▐░▐░▌▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄▄▄
+▐░▌          ▐░░░░░░░░░░░▌▐░▌      ▐░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌
+ ▀            ▀▀▀▀▀▀▀▀▀▀▀  ▀        ▀▀  ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀
+
+ ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄
+▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀
+▐░▌               ▐░▌     ▐░▌       ▐░▌▐░▌          ▐░▌
+▐░█▄▄▄▄▄▄▄▄▄      ▐░▌     ▐░█▄▄▄▄▄▄▄█░▌▐░▌ ▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄▄▄
+▐░░░░░░░░░░░▌     ▐░▌     ▐░░░░░░░░░░░▌▐░▌▐░░░░░░░░▌▐░░░░░░░░░░░▌
+ ▀▀▀▀▀▀▀▀▀█░▌     ▐░▌     ▐░█▀▀▀▀▀▀▀█░▌▐░▌ ▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀
+          ▐░▌     ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌
+ ▄▄▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄
+▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+ ▀▀▀▀▀▀▀▀▀▀▀       ▀       ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀
+`, "\n")
 	stageIntroBannerAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue}
 )
 
 func createStageIntroBanner(m *myGame, stageIdx int, afterFinish func()) {
+	if stageIdx == totalStages-1 {
+		createSlideInOutBanner(
+			m,
+			cgame.FrameFromString(stageIntroBannerFinalStageImgTxt, stageIntroBannerAttr),
+			stageIntroBannerInOutDuration, stageIntroBannerStayDuration, afterFinish)
+		return
+	}
 	frame := cgame.FrameFromStringEx(stageIntroBannerFrameTxt, stageIntroBannerAttr, false)
 	frameR := cgame.FrameRect(frame)
 	frameNumeric := cgame.FrameFromStringEx(

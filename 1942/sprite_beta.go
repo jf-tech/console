@@ -18,7 +18,6 @@ var (
 `, "\n"), cwin.ChAttr{Fg: termbox.ColorLightCyan})
 
 	betaBulletName = "beta_bullet"
-	betaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightCyan}
 )
 
 type spriteBeta struct {
@@ -35,13 +34,13 @@ func (b *spriteBeta) Collided(other cgame.Sprite) {
 func createBeta(m *myGame, stageIdx int) {
 	dist := 1000 // large enough to go out of window (and auto destroy)
 	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
-		Waypoints: []cgame.Waypoint{
+		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
 				X:    0,
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(betaSpeed)) * float64(time.Second)),
-			}},
+			}}),
 		AfterMove: func(s cgame.Sprite) {
 			if !cgame.CheckProbability(betaFiringProbPerStage[stageIdx]) {
 				return
@@ -56,7 +55,7 @@ func createBeta(m *myGame, stageIdx int) {
 				if pellets%2 == 0 && dx == 0 {
 					continue
 				}
-				createBullet(m, betaBulletName, betaBulletAttr, dx, 1, betaBulletSpeed, x, y)
+				createBullet(m, betaBulletName, enemyBulletAttr, dx, 1, betaBulletSpeed, x, y)
 			}
 		},
 	})
