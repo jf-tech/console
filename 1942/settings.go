@@ -28,7 +28,7 @@ var (
 	betaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
 		cgame.NewPeriodicProbabilityChecker("0.6%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0.5%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.5%", 10*time.Millisecond),
+		cgame.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
 	}
 	betaFiringProbPerStage    = []string{"10%", "10%", "10%"}
 	betaFiringPelletsPerStage = []int{3, 4, 5}
@@ -38,16 +38,18 @@ var (
 	gammaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
 		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.3%", 10*time.Millisecond),
+		cgame.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
 	}
 	gammaFiringProbPerStage = []string{"0%", "10%", "10%"}
 
-	deltaSpeed           = cgame.CharPerSec(35)
+	deltaVerticalSpeed   = cgame.CharPerSec(35)
+	deltaHorizontalSpeed = deltaVerticalSpeed * 2
 	deltaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
 		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.3%", 10*time.Millisecond),
+		cgame.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
 	}
+	deltaVerticalProb = "50%"
 
 	giftPackMoveSpeed  = cgame.CharPerSec(5)
 	gpShotgunLife      = time.Minute
