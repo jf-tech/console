@@ -11,6 +11,7 @@ const (
 	SpriteEventDelete
 	SpriteEventDeleteAll
 	SpriteEventSetPosRelative
+	spriteEventCount
 )
 
 func (t SpriteEventType) String() string {

@@ -2,6 +2,7 @@ package cgame
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/jf-tech/console/cwin"
@@ -17,7 +18,7 @@ type SpriteManager struct {
 	ss                    []spriteEntry
 	eventQ                *ThreadSafeFIFO
 	collisionDetectionBuf []bool
-	spriteEventsProcessed int64
+	spriteEventsProcessed [spriteEventCount]int
 }
 
 // Note the names of sprite instances are not required to be unique, this method
@@ -64,12 +65,32 @@ func (sm *SpriteManager) Process() {
 func (sm *SpriteManager) DbgStats() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("Active sprites: %d\n", len(sm.ss)))
+	spriteNums := map[string]int{}
+	for _, e := range sm.ss {
+		spriteNums[e.s.Name()]++
+	}
+	keys := make([]string, 0, len(spriteNums))
+	for k := range spriteNums {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		sb.WriteString(fmt.Sprintf("- '%s': %d\n", k, spriteNums[k]))
+	}
 	animatorN := 0
 	for _, e := range sm.ss {
 		animatorN += len(e.animators)
 	}
 	sb.WriteString(fmt.Sprintf("Active animators: %d\n", animatorN))
-	sb.WriteString(fmt.Sprintf("Sprite Events processed: %d\n", sm.spriteEventsProcessed))
+	totalEvents := 0
+	for i := 0; i < int(spriteEventCount); i++ {
+		totalEvents += sm.spriteEventsProcessed[i]
+	}
+	sb.WriteString(fmt.Sprintf("Sprite Events processed: %d\n", totalEvents))
+	for i := 0; i < int(spriteEventCount); i++ {
+		e := SpriteEventType(i)
+		sb.WriteString(fmt.Sprintf("- '%s': %d\n", e.String(), sm.spriteEventsProcessed[i]))
+	}
 	return sb.String()
 }
 
@@ -80,7 +101,7 @@ func (sm *SpriteManager) processEvents() {
 			break
 		}
 		sm.processEvent(se.(*SpriteEvent))
-		sm.spriteEventsProcessed++
+		sm.spriteEventsProcessed[se.(*SpriteEvent).eventType]++
 	}
 }
 

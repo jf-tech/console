@@ -222,6 +222,7 @@ func (s *stage) displayStats(alpha *spriteAlpha) {
 Master clock: %s %s
 Stage index: %d
 %sArena Rect: %s
+Alpha Rect: %s
 FPS: %.0f
 Total "pixels" rendered: %s
 Memory usage: %s
@@ -248,6 +249,12 @@ Memory usage: %s
 			return strings.Join(ss, "\n") + "\n"
 		}(),
 		s.m.winArena.Rect(),
+		func() string {
+			if as, ok := s.m.g.SpriteMgr.TryFindByName(alphaName); ok {
+				return as.Win().Rect().String()
+			}
+			return "N/A"
+		}(),
 		s.m.g.FPS(),
 		cwin.ByteSizeStr(s.m.g.WinSys.TotalChxRendered()),
 		cwin.ByteSizeStr(s.m.g.HeapUsageInBytes()),
