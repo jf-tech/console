@@ -13,6 +13,7 @@ type stage struct {
 	m              *myGame
 	stageIdx       int
 	stageStartTime time.Duration
+	stageSkipped   bool
 }
 
 func (s *stage) Run() {
@@ -33,6 +34,8 @@ func (s *stage) Run() {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
 					} else if ev.Key == termbox.KeySpace {
 						alpha.fireWeapon()
+					} else if ev.Ch == 's' {
+						s.stageSkipped = true
 					}
 				}
 			}
@@ -53,6 +56,7 @@ func (s *stage) init() {
 
 	betaGenProbPerStage[s.stageIdx].Reset(s.m.g.MasterClock)
 	gammaGenProbPerStage[s.stageIdx].Reset(s.m.g.MasterClock)
+	deltaGenProbPerStage[s.stageIdx].Reset(s.m.g.MasterClock)
 }
 
 func (s *stage) runStageIntroBanner() {
@@ -68,8 +72,6 @@ func (s *stage) runStageIntroBanner() {
 func (s *stage) runStagePassedBanner() {
 	bannerDone := false
 	createStagePassedBanner(s.m, func() {
-		s.m.g.SpriteMgr.AddEvent(
-			cgame.NewSpriteEventDelete(s.m.g.SpriteMgr.FindByName(alphaName)))
 		bannerDone = true
 	})
 	s.m.g.Run(gameOverKeys, pauseGameKeys, func(termbox.Event) bool { return bannerDone })
@@ -85,6 +87,7 @@ func (s *stage) genSprites() {
 	s.genBackgroundStar()
 	s.genBeta()
 	s.genGamma()
+	s.genDelta()
 	s.genGiftPack()
 }
 
@@ -109,6 +112,13 @@ func (s *stage) genGamma() {
 	createGamma(s.m, s.stageIdx)
 }
 
+func (s *stage) genDelta() {
+	if !deltaGenProbPerStage[s.stageIdx].Check() {
+		return
+	}
+	createDelta(s.m)
+}
+
 func (s *stage) genGiftPack() {
 	if gpShotgunProb.Check() {
 		createGiftPack(s.m, gpShotgunSym, gpShotgunSymAttr)
@@ -125,23 +135,29 @@ func (s *stage) genGiftPack() {
 }
 
 func (s *stage) checkStageWindingDown() bool {
-	return s.m.g.MasterClock.Now()-s.stageStartTime > stageDurations[s.stageIdx]
+	return s.m.g.MasterClock.Now()-s.stageStartTime > stageDurations[s.stageIdx] || s.stageSkipped
 }
 
 func (s *stage) checkStageDone() bool {
 	if !s.checkStageWindingDown() {
 		return false
 	}
+	// waiting for all the enemy  sprites to be done/out 'coz they might still kill
+	// our player during the process :)
 	for _, name := range []string{
 		betaName,
 		betaBulletName,
 		gammaName,
 		gammaBulletName,
+		deltaName,
+		// TODO: add more enemy sprite names here for proper stage shutdown wait.
 	} {
 		if _, found := s.m.g.SpriteMgr.TryFindByName(name); found {
 			return false
 		}
 	}
+	// we're truly down. remove all the non enemy sprites
+	s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDeleteAll())
 	return true
 }
 
@@ -155,7 +171,14 @@ func (s *stage) displayStats(alpha *spriteAlpha) {
 		}
 		return "N/A"
 	}
-	s.m.winKills.SetText("KILLS: Beta: %s | Gamma: %s", killStat(betaName), killStat(gammaName))
+	killStatsText := fmt.Sprintf("KILLS: Beta: %s", killStat(betaName))
+	if s.stageIdx > 0 {
+		killStatsText += fmt.Sprintf(" | Gamma: %s", killStat(gammaName))
+	}
+	if s.stageIdx > 1 {
+		killStatsText += fmt.Sprintf(" | Delta: %s", killStat(deltaName))
+	}
+	s.m.winKills.SetText(killStatsText)
 	s.m.winStats.SetText(fmt.Sprintf(`
 Game stats:
 ----------------------------

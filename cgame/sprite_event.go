@@ -9,6 +9,7 @@ type SpriteEventType int
 const (
 	SpriteEventCreate SpriteEventType = iota
 	SpriteEventDelete
+	SpriteEventDeleteAll
 	SpriteEventSetPosRelative
 )
 
@@ -18,6 +19,8 @@ func (t SpriteEventType) String() string {
 		return "SpriteEventCreate"
 	case SpriteEventDelete:
 		return "SpriteEventDelete"
+	case SpriteEventDeleteAll:
+		return "SpriteEventDeleteAll"
 	case SpriteEventSetPosRelative:
 		return "SpriteEventSetPosRelative"
 	default:
@@ -44,6 +47,10 @@ func NewSpriteEventDelete(s Sprite) *SpriteEvent {
 		eventType: SpriteEventDelete,
 		s:         s,
 	}
+}
+
+func NewSpriteEventDeleteAll() *SpriteEvent {
+	return &SpriteEvent{eventType: SpriteEventDeleteAll}
 }
 
 func NewSpriteEventSetPosRelative(s Sprite, dx, dy int) *SpriteEvent {

@@ -12,7 +12,7 @@ var (
 	gameOverKeys  = cwin.Keys(termbox.KeyEsc, 'q')
 	pauseGameKeys = cwin.Keys('p')
 
-	stageDurations                 = []time.Duration{time.Minute, time.Minute}
+	stageDurations                 = []time.Duration{time.Minute, time.Minute, time.Minute}
 	stageIntroBannerInOutDuration  = 300 * time.Millisecond
 	stageIntroBannerStayDuration   = 1 * time.Second
 	stagePassedBannerInOutDuration = stageIntroBannerInOutDuration
@@ -28,17 +28,26 @@ var (
 	betaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
 		cgame.NewPeriodicProbabilityChecker("0.6%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0.5%", 10*time.Millisecond),
+		cgame.NewPeriodicProbabilityChecker("0.5%", 10*time.Millisecond),
 	}
-	betaFiringProbPerStage    = []string{"10%", "10%"}
-	betaFiringPelletsPerStage = []int{3, 4}
+	betaFiringProbPerStage    = []string{"10%", "10%", "10%"}
+	betaFiringPelletsPerStage = []int{3, 4, 5}
 
 	gammaSpeed           = cgame.CharPerSec(4)
 	gammaBulletSpeed     = cgame.CharPerSec(10)
 	gammaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
 		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
+		cgame.NewPeriodicProbabilityChecker("0.3%", 10*time.Millisecond),
 	}
-	gammaFiringProbPerStage = []string{"0%", "10%"}
+	gammaFiringProbPerStage = []string{"0%", "10%", "10%"}
+
+	deltaSpeed           = cgame.CharPerSec(35)
+	deltaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
+		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
+		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
+		cgame.NewPeriodicProbabilityChecker("0.3%", 10*time.Millisecond),
+	}
 
 	giftPackMoveSpeed  = cgame.CharPerSec(5)
 	gpShotgunLife      = time.Minute

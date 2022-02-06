@@ -117,6 +117,11 @@ func (sm *SpriteManager) processEvent(e *SpriteEvent) {
 				ps.SetPosRelative(xy.a, xy.b)
 			}
 		}
+	case SpriteEventDeleteAll:
+		for _, e := range sm.ss {
+			sm.g.WinSys.RemoveWin(e.s.Win())
+		}
+		sm.ss = sm.ss[:0]
 	}
 }
 

@@ -25,6 +25,7 @@ type spriteAlpha struct {
 	m          *myGame
 	betaKills  int
 	gammaKills int
+	deltaKills int
 	gpWeapon   *giftPack
 }
 
@@ -70,6 +71,7 @@ func (a *spriteAlpha) killStats() map[string]int {
 	return map[string]int{
 		betaName:  a.betaKills,
 		gammaName: a.gammaKills,
+		deltaName: a.deltaKills,
 	}
 }
 

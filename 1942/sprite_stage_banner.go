@@ -51,6 +51,19 @@ var (
      ▐░░░░░░░░░░░▌
       ▀▀▀▀▀▀▀▀▀▀▀
 `, "\n"),
+		strings.Trim(`
+      ▄▄▄▄▄▄▄▄▄▄▄
+     ▐░░░░░░░░░░░▌
+      ▀▀▀▀▀▀▀▀▀█░▌
+               ▐░▌
+      ▄▄▄▄▄▄▄▄▄█░▌
+     ▐░░░░░░░░░░░▌
+      ▀▀▀▀▀▀▀▀▀█░▌
+               ▐░▌
+      ▄▄▄▄▄▄▄▄▄█░▌
+     ▐░░░░░░░░░░░▌
+      ▀▀▀▀▀▀▀▀▀▀▀
+`, "\n"),
 	}
 	stageIntroBannerAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue}
 )

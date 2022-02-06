@@ -26,7 +26,7 @@ Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     88
  "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
 
 
-                             Press ESC or 'q' to quit, 'r' to replay.`
+                            Press ESC or 'q' to quit, 'r' to replay.`
 
 	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=You%20Won%20!
 	youWonTxt = `
@@ -88,6 +88,9 @@ Press Enter to start the game; ESC or 'q' to quit.
 	newStage(m, 0).Run()
 	if !m.g.IsGameOver() {
 		newStage(m, 1).Run()
+	}
+	if !m.g.IsGameOver() {
+		newStage(m, 2).Run()
 	}
 
 	e = m.g.WinSys.MessageBoxEx(nil, cwin.Keys(termbox.KeyEsc, 'q', 'r'), "Result",

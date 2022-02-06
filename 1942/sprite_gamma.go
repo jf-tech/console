@@ -18,7 +18,7 @@ var (
 `, "\n"), cwin.ChAttr{Fg: termbox.ColorLightBlue})
 
 	gammaBulletName = "gamma_bullet"
-	gammaBulletAttr = betaBulletAttr
+	gammaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightCyan}
 )
 
 type spriteGamma struct {
