@@ -77,6 +77,7 @@ final battle!
 Good luck, solider!
 
 Press Enter to start the game; ESC or 'q' to quit.
+('e' to start in Easy Mode, if you bother reading this :)
 `)
 	if cwin.FindKey(gameOverKeys, e) {
 		return codeQuit

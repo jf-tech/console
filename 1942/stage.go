@@ -21,12 +21,12 @@ type stage struct {
 func (s *stage) Run() {
 	s.init()
 	s.runStageIntroBanner()
-	alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
 	s.m.g.Run(gameOverKeys, pauseGameKeys,
 		func(ev termbox.Event) bool {
 			if s.checkStageDone() {
 				return true
 			}
+			alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
 			if ev.Type == termbox.EventKey {
 				if !s.m.g.IsPaused() {
 					// due to console aspect ration, make left/right move a bit faster.
