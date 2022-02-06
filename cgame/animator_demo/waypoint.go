@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -76,8 +78,9 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	g.Run(nil, nil, nil)
 }
 
-func readFile(path string) string {
-	b, err := ioutil.ReadFile(path)
+func readFile(relPath string) string {
+	_, filename, _, _ := runtime.Caller(1)
+	b, err := ioutil.ReadFile(path.Join(path.Dir(filename), relPath))
 	if err != nil {
 		panic(err)
 	}
