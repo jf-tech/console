@@ -81,11 +81,12 @@ func (aw *AnimatorWaypoint) setupNextWaypoint(s Sprite) (more bool) {
 }
 
 func (aw *AnimatorWaypoint) checkToInit(s Sprite) {
-	if aw.clock == nil {
-		aw.clock = s.Game().MasterClock
-		if !aw.setupNextWaypoint(s) {
-			panic("Waypoints cannot be empty")
-		}
+	if aw.clock != nil {
+		return
+	}
+	aw.clock = s.Game().MasterClock
+	if !aw.setupNextWaypoint(s) {
+		panic("Waypoints cannot be empty")
 	}
 }
 
