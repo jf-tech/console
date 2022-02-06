@@ -64,7 +64,7 @@ func (m *myGame) main() int {
 	m.winSetup()
 	m.g.WinSys.Update()
 
-	e := m.g.WinSys.MessageBoxEx(nil,
+	e := m.g.WinSys.MessageBoxEx(m.winArena,
 		append(cwin.Keys(termbox.KeyEnter), append(gameOverKeys, easyModeKeys...)...),
 		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
@@ -90,7 +90,7 @@ Press Enter to start the game; ESC or 'q' to quit.
 		newStage(m, i).Run()
 	}
 
-	e = m.g.WinSys.MessageBoxEx(nil,
+	e = m.g.WinSys.MessageBoxEx(m.winArena,
 		append(gameOverKeys, replayGameKeys...),
 		"Result",
 		func() string {

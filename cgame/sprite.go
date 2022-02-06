@@ -1,7 +1,10 @@
 package cgame
 
 import (
+	"strings"
+
 	"github.com/jf-tech/console/cwin"
+	"github.com/nsf/termbox-go"
 )
 
 type Sprite interface {
@@ -50,6 +53,11 @@ func (sb *SpriteBase) SetFrame(f SpriteFrame) {
 }
 
 func NewSpriteBase(g *Game, parent *cwin.Win, name string, f SpriteFrame, x, y int) *SpriteBase {
+	r := FrameRect(f)
+	return NewSpriteBaseR(g, parent, name, f, cwin.Rect{X: x, Y: y, W: r.W, H: r.H})
+}
+
+func NewSpriteBaseR(g *Game, parent *cwin.Win, name string, f SpriteFrame, r cwin.Rect) *SpriteBase {
 	sb := &SpriteBase{
 		name:     name,
 		uid:      cwin.GenUID(),
@@ -57,9 +65,8 @@ func NewSpriteBase(g *Game, parent *cwin.Win, name string, f SpriteFrame, x, y i
 		g:        g,
 		curFrame: f,
 	}
-	r := FrameRect(f)
 	winCfg := cwin.WinCfg{
-		R:        cwin.Rect{X: x, Y: y, W: r.W, H: r.H},
+		R:        r,
 		Name:     name,
 		NoBorder: true,
 	}

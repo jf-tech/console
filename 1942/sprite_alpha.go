@@ -25,6 +25,7 @@ type spriteAlpha struct {
 	betaKills  int
 	gammaKills int
 	deltaKills int
+	hit        int
 	gpWeapon   *giftPack
 }
 
@@ -86,6 +87,7 @@ func (a *spriteAlpha) Collided(other cgame.Sprite) {
 			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
 		}
 	default:
+		a.hit++
 		if !a.m.invincible {
 			a.m.g.GameOver()
 		}

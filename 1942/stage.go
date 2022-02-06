@@ -162,16 +162,16 @@ func (s *stage) checkStageDone() bool {
 	if !s.checkStageWindingDown() {
 		return false
 	}
+	if s.stageIdx == totalStages-1 && !s.bossCreated {
+		return false
+	}
 	// waiting for all the enemy  sprites to be done/out 'coz they might still kill
 	// our player during the process :)
 	for _, name := range []string{
 		betaName,
-		betaBulletName,
 		gammaName,
-		gammaBulletName,
 		deltaName,
 		bossName,
-		bossBulletName,
 	} {
 		if _, found := s.m.g.SpriteMgr.TryFindByName(name); found {
 			return false
@@ -242,6 +242,7 @@ Memory usage: %s
 			}
 			if s.m.invincible {
 				ss = append(ss, "Invincible Mode: On")
+				ss = append(ss, fmt.Sprintf("Hits on Alpha: %d", alpha.hit))
 			}
 			if len(ss) <= 0 {
 				return ""
