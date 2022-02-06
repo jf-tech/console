@@ -1,10 +1,7 @@
 package cgame
 
 import (
-	"strings"
-
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 type Sprite interface {
