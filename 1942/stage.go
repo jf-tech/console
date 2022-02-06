@@ -34,7 +34,7 @@ func (s *stage) Run() {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
 					} else if ev.Key == termbox.KeySpace {
 						alpha.fireWeapon()
-					} else if ev.Ch == 's' {
+					} else if cwin.FindKey(skipStageKeys, ev) {
 						s.stageSkipped = true
 					}
 				}

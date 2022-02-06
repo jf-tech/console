@@ -9,8 +9,11 @@ import (
 )
 
 var (
-	gameOverKeys  = cwin.Keys(termbox.KeyEsc, 'q')
-	pauseGameKeys = cwin.Keys('p')
+	gameOverKeys   = cwin.Keys(termbox.KeyEsc, 'q')
+	pauseGameKeys  = cwin.Keys('p')
+	replayGameKeys = cwin.Keys('r')
+	skipStageKeys  = cwin.Keys('s')
+	easyModeKeys   = cwin.Keys('e')
 
 	stageDurations                 = []time.Duration{time.Minute, time.Minute, time.Minute}
 	stageIntroBannerInOutDuration  = 300 * time.Millisecond

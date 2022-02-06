@@ -65,7 +65,7 @@ func (m *myGame) main() int {
 	m.g.WinSys.Update()
 
 	e := m.g.WinSys.MessageBoxEx(nil,
-		cwin.Keys(termbox.KeyEnter, termbox.KeyEsc, 'q', 'e'),
+		append(cwin.Keys(termbox.KeyEnter), append(gameOverKeys, easyModeKeys...)...),
 		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
 fighting is quickly approaching the final stage. Both sides have suffered
@@ -78,10 +78,10 @@ Good luck, solider!
 
 Press Enter to start the game; ESC or 'q' to quit.
 `)
-	if e.Key == termbox.KeyEsc || e.Ch == 'q' {
+	if cwin.FindKey(gameOverKeys, e) {
 		return codeQuit
 	}
-	m.easyMode = e.Ch == 'e'
+	m.easyMode = cwin.FindKey(easyModeKeys, e)
 
 	m.g.Resume()
 
@@ -93,7 +93,9 @@ Press Enter to start the game; ESC or 'q' to quit.
 		newStage(m, 2).Run()
 	}
 
-	e = m.g.WinSys.MessageBoxEx(nil, cwin.Keys(termbox.KeyEsc, 'q', 'r'), "Result",
+	e = m.g.WinSys.MessageBoxEx(nil,
+		append(gameOverKeys, replayGameKeys...),
+		"Result",
 		func() string {
 			if m.g.IsGameOver() {
 				return gameOverTxt
