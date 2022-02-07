@@ -27,6 +27,7 @@ type spriteBeta struct {
 func (b *spriteBeta) Collided(other cgame.Sprite) {
 	if other.Name() == alphaBulletName || other.Name() == alphaName {
 		b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
+		cgame.CreateExplosion(b, cgame.ExplosionCfg{MaxDuration: betaExplosionDuration})
 		b.Mgr().FindByName(alphaName).(*spriteAlpha).betaKills++
 	}
 }

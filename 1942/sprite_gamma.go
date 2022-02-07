@@ -27,6 +27,7 @@ type spriteGamma struct {
 func (g *spriteGamma) Collided(other cgame.Sprite) {
 	if other.Name() == alphaBulletName || other.Name() == alphaName {
 		g.Mgr().AddEvent(cgame.NewSpriteEventDelete(g))
+		cgame.CreateExplosion(g, cgame.ExplosionCfg{MaxDuration: gammaExplosionDuration})
 		g.Mgr().FindByName(alphaName).(*spriteAlpha).gammaKills++
 	}
 }

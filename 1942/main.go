@@ -86,8 +86,11 @@ Press Enter to start the game; ESC or 'q' to quit.
 
 	m.g.Resume()
 
+	stageExchange := &interStageExchange{}
 	for i := 0; i < totalStages && !m.g.IsGameOver(); i++ {
-		newStage(m, i).Run()
+		stage := newStage(m, i, stageExchange)
+		stage.Run()
+		stageExchange = stage.exchange
 	}
 
 	e = m.g.WinSys.MessageBoxEx(m.winArena,

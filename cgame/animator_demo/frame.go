@@ -137,18 +137,7 @@ type waypointProvider struct {
 	e *exchange
 }
 
-var (
-	dirs = []cgame.PairInt{
-		{A: 0, B: -1},  // up
-		{A: 1, B: -1},  // up right
-		{A: 1, B: 0},   // right
-		{A: 1, B: 1},   // down right
-		{A: 0, B: 1},   // down
-		{A: -1, B: 1},  // down left
-		{A: -1, B: 0},  // left
-		{A: -1, B: -1}, // up left
-	}
-	dirSymbols             = []rune("↑↗→↘↓↙←↖")
+const (
 	minDistBeforeDirChange = 1
 	maxDistBeforeDirChange = 100
 )
@@ -157,19 +146,19 @@ func (wp *waypointProvider) Next() (cgame.Waypoint, bool) {
 	for {
 		dist := rand.Int() % (maxDistBeforeDirChange - minDistBeforeDirChange + 1)
 		dist += minDistBeforeDirChange
-		dirIdx := rand.Int() % len(dirs)
+		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
 		w := wp.e.s.Win()
 		newR := w.Rect()
-		newR.X += dirs[dirIdx].A * dist
-		newR.Y += dirs[dirIdx].B * dist
+		newR.X += cgame.DirOffSetXY[dirIdx].A * dist
+		newR.Y += cgame.DirOffSetXY[dirIdx].B * dist
 		if overlapped, ro := newR.Overlap(w.Parent().ClientRect().ToOrigin()); overlapped && ro == newR {
-			wp.e.curDir = dirSymbols[dirIdx]
+			wp.e.curDir = cgame.DirSymbols[dirIdx]
 			wp.e.curDist = dist
 			return cgame.Waypoint{
 				Type: cgame.WaypointAbs,
 				X:    newR.X,
 				Y:    newR.Y,
-				T:    time.Duration(dist) * 200 * time.Millisecond, // each unit move takes 200ms.
+				T:    time.Duration(dist) * 200 * time.Millisecond, // eachk "pixel" move takes 200ms.
 			}, true
 		}
 	}

@@ -13,9 +13,9 @@ import (
 var (
 	deltaName  = "delta"
 	deltaFrame = cgame.FrameFromString(strings.Trim(`
-   /^\
- << X >>
-   \v/
+  /^\
+<< X >>
+  \v/
 `, "\n"), cwin.ChAttr{Fg: termbox.ColorLightGreen})
 )
 
@@ -26,6 +26,7 @@ type spriteDelta struct {
 func (d *spriteDelta) Collided(other cgame.Sprite) {
 	if other.Name() == alphaBulletName || other.Name() == alphaName {
 		d.Mgr().AddEvent(cgame.NewSpriteEventDelete(d))
+		cgame.CreateExplosion(d, cgame.ExplosionCfg{MaxDuration: deltaExplosionDuration})
 		d.Mgr().FindByName(alphaName).(*spriteAlpha).deltaKills++
 	}
 }

@@ -40,6 +40,7 @@ var (
 	}
 	betaFiringProbPerStage    = []string{"10%", "10%", "10%"}
 	betaFiringPelletsPerStage = []int{2, 3, 3}
+	betaExplosionDuration     = 2 * time.Second
 
 	gammaSpeed           = cgame.CharPerSec(4)
 	gammaBulletSpeed     = cgame.CharPerSec(10)
@@ -49,6 +50,7 @@ var (
 		cgame.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
 	}
 	gammaFiringProbPerStage = []string{"0%", "10%", "10%"}
+	gammaExplosionDuration  = 2 * time.Second
 
 	deltaVerticalSpeed     = cgame.CharPerSec(35)
 	deltaHorizontalSpeed   = deltaVerticalSpeed * 2
@@ -58,7 +60,8 @@ var (
 		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
 		cgame.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
 	}
-	deltaVerticalProb = "50%"
+	deltaVerticalProb      = "50%"
+	deltaExplosionDuration = 1 * time.Second
 
 	bossSpeed                      = cgame.CharPerSec(2)
 	bossMinDistToGoBeforeDirChange = 8
@@ -66,6 +69,7 @@ var (
 	bossHP                         = 200
 	bossBulletFiringProb           = "20%"
 	bossBulletSpeed                = cgame.CharPerSec(10)
+	bossExplosionDuration          = 4 * time.Second
 
 	giftPackMoveSpeed  = cgame.CharPerSec(5)
 	gpShotgunLife      = time.Minute

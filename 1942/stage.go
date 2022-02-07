@@ -10,9 +10,15 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+type interStageExchange struct {
+	gpWeapon *giftPack
+}
+
 type stage struct {
-	m              *myGame
-	stageIdx       int
+	m        *myGame
+	stageIdx int
+	exchange *interStageExchange
+
 	stageStartTime time.Duration
 	stageSkipped   bool
 	bossCreated    bool
@@ -73,7 +79,7 @@ func (s *stage) runStageIntroBanner() {
 	bannerDone := false
 	createStageIntroBanner(s.m, s.stageIdx, func() {
 		s.stageStartTime = s.m.g.MasterClock.Now()
-		createAlpha(s.m)
+		createAlpha(s.m, s)
 		bannerDone = true
 	})
 	s.m.g.Run(gameOverKeys, pauseGameKeys, func(termbox.Event) bool { return bannerDone })
@@ -172,6 +178,7 @@ func (s *stage) checkStageDone() bool {
 		gammaName,
 		deltaName,
 		bossName,
+		bossExplosionName,
 	} {
 		if _, found := s.m.g.SpriteMgr.TryFindByName(name); found {
 			return false
@@ -262,6 +269,6 @@ Memory usage: %s
 		s.m.g.SpriteMgr.DbgStats()))
 }
 
-func newStage(m *myGame, idx int) *stage {
-	return &stage{m: m, stageIdx: idx}
+func newStage(m *myGame, idx int, e *interStageExchange) *stage {
+	return &stage{m: m, stageIdx: idx, exchange: e}
 }

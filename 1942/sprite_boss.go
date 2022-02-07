@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	bossName  = "boss"
-	bossFrame = cgame.FrameFromString(strings.Trim(`
+	bossName          = "boss"
+	bossExplosionName = "boss_explosion"
+	bossFrame         = cgame.FrameFromString(strings.Trim(`
 [========================================]
 
                |||      |||
@@ -53,7 +54,10 @@ func (b *spriteBoss) Collided(other cgame.Sprite) {
 		b.drawHP()
 		if b.hpLeft <= 0 {
 			b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
-			// TODO add some fiery explosion stuff
+			cgame.CreateExplosion(b, cgame.ExplosionCfg{
+				MaxDuration: bossExplosionDuration,
+				SpriteName:  bossExplosionName,
+			})
 		}
 	}
 }
@@ -121,19 +125,6 @@ func createBoss(m *myGame) {
 	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
 }
 
-var (
-	dirs = []cgame.PairInt{
-		{A: 0, B: -1},  // up
-		{A: 1, B: -1},  // up right
-		{A: 1, B: 0},   // right
-		{A: 1, B: 1},   // down right
-		{A: 0, B: 1},   // down
-		{A: -1, B: 1},  // down left
-		{A: -1, B: 0},  // left
-		{A: -1, B: -1}, // up left
-	}
-)
-
 type bossWaypoints struct {
 	s *spriteBoss
 }
@@ -142,11 +133,11 @@ func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 	for {
 		dist := rand.Int() % (bossMaxDistToGoBeforeDirChange - bossMinDistToGoBeforeDirChange + 1)
 		dist += bossMinDistToGoBeforeDirChange
-		dirIdx := rand.Int() % len(dirs)
+		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
 		w := bw.s.Win()
 		newR := w.Rect()
-		newR.X += dirs[dirIdx].A * dist
-		newR.Y += dirs[dirIdx].B * dist
+		newR.X += cgame.DirOffSetXY[dirIdx].A * dist
+		newR.Y += cgame.DirOffSetXY[dirIdx].B * dist
 		if overlapped, ro := newR.Overlap(w.Parent().ClientRect().ToOrigin()); overlapped && ro == newR {
 			return cgame.Waypoint{
 				Type: cgame.WaypointAbs,

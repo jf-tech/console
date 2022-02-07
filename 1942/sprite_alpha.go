@@ -22,6 +22,7 @@ var (
 type spriteAlpha struct {
 	*cgame.SpriteBase
 	m          *myGame
+	stage      *stage
 	betaKills  int
 	gammaKills int
 	deltaKills int
@@ -43,6 +44,7 @@ func (a *spriteAlpha) fireWeapon() {
 	y := a.Win().Rect().Y - 1
 	if a.gpWeapon == nil || a.gpWeapon.remainingLife() <= 0 {
 		a.gpWeapon = nil
+		a.stage.exchange.gpWeapon = nil
 		createBullet(a.m, alphaBulletName, alphaBulletAttr, 0, -1, alphaBulletSpeed, x, y)
 	} else {
 		switch a.gpWeapon.name {
@@ -86,6 +88,7 @@ func (a *spriteAlpha) Collided(other cgame.Sprite) {
 		case gpShotgun2Sym:
 			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
 		}
+		a.stage.exchange.gpWeapon = a.gpWeapon
 	default:
 		a.hit++
 		if !a.m.invincible {
@@ -94,10 +97,12 @@ func (a *spriteAlpha) Collided(other cgame.Sprite) {
 	}
 }
 
-func createAlpha(m *myGame) {
+func createAlpha(m *myGame, stage *stage) {
 	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
 		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, alphaName, alphaFrame,
 			(m.winArena.ClientRect().W-cgame.FrameRect(alphaFrame).W)/2,
 			m.winArena.ClientRect().H-cgame.FrameRect(alphaFrame).H),
-		m: m}))
+		m:        m,
+		stage:    stage,
+		gpWeapon: stage.exchange.gpWeapon}))
 }

@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
+	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -31,31 +35,52 @@ func main() {
 	g.Resume()        // game (master clock) is always paused right after init.
 
 	doDemo(g, demoWin)
-
-	cwin.SyncExpectKey(nil)
 }
 
 func doDemo(g *cgame.Game, demoWin *cwin.Win) {
-	// create a single sprite frame
-	frame := cgame.FrameFromString(strings.Trim(`
-\┃┃/
- \/
-`, "\n"), cwin.ChAttr{Fg: termbox.ColorLightCyan})
-	frameR := cgame.FrameRect(frame)
+	for _, p := range []string{
+		"resources/spacecraft_small_1.txt",
+		"resources/spacecraft_small_2.txt",
+		"resources/spacecraft_large_1.txt",
+	} {
+		doExplosion(g, demoWin, p)
+	}
+}
 
-	// create a sprite
-	x, y := (demoWin.ClientRect().W-frameR.W)/2, (demoWin.ClientRect().H-frameR.H)/2
-	s := cgame.NewSpriteBase(g, demoWin, "explosion_demo", frame, x, y)
-	// add the sprite to the sprite manager
+func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
+	fn := path.Base(filepath)
+	demoWin.SetTitle(
+		fmt.Sprintf("Demo - Explosion '%s': any key to start", fn), cwin.AlignLeft)
+	f := cgame.FrameFromString(
+		strings.Trim(readFile(filepath), "\n"), cwin.ChAttr{Fg: termbox.ColorLightCyan})
+	s := cgame.NewSpriteBase(g, demoWin, "s", f,
+		(demoWin.ClientRect().W-cgame.FrameRect(f).W)/2,
+		(demoWin.ClientRect().H-cgame.FrameRect(f).H)/2)
 	g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s))
 	g.SpriteMgr.Process()
 	g.WinSys.Update()
 	cwin.SyncExpectKey(nil)
-
-	cgame.CreateExplosion(g.SpriteMgr, s, cgame.ExplosionCfg{
-		Scale: 2.0,
-		T:     2 * time.Second,
+	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' in progress...", fn), cwin.AlignLeft)
+	done := false
+	cgame.CreateExplosion(s, cgame.ExplosionCfg{
+		MaxDuration: 2 * time.Second,
+		AfterFinish: func() {
+			done = true
+		},
 	})
-	g.SpriteMgr.Process()
+	g.Run(nil, nil, func(_ termbox.Event) bool {
+		return done
+	})
+	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' done. Any key for next", fn), cwin.AlignLeft)
 	g.WinSys.Update()
+	cwin.SyncExpectKey(nil)
+}
+
+func readFile(relPath string) string {
+	_, filename, _, _ := runtime.Caller(1)
+	b, err := ioutil.ReadFile(path.Join(path.Dir(filename), relPath))
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }
