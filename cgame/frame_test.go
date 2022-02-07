@@ -15,7 +15,7 @@ func TestStringToFrame(t *testing.T) {
 		name string
 		s    string
 		attr cwin.ChAttr
-		exp  SpriteFrame
+		exp  Frame
 	}{
 		{
 			name: "4x2",
@@ -24,7 +24,7 @@ func TestStringToFrame(t *testing.T) {
  \/
 `,
 			attr: testAttr,
-			exp: []SpriteCell{
+			exp: []Cell{
 				{X: 0, Y: 0, Chx: cwin.Chx{Ch: '\\', Attr: testAttr}},
 				{X: 1, Y: 0, Chx: cwin.Chx{Ch: '┃', Attr: testAttr}},
 				{X: 2, Y: 0, Chx: cwin.Chx{Ch: '┃', Attr: testAttr}},

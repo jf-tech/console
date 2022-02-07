@@ -7,7 +7,7 @@ import (
 )
 
 func createSlideInOutBanner(
-	m *myGame, frame cgame.SpriteFrame, inOut, stay time.Duration, afterFinish func()) {
+	m *myGame, frame cgame.Frame, inOut, stay time.Duration, afterFinish func()) {
 
 	frameR := cgame.FrameRect(frame)
 	y := (m.winArena.ClientRect().H - frameR.H) / 2
