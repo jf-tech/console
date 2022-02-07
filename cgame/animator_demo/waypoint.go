@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 func main() {
@@ -43,7 +43,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	// create a single sprite frame
 	frame := cgame.FrameFromString(
 		strings.Trim(readFile("resources/airplane.txt"), "\n"),
-		cwin.ChAttr{Fg: termbox.ColorLightYellow})
+		cwin.ChAttr{Fg: cterm.ColorLightYellow})
 
 	// create a sprite
 	startX, startY := -cgame.FrameRect(frame).W+1, (demoWin.ClientRect().H-cgame.FrameRect(frame).H)/2

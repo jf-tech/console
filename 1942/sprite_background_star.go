@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 var (
 	bgStarName  = "background_star"
-	bgStarFrame = cgame.FrameFromString(".", cwin.ChAttr{Fg: termbox.ColorDarkGray})
+	bgStarFrame = cgame.FrameFromString(".", cwin.ChAttr{Fg: cterm.ColorDarkGray})
 )
 
 func createBackgroundStar(m *myGame) {

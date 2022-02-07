@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/go-corelib/maths"
-	"github.com/nsf/termbox-go"
 )
 
 type Sys struct {
@@ -77,8 +77,8 @@ func (s *Sys) CenterBanner(parent *Win, title, format string, a ...interface{}) 
 			W: width,
 			H: height},
 		Name:       title,
-		BorderAttr: ChAttr{Fg: termbox.ColorDefault, Bg: termbox.ColorBlue},
-		ClientAttr: ChAttr{Fg: termbox.ColorDefault, Bg: termbox.ColorBlue},
+		BorderAttr: ChAttr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
+		ClientAttr: ChAttr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
 	})
 	w.SetTitle(title, AlignCenter)
 	w.SetText(msg)
@@ -89,13 +89,13 @@ func (s *Sys) CenterBanner(parent *Win, title, format string, a ...interface{}) 
 // window, and synchronously waiting for a set of user specified keys, and return if any of the
 // keys are pressed.
 func (s *Sys) MessageBoxEx(
-	parent *Win, keys []termbox.Event, title, format string, a ...interface{}) termbox.Event {
+	parent *Win, keys []cterm.Event, title, format string, a ...interface{}) cterm.Event {
 
 	w := s.CenterBanner(parent, title, format, a...)
 	s.Update()
 
-	ret := termbox.Event{Type: termbox.EventKey}
-	SyncExpectKey(func(k termbox.Key, ch rune) bool {
+	ret := cterm.Event{Type: cterm.EventKey}
+	SyncExpectKey(func(k cterm.Key, ch rune) bool {
 		for _, e := range keys {
 			if ch != 0 {
 				if e.Ch == ch {
@@ -119,8 +119,8 @@ func (s *Sys) MessageBoxEx(
 // MessageBox is mostly similar to MessageBoxEx but only with 2 expected keys: Enter or ESC
 // It returns true if Enter is pressed or false if ESC is pressed.
 func (s *Sys) MessageBox(parent *Win, title, format string, a ...interface{}) bool {
-	e := s.MessageBoxEx(parent, Keys(termbox.KeyEnter, termbox.KeyEsc), title, format, a...)
-	return e.Key == termbox.KeyEnter
+	e := s.MessageBoxEx(parent, Keys(cterm.KeyEnter, cterm.KeyEsc), title, format, a...)
+	return e.Key == cterm.KeyEnter
 }
 
 func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w *Win, sysRect Rect) {
@@ -168,7 +168,7 @@ func (s *Sys) doUpdate(differential bool) {
 			idx := s.sysWin.bufIdx(x, y)
 			if !differential || s.scrBuf[idx] != s.offScrBuf[idx] {
 				s.scrBuf[idx] = s.offScrBuf[idx]
-				termbox.SetCell(x, y,
+				cterm.SetCell(x, y,
 					s.scrBuf[idx].Ch, s.scrBuf[idx].Attr.Fg, s.scrBuf[idx].Attr.Bg)
 				s.totalChxRendered++
 			}
@@ -179,7 +179,7 @@ func (s *Sys) doUpdate(differential bool) {
 // return the number of "pixels" updated
 func (s *Sys) Update() {
 	s.doUpdate(true)
-	termbox.Flush()
+	cterm.Flush()
 }
 
 func (s *Sys) TotalChxRendered() int64 {
@@ -191,14 +191,14 @@ func (s *Sys) DumpTree() string {
 }
 
 func (s *Sys) Close() {
-	termbox.Close()
+	cterm.Close()
 }
 
 func Init() (*Sys, error) {
-	if err := termbox.Init(); err != nil {
+	if err := cterm.Init(); err != nil {
 		return nil, err
 	}
-	w, h := termbox.Size()
+	w, h := cterm.Size()
 	s := &Sys{sysWin: NewWin(nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})}
 	n := w * h
 	s.scrBuf = make([]Chx, n)

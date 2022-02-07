@@ -1,28 +1,30 @@
 package cwin
 
-import "github.com/nsf/termbox-go"
+import (
+	"github.com/jf-tech/console/cterm"
+)
 
-func Keys(keys ...interface{}) []termbox.Event {
-	var ks []termbox.Event
+func Keys(keys ...interface{}) []cterm.Event {
+	var ks []cterm.Event
 	for _, k := range keys {
 		if ch, ok := k.(rune); ok {
 			if ch == 0 {
 				panic("rune cannot be zero")
 			}
-			ks = append(ks, termbox.Event{Type: termbox.EventKey, Ch: ch})
+			ks = append(ks, cterm.Event{Type: cterm.EventKey, Ch: ch})
 			continue
 		}
-		if key, ok := k.(termbox.Key); ok {
-			ks = append(ks, termbox.Event{Type: termbox.EventKey, Key: key})
+		if key, ok := k.(cterm.Key); ok {
+			ks = append(ks, cterm.Event{Type: cterm.EventKey, Key: key})
 			continue
 		}
 	}
 	return ks
 }
 
-func FindKey(keys []termbox.Event, key termbox.Event) bool {
+func FindKey(keys []cterm.Event, key cterm.Event) bool {
 	for _, ev := range keys {
-		if ev.Type != termbox.EventKey {
+		if ev.Type != cterm.EventKey {
 			continue
 		}
 		if key.Ch != 0 && ev.Ch == key.Ch {
@@ -37,10 +39,10 @@ func FindKey(keys []termbox.Event, key termbox.Event) bool {
 
 // if f == nil, SyncExpectKey waits for any single key and then returns
 // if f != nil, SyncExpectKey repeatedly waits for a key & has it processed by f, if f returns false
-func SyncExpectKey(f func(termbox.Key, rune) bool) {
+func SyncExpectKey(f func(cterm.Key, rune) bool) {
 	for {
-		ev := termbox.PollEvent()
-		if ev.Type == termbox.EventKey && (f == nil || f(ev.Key, ev.Ch)) {
+		ev := cterm.PollEvent()
+		if ev.Type == cterm.EventKey && (f == nil || f(ev.Key, ev.Ch)) {
 			break
 		}
 	}

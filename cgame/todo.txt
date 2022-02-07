@@ -1,2 +1,0 @@
-nice to have:
-- abstrat termbox out so i can eventually switch to something else (like tcell) if needed

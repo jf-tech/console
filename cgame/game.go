@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 type Game struct {
@@ -15,7 +15,7 @@ type Game struct {
 	SpriteMgr   *SpriteManager
 
 	stopEventListening chan struct{}
-	evChan             chan termbox.Event
+	evChan             chan cterm.Event
 
 	loopsDone int64
 	gameOver  bool
@@ -41,12 +41,12 @@ func (g *Game) Close() {
 }
 
 func (g *Game) Run(
-	gameOverKeys, pauseKeys []termbox.Event, optionalRunFunc func(ev termbox.Event) bool) {
+	gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc func(ev cterm.Event) bool) {
 
 	stop := false
 	for !stop && !g.IsGameOver() {
-		var ev termbox.Event
-		if ev = g.TryGetEvent(); ev.Type == termbox.EventKey {
+		var ev cterm.Event
+		if ev = g.TryGetEvent(); ev.Type == cterm.EventKey {
 			if cwin.FindKey(gameOverKeys, ev) {
 				g.GameOver()
 				return
@@ -69,7 +69,7 @@ func (g *Game) Run(
 }
 
 // This is a non-blocking call
-func (g *Game) TryGetEvent() termbox.Event {
+func (g *Game) TryGetEvent() cterm.Event {
 	if g.evChan == nil {
 		panic("SetupEventListening not called")
 	}
@@ -77,7 +77,7 @@ func (g *Game) TryGetEvent() termbox.Event {
 	case ev := <-g.evChan:
 		return ev
 	default:
-		return termbox.Event{Type: termbox.EventNone}
+		return cterm.Event{Type: cterm.EventNone}
 	}
 }
 
@@ -125,9 +125,9 @@ func (g *Game) setupEventListening() {
 		panic("SetupEventListening called twice")
 	}
 	g.stopEventListening = make(chan struct{})
-	g.evChan = make(chan termbox.Event, 100)
+	g.evChan = make(chan cterm.Event, 100)
 
-	// main go routine listening for stop signal and termbox event polling.
+	// main go routine listening for stop signal and cterm event polling.
 	go func() {
 	loop:
 		for {
@@ -135,7 +135,7 @@ func (g *Game) setupEventListening() {
 			case <-g.stopEventListening:
 				break loop
 			default:
-				g.evChan <- termbox.PollEvent()
+				g.evChan <- cterm.PollEvent()
 			}
 		}
 	}()
@@ -147,11 +147,11 @@ func (g *Game) shutdownEventListening() {
 	}
 	close(g.stopEventListening)
 	g.stopEventListening = nil
-	// importantly need to call termbox.Interrupt() before closing the evChan because
-	// termbox.Interrupt() synchronously waits for termbox.PollEvent finishes so there
+	// importantly need to call cterm.Interrupt() before closing the evChan because
+	// cterm.Interrupt() synchronously waits for cterm.PollEvent finishes so there
 	// might be one last event coming through into the evChan. If we close it before
-	// calling termbox.Interrupt(), we might get a panic.
-	termbox.Interrupt()
+	// calling cterm.Interrupt(), we might get a panic.
+	cterm.Interrupt()
 	close(g.evChan)
 	g.evChan = nil
 }

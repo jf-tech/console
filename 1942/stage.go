@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 type interStageExchange struct {
@@ -28,25 +28,25 @@ func (s *stage) Run() {
 	s.init()
 	s.runStageIntroBanner()
 	s.m.g.Run(gameOverKeys, pauseGameKeys,
-		func(ev termbox.Event) bool {
+		func(ev cterm.Event) bool {
 			if s.checkStageDone() {
 				return true
 			}
 			alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
-			if ev.Type == termbox.EventKey {
+			if ev.Type == cterm.EventKey {
 				if !s.m.g.IsPaused() {
 					// due to console aspect ration, make left/right move a bit faster.
 					// also let retreat (down) a bit faster than up to make the game exp
 					// better.
-					if ev.Key == termbox.KeyArrowUp {
+					if ev.Key == cterm.KeyArrowUp {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
-					} else if ev.Key == termbox.KeyArrowDown {
+					} else if ev.Key == cterm.KeyArrowDown {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 2))
-					} else if ev.Key == termbox.KeyArrowLeft {
+					} else if ev.Key == cterm.KeyArrowLeft {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
-					} else if ev.Key == termbox.KeyArrowRight {
+					} else if ev.Key == cterm.KeyArrowRight {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
-					} else if ev.Key == termbox.KeySpace {
+					} else if ev.Key == cterm.KeySpace {
 						alpha.fireWeapon()
 					} else if cwin.FindKey(skipStageKeys, ev) {
 						s.stageSkipped = true
@@ -82,7 +82,7 @@ func (s *stage) runStageIntroBanner() {
 		createAlpha(s.m, s)
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(termbox.Event) bool { return bannerDone })
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(cterm.Event) bool { return bannerDone })
 }
 
 func (s *stage) runStagePassedBanner() {
@@ -90,7 +90,7 @@ func (s *stage) runStagePassedBanner() {
 	createStagePassedBanner(s.m, func() {
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(termbox.Event) bool { return bannerDone })
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(cterm.Event) bool { return bannerDone })
 }
 
 func (s *stage) genSprites() {

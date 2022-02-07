@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestStringToFrame(t *testing.T) {
-	testAttr := cwin.ChAttr{Fg: termbox.ColorBlue, Bg: termbox.ColorWhite}
+	testAttr := cwin.ChAttr{Fg: cterm.ColorBlue, Bg: cterm.ColorWhite}
 	for _, test := range []struct {
 		name string
 		s    string

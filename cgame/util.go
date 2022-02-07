@@ -25,10 +25,7 @@ func (f *ThreadSafeFIFO) TryPop() (interface{}, bool) {
 		return nil, false
 	}
 	ret := f.elems[0]
-	for i := 0; i < n-1; i++ {
-		f.elems[i] = f.elems[i+1]
-	}
-	f.elems[n-1] = nil
+	copy(f.elems[0:], f.elems[1:])
 	f.elems = f.elems[:n-1]
 	return ret, true
 }

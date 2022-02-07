@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/go-corelib/maths"
-	"github.com/nsf/termbox-go"
 )
 
 type Align int
@@ -37,7 +37,7 @@ var (
 )
 
 type ChAttr struct {
-	Fg, Bg termbox.Attribute // termbox.ColorRed | ColorGreen | ...
+	Fg, Bg cterm.Attribute // cterm.ColorRed | ColorGreen | ...
 }
 
 type Chx struct {

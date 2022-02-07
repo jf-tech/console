@@ -81,9 +81,7 @@ func (e *explosionFrameProvider) Next() (Frame, time.Duration, bool) {
 			f[i].Chx.Ch = fire
 		}
 		if cellRemoval {
-			for j := i; j < len(f)-1; j++ {
-				f[j] = f[j+1]
-			}
+			copy(f[i:], f[i+1:])
 			f = f[:len(f)-1]
 			i--
 			continue

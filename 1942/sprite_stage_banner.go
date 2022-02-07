@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 var (
@@ -90,7 +90,7 @@ var (
 ▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
  ▀▀▀▀▀▀▀▀▀▀▀       ▀       ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀
 `, "\n")
-	stageIntroBannerAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue}
+	stageIntroBannerAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlue}
 )
 
 func createStageIntroBanner(m *myGame, stageIdx int, afterFinish func()) {

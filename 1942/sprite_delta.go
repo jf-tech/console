@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 var (
@@ -16,7 +16,7 @@ var (
   /^\
 << X >>
   \v/
-`, "\n"), cwin.ChAttr{Fg: termbox.ColorLightGreen})
+`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightGreen})
 )
 
 type spriteDelta struct {

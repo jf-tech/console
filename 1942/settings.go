@@ -4,12 +4,12 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 var (
-	gameOverKeys       = cwin.Keys(termbox.KeyEsc, 'q')
+	gameOverKeys       = cwin.Keys(cterm.KeyEsc, 'q')
 	pauseGameKeys      = cwin.Keys('p')
 	replayGameKeys     = cwin.Keys('r')
 	skipStageKeys      = cwin.Keys('s')
@@ -23,8 +23,8 @@ var (
 	stagePassedBannerInOutDuration = stageIntroBannerInOutDuration
 	stagePassedBannerStayDuration  = 2 * time.Second
 
-	alphaBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow}
-	enemyBulletAttr = cwin.ChAttr{Fg: termbox.ColorLightCyan}
+	alphaBulletAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow}
+	enemyBulletAttr = cwin.ChAttr{Fg: cterm.ColorLightCyan}
 
 	bgStarSpeed   = cgame.CharPerSec(25)
 	bgStarGenProb = cgame.NewPeriodicProbabilityChecker("50%", 100*time.Millisecond)

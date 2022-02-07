@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
 	"github.com/jf-tech/go-corelib/maths"
-	"github.com/nsf/termbox-go"
 )
 
 var (
@@ -32,8 +32,8 @@ var (
                    \  /
                    \  /
                     \/
-`, "\n"), cwin.ChAttr{Fg: termbox.ColorWhite})
-	bossHPAttr     = cwin.ChAttr{Fg: termbox.ColorRed}
+`, "\n"), cwin.ChAttr{Fg: cterm.ColorWhite})
+	bossHPAttr     = cwin.ChAttr{Fg: cterm.ColorRed}
 	bossBulletName = "boss_bullet"
 
 	leftGunX  = 1

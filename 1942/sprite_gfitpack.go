@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 // Each gift pack frame contains exactly '???' placeholder to be replaced
@@ -72,11 +72,11 @@ func (gp *giftPack) remainingLife() time.Duration {
 var (
 	gpShotgunName    = "Shotgun"
 	gpShotgunSym     = giftPackSymbol{'-', 'S', '-'}
-	gpShotgunSymAttr = cwin.ChAttr{Fg: termbox.ColorWhite, Bg: termbox.ColorBlack}
+	gpShotgunSymAttr = cwin.ChAttr{Fg: cterm.ColorWhite, Bg: cterm.ColorBlack}
 
 	gpShotgun2Name    = "Shotgun++"
 	gpShotgun2Sym     = giftPackSymbol{'S', '+', '+'}
-	gpShotgun2SymAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlack}
+	gpShotgun2SymAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlack}
 )
 
 func newGiftPackShotgun(clock *cgame.Clock) *giftPack {

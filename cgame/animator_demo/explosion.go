@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 func main() {
@@ -52,7 +52,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
 	demoWin.SetTitle(
 		fmt.Sprintf("Demo - Explosion '%s': any key to start", fn), cwin.AlignLeft)
 	f := cgame.FrameFromString(
-		strings.Trim(readFile(filepath), "\n"), cwin.ChAttr{Fg: termbox.ColorLightCyan})
+		strings.Trim(readFile(filepath), "\n"), cwin.ChAttr{Fg: cterm.ColorLightCyan})
 	s := cgame.NewSpriteBase(g, demoWin, "s", f,
 		(demoWin.ClientRect().W-cgame.FrameRect(f).W)/2,
 		(demoWin.ClientRect().H-cgame.FrameRect(f).H)/2)
@@ -68,7 +68,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
 			done = true
 		},
 	})
-	g.Run(nil, nil, func(_ termbox.Event) bool {
+	g.Run(nil, nil, func(_ cterm.Event) bool {
 		return done
 	})
 	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' done. Any key for next", fn), cwin.AlignLeft)

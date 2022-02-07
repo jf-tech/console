@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 func main() {
@@ -72,7 +72,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	// as the frame background :)
 	g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, aw, af))
 
-	g.Run(nil, nil, func(ev termbox.Event) bool {
+	g.Run(nil, nil, func(ev cterm.Event) bool {
 		demoWin.SetTitle(
 			func() string {
 				return fmt.Sprintf(
@@ -81,10 +81,10 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 					g.MasterClock.Now()/time.Millisecond*time.Millisecond)
 			}(),
 			cwin.AlignLeft)
-		if ev.Type != termbox.EventKey {
+		if ev.Type != cterm.EventKey {
 			return false
 		}
-		if ev.Key != termbox.KeySpace {
+		if ev.Key != cterm.KeySpace {
 			return true
 		}
 		if g.IsPaused() {
@@ -121,13 +121,13 @@ func (sfp *sineWaveFrameProvider) Next() (cgame.Frame, time.Duration, bool) {
 						}
 						return ' '
 					}(),
-					Attr: cwin.ChAttr{Fg: termbox.ColorWhite, Bg: termbox.ColorDarkGray}}})
+					Attr: cwin.ChAttr{Fg: cterm.ColorWhite, Bg: cterm.ColorDarkGray}}})
 		}
 	}
 	for x := 0; x < sfp.e.w; x++ {
 		y := fromRY(math.Sin(toRX(x+sfp.shift, sfp.e.w)), sfp.e.h)
 		f[y*sfp.e.w+x].Chx =
-			cwin.Chx{Ch: '#', Attr: cwin.ChAttr{Fg: termbox.ColorYellow, Bg: termbox.ColorLightBlue}}
+			cwin.Chx{Ch: '#', Attr: cwin.ChAttr{Fg: cterm.ColorYellow, Bg: cterm.ColorLightBlue}}
 	}
 	sfp.shift = (sfp.shift - 1 + sfp.e.w) % sfp.e.w
 	return f, 50 * time.Millisecond, true

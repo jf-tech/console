@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 	betaFrame = cgame.FrameFromString(strings.Trim(`
 \┃┃/
  \/
-`, "\n"), cwin.ChAttr{Fg: termbox.ColorLightCyan})
+`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightCyan})
 
 	betaBulletName = "beta_bullet"
 )

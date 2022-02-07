@@ -150,9 +150,7 @@ func (sm *SpriteManager) processAnimators() {
 	for _, e := range sm.ss {
 		for i := 0; i < len(e.animators); i++ {
 			if e.animators[i].Animate(e.s) == AnimatorCompleted {
-				for j := i; j < len(e.animators)-1; j++ {
-					e.animators[j] = e.animators[j+1]
-				}
+				copy(e.animators[i:], e.animators[i+1:])
 				e.animators = e.animators[:len(e.animators)-1]
 			}
 		}

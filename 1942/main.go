@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 const (
@@ -65,7 +65,7 @@ func (m *myGame) main() int {
 	m.g.WinSys.Update()
 
 	e := m.g.WinSys.MessageBoxEx(m.winArena,
-		append(cwin.Keys(termbox.KeyEnter), append(gameOverKeys, easyModeKeys...)...),
+		append(cwin.Keys(cterm.KeyEnter), append(gameOverKeys, easyModeKeys...)...),
 		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
 fighting is quickly approaching the final stage. Both sides have suffered
@@ -143,17 +143,17 @@ func (m *myGame) winSetup() {
 			H: winHeaderH},
 		Name:       "header",
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Fg: termbox.ColorLightYellow, Bg: termbox.ColorBlue},
+		ClientAttr: cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlue},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R:          cwin.Rect{X: 1, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: termbox.ColorRed},
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R:          cwin.Rect{X: winHeaderW, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: termbox.ColorRed},
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
 	})
 	m.winArena = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R: cwin.Rect{
@@ -179,8 +179,8 @@ func (m *myGame) winSetup() {
 			W: m.winStats.Rect().W,
 			H: winGameClientR.H - m.winStats.Rect().H},
 		Name:       "Keyboard",
-		BorderAttr: cwin.ChAttr{Bg: termbox.ColorBlue},
-		ClientAttr: cwin.ChAttr{Bg: termbox.ColorBlue},
+		BorderAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
 	})
 	winInstructions.SetText(textInstructions)
 }
