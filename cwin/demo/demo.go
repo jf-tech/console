@@ -5,10 +5,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
 )
 
 func main() {
+	cterm.SetProvider(cterm.TCell)
 	sys, err := cwin.Init()
 	if err != nil {
 		panic(err)

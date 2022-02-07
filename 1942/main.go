@@ -54,6 +54,7 @@ type myGame struct {
 }
 
 func (m *myGame) main() int {
+	cterm.SetProvider(cterm.TermBox)
 	var err error
 	m.g, err = cgame.Init()
 	if err != nil {

@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	cterm.SetProvider(cterm.TCell)
 	g, err := cgame.Init()
 	if err != nil {
 		panic(err)
@@ -84,7 +85,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 		if ev.Type != cterm.EventKey {
 			return false
 		}
-		if ev.Key != cterm.KeySpace {
+		if ev.Ch != ' ' {
 			return true
 		}
 		if g.IsPaused() {

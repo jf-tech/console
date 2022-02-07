@@ -54,7 +54,6 @@ var (
 		termbox.KeyArrowLeft:  KeyArrowLeft,
 		termbox.KeyEnter:      KeyEnter,
 		termbox.KeyEsc:        KeyEsc,
-		termbox.KeySpace:      KeySpace,
 	}
 )
 
@@ -67,6 +66,9 @@ func eventFromTermBox(e termbox.Event) Event {
 	}
 	if k, ok := keyFromTermBox[e.Key]; ok {
 		return Event{Type: EventKey, Key: k}
+	}
+	if e.Key == termbox.KeySpace {
+		return Event{Type: EventKey, Ch: ' '}
 	}
 	return Event{Type: EventKey}
 }

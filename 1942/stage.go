@@ -46,7 +46,7 @@ func (s *stage) Run() {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
 					} else if ev.Key == cterm.KeyArrowRight {
 						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
-					} else if ev.Key == cterm.KeySpace {
+					} else if ev.Ch == ' ' {
 						alpha.fireWeapon()
 					} else if cwin.FindKey(skipStageKeys, ev) {
 						s.stageSkipped = true

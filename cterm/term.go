@@ -4,22 +4,20 @@ type Provider int
 
 const (
 	TermBox Provider = iota
+	TCell
 )
 
 var (
-	provider          = termProvider(&providerTermBox{})
-	setProviderCalled = false
+	provider = termProvider(&providerTermBox{})
 )
 
 func SetProvider(p Provider) {
-	if setProviderCalled {
-		panic("SetProvider can only be called once")
-	}
 	switch p {
 	case TermBox:
 		provider = &providerTermBox{}
+	case TCell:
+		provider = &providerTCell{}
 	}
-	setProviderCalled = true
 }
 
 func Init() error {
@@ -99,7 +97,6 @@ const (
 	KeyArrowLeft
 	KeyEnter
 	KeyEsc
-	KeySpace
 )
 
 // PollEvent blocks until an event is ready, and then returns it.
