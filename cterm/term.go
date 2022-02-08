@@ -1,11 +1,24 @@
 package cterm
 
+import "fmt"
+
 type Provider int
 
 const (
 	TermBox Provider = iota
 	TCell
 )
+
+func (p Provider) String() string {
+	switch p {
+	case TermBox:
+		return "TermBox"
+	case TCell:
+		return "TCell"
+	default:
+		return fmt.Sprintf("unknown Provider(!%d!)", int(p))
+	}
+}
 
 var (
 	provider = termProvider(&providerTermBox{})

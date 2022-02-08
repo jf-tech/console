@@ -76,8 +76,8 @@ var (
 	}
 )
 
-func eventFromTCell(e tcell.Event) Event {
-	key, ok := e.(*tcell.EventKey)
+func eventFromTCell(ev tcell.Event) Event {
+	key, ok := ev.(*tcell.EventKey)
 	if !ok {
 		return Event{Type: EventNone}
 	}

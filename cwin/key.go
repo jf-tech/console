@@ -36,14 +36,3 @@ func FindKey(keys []cterm.Event, key cterm.Event) bool {
 	}
 	return false
 }
-
-// if f == nil, SyncExpectKey waits for any single key and then returns
-// if f != nil, SyncExpectKey repeatedly waits for a key & has it processed by f, if f returns false
-func SyncExpectKey(f func(cterm.Key, rune) bool) {
-	for {
-		ev := cterm.PollEvent()
-		if ev.Type == cterm.EventKey && (f == nil || f(ev.Key, ev.Ch)) {
-			break
-		}
-	}
-}

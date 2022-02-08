@@ -11,7 +11,25 @@ import (
 type Sys struct {
 	sysWin            *Win
 	scrBuf, offScrBuf []Chx
-	totalChxRendered  int64
+
+	stopEvent chan struct{}
+	evChan    chan cterm.Event
+
+	totalChxRendered int64
+}
+
+func Init(provider cterm.Provider) (*Sys, error) {
+	cterm.SetProvider(provider)
+	if err := cterm.Init(); err != nil {
+		return nil, err
+	}
+	w, h := cterm.Size()
+	s := &Sys{sysWin: NewWin(nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})}
+	n := w * h
+	s.scrBuf = make([]Chx, n)
+	s.offScrBuf = make([]Chx, n)
+	s.startEventListening()
+	return s, nil
 }
 
 func (s *Sys) GetSysWin() *Win {
@@ -57,6 +75,40 @@ func (s *Sys) RemoveWin(w *Win) {
 	}
 }
 
+// This is a non-blocking call
+func (s *Sys) TryGetEvent() cterm.Event {
+	if s.evChan == nil {
+		panic("startEventListening not called")
+	}
+	select {
+	case ev := <-s.evChan:
+		return ev
+	default:
+		return cterm.Event{Type: cterm.EventNone}
+	}
+}
+
+// This is a blocking call
+func (s *Sys) GetEvent() cterm.Event {
+	for {
+		ev := s.TryGetEvent()
+		if ev.Type != cterm.EventNone {
+			return ev
+		}
+	}
+}
+
+// if f == nil, SyncExpectKey waits for any single key and then returns
+// if f != nil, SyncExpectKey repeatedly waits for a key & has it processed by f, if f returns false
+func (s *Sys) SyncExpectKey(f func(cterm.Key, rune) bool) {
+	for {
+		ev := s.GetEvent()
+		if ev.Type == cterm.EventKey && (f == nil || f(ev.Key, ev.Ch)) {
+			break
+		}
+	}
+}
+
 func (s *Sys) CenterBanner(parent *Win, title, format string, a ...interface{}) *Win {
 	if parent == nil {
 		parent = s.sysWin
@@ -95,16 +147,16 @@ func (s *Sys) MessageBoxEx(
 	s.Update()
 
 	ret := cterm.Event{Type: cterm.EventKey}
-	SyncExpectKey(func(k cterm.Key, ch rune) bool {
-		for _, e := range keys {
+	s.SyncExpectKey(func(k cterm.Key, ch rune) bool {
+		for _, ev := range keys {
 			if ch != 0 {
-				if e.Ch == ch {
+				if ev.Ch == ch {
 					ret.Ch = ch
 					return true
 				}
 				continue
 			}
-			if e.Key == k {
+			if ev.Key == k {
 				ret.Key = k
 				return true
 			}
@@ -121,6 +173,24 @@ func (s *Sys) MessageBoxEx(
 func (s *Sys) MessageBox(parent *Win, title, format string, a ...interface{}) bool {
 	e := s.MessageBoxEx(parent, Keys(cterm.KeyEnter, cterm.KeyEsc), title, format, a...)
 	return e.Key == cterm.KeyEnter
+}
+
+func (s *Sys) Update() {
+	s.doUpdate(true)
+	cterm.Flush()
+}
+
+func (s *Sys) TotalChxRendered() int64 {
+	return s.totalChxRendered
+}
+
+func (s *Sys) DumpTree() string {
+	return s.sysWin.DumpTree(0)
+}
+
+func (s *Sys) Close() {
+	s.stopEventListening()
+	cterm.Close()
 }
 
 func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w *Win, sysRect Rect) {
@@ -176,32 +246,37 @@ func (s *Sys) doUpdate(differential bool) {
 	}
 }
 
-// return the number of "pixels" updated
-func (s *Sys) Update() {
-	s.doUpdate(true)
-	cterm.Flush()
-}
-
-func (s *Sys) TotalChxRendered() int64 {
-	return s.totalChxRendered
-}
-
-func (s *Sys) DumpTree() string {
-	return s.sysWin.DumpTree(0)
-}
-
-func (s *Sys) Close() {
-	cterm.Close()
-}
-
-func Init() (*Sys, error) {
-	if err := cterm.Init(); err != nil {
-		return nil, err
+func (s *Sys) startEventListening() {
+	if s.stopEvent != nil {
+		panic("startEventListening called twice")
 	}
-	w, h := cterm.Size()
-	s := &Sys{sysWin: NewWin(nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})}
-	n := w * h
-	s.scrBuf = make([]Chx, n)
-	s.offScrBuf = make([]Chx, n)
-	return s, nil
+	s.stopEvent = make(chan struct{})
+	s.evChan = make(chan cterm.Event, 100)
+
+	go func() {
+	loop:
+		for {
+			select {
+			case <-s.stopEvent:
+				break loop
+			default:
+				s.evChan <- cterm.PollEvent()
+			}
+		}
+	}()
+}
+
+func (s *Sys) stopEventListening() {
+	if s.stopEvent == nil {
+		return
+	}
+	close(s.stopEvent)
+	s.stopEvent = nil
+	// importantly need to call cterm.Interrupt() before closing the evChan because
+	// cterm.Interrupt() synchronously waits for cterm.PollEvent finishes so there
+	// might be one last event coming through into the evChan. If we close it before
+	// calling cterm.Interrupt(), we might get a panic.
+	cterm.Interrupt()
+	close(s.evChan)
+	s.evChan = nil
 }

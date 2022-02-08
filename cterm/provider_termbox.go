@@ -57,17 +57,17 @@ var (
 	}
 )
 
-func eventFromTermBox(e termbox.Event) Event {
-	if e.Type != termbox.EventKey {
+func eventFromTermBox(ev termbox.Event) Event {
+	if ev.Type != termbox.EventKey {
 		return Event{Type: EventNone}
 	}
-	if e.Ch != 0 {
-		return Event{Type: EventKey, Ch: e.Ch}
+	if ev.Ch != 0 {
+		return Event{Type: EventKey, Ch: ev.Ch}
 	}
-	if k, ok := keyFromTermBox[e.Key]; ok {
+	if k, ok := keyFromTermBox[ev.Key]; ok {
 		return Event{Type: EventKey, Key: k}
 	}
-	if e.Key == termbox.KeySpace {
+	if ev.Key == termbox.KeySpace {
 		return Event{Type: EventKey, Ch: ' '}
 	}
 	return Event{Type: EventKey}

@@ -14,8 +14,7 @@ import (
 )
 
 func main() {
-	cterm.SetProvider(cterm.TCell)
-	g, err := cgame.Init()
+	g, err := cgame.Init(cterm.TCell)
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +36,7 @@ func main() {
 
 	doDemo(g, demoWin)
 
-	cwin.SyncExpectKey(nil)
+	g.WinSys.SyncExpectKey(nil)
 }
 
 func doDemo(g *cgame.Game, demoWin *cwin.Win) {

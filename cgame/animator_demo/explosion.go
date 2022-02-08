@@ -14,8 +14,7 @@ import (
 )
 
 func main() {
-	cterm.SetProvider(cterm.TCell)
-	g, err := cgame.Init()
+	g, err := cgame.Init(cterm.TCell)
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +59,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
 	g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s))
 	g.SpriteMgr.Process()
 	g.WinSys.Update()
-	cwin.SyncExpectKey(nil)
+	g.WinSys.SyncExpectKey(nil)
 	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' in progress...", fn), cwin.AlignLeft)
 	done := false
 	cgame.CreateExplosion(s, cgame.ExplosionCfg{
@@ -74,7 +73,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
 	})
 	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' done. Any key for next", fn), cwin.AlignLeft)
 	g.WinSys.Update()
-	cwin.SyncExpectKey(nil)
+	g.WinSys.SyncExpectKey(nil)
 }
 
 func readFile(relPath string) string {

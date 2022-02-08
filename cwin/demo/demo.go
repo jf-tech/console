@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	cterm.SetProvider(cterm.TCell)
-	sys, err := cwin.Init()
+	provider := cterm.TCell
+	sys, err := cwin.Init(provider)
 	if err != nil {
 		panic(err)
 	}
@@ -20,7 +20,7 @@ func main() {
 	sysR := sys.GetSysWin().ClientRect()
 	demoR := cwin.Rect{X: 0, Y: 0, W: sysR.W * 3 / 4, H: sysR.H * 3 / 4}
 	demoR.X = (sysR.W - demoR.W) / 2
-	demoR.Y = (sysR.H - demoR.H) / 2
+	demoR.Y = (sysR.H-demoR.H)/2 - 5
 	demoWin := sys.CreateWin(nil, cwin.WinCfg{
 		R: demoR,
 	})
@@ -32,12 +32,40 @@ func main() {
 		sb.WriteRune('\n')
 	}
 	demoWin.SetText(sb.String())
-	demoWin.SetTitle(
-		fmt.Sprintf("Demo (%dx%d) - press any key for next", sysR.W, sysR.H), cwin.AlignLeft)
+
+	demoTitlePrefix := fmt.Sprintf("Demo [%s] (%dx%d)", provider, sysR.W, sysR.H)
+	demoWin.SetTitle(fmt.Sprintf("%s - press any key for next", demoTitlePrefix), cwin.AlignLeft)
+
+	fgColorWin := sys.CreateWin(nil, cwin.WinCfg{
+		R: cwin.Rect{
+			X: demoR.X,
+			Y: demoR.Y + demoR.H,
+			W: demoR.W,
+			H: 3,
+		},
+		Name: "Foreground Colors",
+	})
+	for x, color := 0, cterm.ColorBlack; color <= cterm.ColorLightGray; x, color = x+2, color+1 {
+		fgColorWin.PutClient(x, 0, cwin.Chx{Ch: '█', Attr: cwin.ChAttr{Fg: color}})
+		fgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: '█', Attr: cwin.ChAttr{Fg: color}})
+	}
+	bgColorWin := sys.CreateWin(nil, cwin.WinCfg{
+		R: cwin.Rect{
+			X: fgColorWin.Rect().X,
+			Y: fgColorWin.Rect().Y + fgColorWin.Rect().H,
+			W: fgColorWin.Rect().W,
+			H: 3,
+		},
+		Name: "Background Colors",
+	})
+	for x, color := 0, cterm.ColorBlack; color <= cterm.ColorLightGray; x, color = x+2, color+1 {
+		bgColorWin.PutClient(x, 0, cwin.Chx{Ch: ' ', Attr: cwin.ChAttr{Bg: color}})
+		bgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: ' ', Attr: cwin.ChAttr{Bg: color}})
+	}
+
 	sys.Update()
-	cwin.SyncExpectKey(nil)
-	demoWin.SetTitle(
-		fmt.Sprintf("Demo (%dx%d) - MessageBox", sysR.W, sysR.H), cwin.AlignLeft)
+	sys.SyncExpectKey(nil)
+	demoWin.SetTitle(fmt.Sprintf("%s - MessageBox", demoTitlePrefix), cwin.AlignLeft)
 
 	sys.MessageBox(demoWin,
 		"MessageBox",

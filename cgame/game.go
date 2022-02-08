@@ -14,29 +14,24 @@ type Game struct {
 	MasterClock *Clock
 	SpriteMgr   *SpriteManager
 
-	stopEventListening chan struct{}
-	evChan             chan cterm.Event
-
 	loopsDone int64
 	gameOver  bool
 }
 
-func Init() (*Game, error) {
+func Init(provider cterm.Provider) (*Game, error) {
 	rand.Seed(time.Now().UnixNano())
-	winSys, err := cwin.Init()
+	winSys, err := cwin.Init(provider)
 	if err != nil {
 		return nil, err
 	}
 	g := &Game{WinSys: winSys, MasterClock: newClock()}
 	g.SpriteMgr = newSpriteManager(g)
-	g.setupEventListening()
 	g.Pause()
 	return g, nil
 }
 
 func (g *Game) Close() {
 	g.Pause()
-	g.shutdownEventListening()
 	g.WinSys.Close()
 }
 
@@ -46,7 +41,7 @@ func (g *Game) Run(
 	stop := false
 	for !stop && !g.IsGameOver() {
 		var ev cterm.Event
-		if ev = g.TryGetEvent(); ev.Type == cterm.EventKey {
+		if ev = g.WinSys.TryGetEvent(); ev.Type == cterm.EventKey {
 			if cwin.FindKey(gameOverKeys, ev) {
 				g.GameOver()
 				return
@@ -65,19 +60,6 @@ func (g *Game) Run(
 		g.SpriteMgr.Process()
 		g.WinSys.Update()
 		g.loopsDone++
-	}
-}
-
-// This is a non-blocking call
-func (g *Game) TryGetEvent() cterm.Event {
-	if g.evChan == nil {
-		panic("SetupEventListening not called")
-	}
-	select {
-	case ev := <-g.evChan:
-		return ev
-	default:
-		return cterm.Event{Type: cterm.EventNone}
 	}
 }
 
@@ -118,40 +100,4 @@ func (g *Game) HeapUsageInBytes() int64 {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	return int64(m.HeapAlloc)
-}
-
-func (g *Game) setupEventListening() {
-	if g.stopEventListening != nil {
-		panic("SetupEventListening called twice")
-	}
-	g.stopEventListening = make(chan struct{})
-	g.evChan = make(chan cterm.Event, 100)
-
-	// main go routine listening for stop signal and cterm event polling.
-	go func() {
-	loop:
-		for {
-			select {
-			case <-g.stopEventListening:
-				break loop
-			default:
-				g.evChan <- cterm.PollEvent()
-			}
-		}
-	}()
-}
-
-func (g *Game) shutdownEventListening() {
-	if g.stopEventListening == nil {
-		return
-	}
-	close(g.stopEventListening)
-	g.stopEventListening = nil
-	// importantly need to call cterm.Interrupt() before closing the evChan because
-	// cterm.Interrupt() synchronously waits for cterm.PollEvent finishes so there
-	// might be one last event coming through into the evChan. If we close it before
-	// calling cterm.Interrupt(), we might get a panic.
-	cterm.Interrupt()
-	close(g.evChan)
-	g.evChan = nil
 }

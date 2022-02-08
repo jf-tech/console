@@ -12,8 +12,7 @@ import (
 )
 
 func main() {
-	cterm.SetProvider(cterm.TCell)
-	g, err := cgame.Init()
+	g, err := cgame.Init(cterm.TCell)
 	if err != nil {
 		panic(err)
 	}

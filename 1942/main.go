@@ -54,9 +54,8 @@ type myGame struct {
 }
 
 func (m *myGame) main() int {
-	cterm.SetProvider(cterm.TermBox)
 	var err error
-	m.g, err = cgame.Init()
+	m.g, err = cgame.Init(cterm.TCell)
 	if err != nil {
 		return codeGameInitFailure
 	}
@@ -144,7 +143,7 @@ func (m *myGame) winSetup() {
 			H: winHeaderH},
 		Name:       "header",
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlue},
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R:          cwin.Rect{X: 1, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
