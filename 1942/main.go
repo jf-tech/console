@@ -129,7 +129,7 @@ const (
 	textInstructions = `Press ESC or 'q' to quit the game.
 Press arrows to move your airplane.
 Press space bar to fire your weapon.
-Press 'b' to launch a bomb.
+Press 'i' for invincible cheat mode.
 Press 'p' to pause/unpause the game.`
 )
 
