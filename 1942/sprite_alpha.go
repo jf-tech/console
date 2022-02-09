@@ -1,68 +1,112 @@
 package main
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 var (
-	alphaName   = "alpha"
-	alphaImgTxt = strings.Trim(`
+	alphaName  = "alpha"
+	alphaFrame = cgame.FrameFromString(strings.Trim(`
   ┃
 -█-█-
-`, "\n")
-	alphaAttr = cwin.ChAttr{Fg: termbox.ColorLightYellow}
-
-	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
-	gameOverTxt = `
-
- .d8888b.                                        .d88888b.                                 888
-d88P  Y88b                                      d88P" "Y88b                                888
-888    888                                      888     888                                888
-888         8888b.  88888b.d88b.   .d88b.       888     888 888  888  .d88b.  888d888      888
-888  88888     "88b 888 "888 "88b d8P  Y8b      888     888 888  888 d8P  Y8b 888P"        888
-888    888 .d888888 888  888  888 88888888      888     888 Y88  88P 88888888 888          Y8P
-Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     888           "
- "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
-
-
-                                     Press Enter to exit.
-`
-	alphaBullet1Name  = "alpha_bullet1"
-	alphaBullet1Attr  = cwin.ChAttr{Fg: termbox.ColorLightYellow}
-	alphaBullet1Speed = cgame.ActionPerSec(25)
+`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightYellow})
+	alphaBulletName = "alpha_bullet"
 )
 
 type spriteAlpha struct {
 	*cgame.SpriteBase
-	m         *myGame
-	betaKills int
+	m          *myGame
+	stage      *stage
+	betaKills  int
+	gammaKills int
+	deltaKills int
+	hit        int
+	gpWeapon   *giftPack
 }
 
 func (a *spriteAlpha) SetPosRelative(dx, dy int) {
-	newR := a.W.Rect()
+	newR := a.Win().Rect()
 	newR.X += dx
 	newR.Y += dy
-	if _, r := a.m.winArena.ClientRect().Overlap(newR); r == newR {
-		a.W.SetPosRelative(dx, dy)
+	if overlapped, r := a.m.winArena.ClientRect().ToOrigin().Overlap(newR); overlapped && r == newR {
+		a.Win().SetPosRelative(dx, dy)
 	}
 }
 
 func (a *spriteAlpha) fireWeapon() {
-	x := a.W.Rect().X + a.W.Rect().W/2
-	y := a.W.Rect().Y - 1
-	a.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet1(
-		a.m.g, a.m.winArena, alphaBullet1Name, alphaBullet1Attr, 0, -1, alphaBullet1Speed, x, y)))
+	x := a.Win().Rect().X + a.Win().Rect().W/2
+	y := a.Win().Rect().Y - 1
+	if a.gpWeapon == nil || a.gpWeapon.remainingLife() <= 0 {
+		a.gpWeapon = nil
+		a.stage.exchange.gpWeapon = nil
+		createBullet(a.m, alphaBulletName, alphaBulletAttr, 0, -1, alphaBulletSpeed, x, y)
+	} else {
+		switch a.gpWeapon.name {
+		case gpShotgunName, gpShotgun2Name:
+			pellets := 3
+			if a.gpWeapon.name == gpShotgun2Name {
+				pellets = 5
+			}
+			for i := -pellets / 2; i <= pellets/2; i++ {
+				createBullet(a.m, alphaBulletName, alphaBulletAttr, i, -1, alphaBulletSpeed, x, y)
+			}
+		default:
+			panic(fmt.Sprintf("unknown weapon name: %s", a.gpWeapon.name))
+		}
+	}
+	a.m.g.SoundMgr.PlayMP3(sfxPewFile, sfxClipVol, 1)
+}
+
+func (a *spriteAlpha) weaponStats() (name, remaining string) {
+	if a.gpWeapon != nil {
+		return a.gpWeapon.name, (a.gpWeapon.remainingLife() / time.Second * time.Second).String()
+	}
+	return "Basic Gun", "Infinite"
+}
+
+func (a *spriteAlpha) killStats() map[string]int {
+	return map[string]int{
+		betaName:  a.betaKills,
+		gammaName: a.gammaKills,
+		deltaName: a.deltaKills,
+	}
 }
 
 func (a *spriteAlpha) Collided(other cgame.Sprite) {
-	if other.Cfg().Name == alphaBullet1Name || other.Cfg().Name == alphaName {
-		return
+	a.Win().ToBottom()
+	switch other.Name() {
+	case alphaBulletName:
+	case giftPackName:
+		switch other.(*spriteGiftPack).gpSym {
+		case gpShotgunSym:
+			a.gpWeapon = newGiftPackShotgun(a.m.g.MasterClock)
+		case gpShotgun2Sym:
+			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
+		}
+		a.stage.exchange.gpWeapon = a.gpWeapon
+		a.m.g.SoundMgr.PlayMP3(sfxWeaponUpgradedFile, sfxClipVol, 1)
+	default:
+		a.hit++
+		if !a.m.invincible {
+			a.m.g.GameOver()
+			return
+		}
+		a.m.g.SoundMgr.PlayMP3(sfxWoodsBeenHitFile, sfxClipVol, 1)
 	}
-	a.m.g.Pause()
-	a.m.g.WinSys.MessageBox(nil, "Uh oh...", gameOverTxt)
-	a.m.g.GameOver()
+}
+
+func createAlpha(m *myGame, stage *stage) {
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
+		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, alphaName, alphaFrame,
+			(m.winArena.ClientRect().W-cgame.FrameRect(alphaFrame).W)/2,
+			m.winArena.ClientRect().H-cgame.FrameRect(alphaFrame).H),
+		m:        m,
+		stage:    stage,
+		gpWeapon: stage.exchange.gpWeapon}))
 }

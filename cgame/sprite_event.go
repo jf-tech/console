@@ -9,7 +9,9 @@ type SpriteEventType int
 const (
 	SpriteEventCreate SpriteEventType = iota
 	SpriteEventDelete
+	SpriteEventDeleteAll
 	SpriteEventSetPosRelative
+	spriteEventCount
 )
 
 func (t SpriteEventType) String() string {
@@ -18,6 +20,8 @@ func (t SpriteEventType) String() string {
 		return "SpriteEventCreate"
 	case SpriteEventDelete:
 		return "SpriteEventDelete"
+	case SpriteEventDeleteAll:
+		return "SpriteEventDeleteAll"
 	case SpriteEventSetPosRelative:
 		return "SpriteEventSetPosRelative"
 	default:
@@ -26,29 +30,34 @@ func (t SpriteEventType) String() string {
 }
 
 type SpriteEvent struct {
-	Type SpriteEventType
-	S    Sprite
-	Body interface{}
+	eventType SpriteEventType
+	s         Sprite
+	body      interface{}
 }
 
-func NewSpriteEventCreate(s Sprite) *SpriteEvent {
+func NewSpriteEventCreate(s Sprite, animators ...Animator) *SpriteEvent {
 	return &SpriteEvent{
-		Type: SpriteEventCreate,
-		S:    s,
+		eventType: SpriteEventCreate,
+		s:         s,
+		body:      animators,
 	}
 }
 
 func NewSpriteEventDelete(s Sprite) *SpriteEvent {
 	return &SpriteEvent{
-		Type: SpriteEventDelete,
-		S:    s,
+		eventType: SpriteEventDelete,
+		s:         s,
 	}
+}
+
+func NewSpriteEventDeleteAll() *SpriteEvent {
+	return &SpriteEvent{eventType: SpriteEventDeleteAll}
 }
 
 func NewSpriteEventSetPosRelative(s Sprite, dx, dy int) *SpriteEvent {
 	return &SpriteEvent{
-		Type: SpriteEventSetPosRelative,
-		S:    s,
-		Body: pairInt{a: dx, b: dy},
+		eventType: SpriteEventSetPosRelative,
+		s:         s,
+		body:      PairInt{A: dx, B: dy},
 	}
 }

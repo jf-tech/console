@@ -3,78 +3,109 @@ package main
 import (
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 var (
-	betaName   = "beta"
-	betaImgTxt = strings.Trim(`
+	betaName  = "beta"
+	betaFrame = cgame.FrameFromString(strings.Trim(`
 \┃┃/
  \/
- `, "\n")
-	betaAttr  = cwin.ChAttr{Fg: termbox.ColorLightCyan}
-	betaSpeed = cgame.ActionPerSec(4)
+`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightCyan})
 
-	betaGenProb    = 10000
-	betaFiringProb = 20
-
-	betaBullet1Name  = "beta_bullet1"
-	betaBullet1Attr  = cwin.ChAttr{Fg: termbox.ColorLightCyan}
-	betaBullet1Speed = cgame.ActionPerSec(10)
+	betaBulletName = "beta_bullet"
 )
 
 type spriteBeta struct {
-	*cgame.SpriteAnimated
+	*cgame.SpriteBase
 }
 
 func (b *spriteBeta) Collided(other cgame.Sprite) {
-	if other.Cfg().Name == betaBullet1Name || other.Cfg().Name == betaName {
-		return
-	}
-	if other.Cfg().Name == alphaBullet1Name || other.Cfg().Name == alphaName {
-		b.Mgr.AddEvent(cgame.NewSpriteEventDelete(b))
-		b.Mgr.FindByName(alphaName).(*spriteAlpha).betaKills++
+	if other.Name() == alphaBulletName || other.Name() == alphaName {
+		b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
+		cgame.CreateExplosion(b, cgame.ExplosionCfg{MaxDuration: betaExplosionDuration})
+		b.Mgr().FindByName(alphaName).(*spriteAlpha).betaKills++
 	}
 }
 
-func shouldGenBeta() bool {
-	return rand.Int()%betaGenProb == 0
+func createBeta(m *myGame, stageIdx int) {
+	dist := 1000 // large enough to go out of window (and auto destroy)
+	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+			{
+				Type: cgame.WaypointRelative,
+				X:    0,
+				Y:    1 * dist,
+				T:    time.Duration((float64(dist) / float64(betaSpeed)) * float64(time.Second)),
+			}}),
+		AfterMove: func(s cgame.Sprite) {
+			if !cgame.CheckProbability(betaFiringProbPerStage[stageIdx]) {
+				return
+			}
+			x := s.Win().Rect().X + s.Win().Rect().W/2
+			y := s.Win().Rect().Y + s.Win().Rect().H
+			pellets := betaFiringPelletsPerStage[stageIdx]
+			if m.easyMode {
+				pellets /= 2
+			}
+			for dx := -(pellets / 2); dx <= pellets/2; dx++ {
+				if pellets%2 == 0 && dx == 0 {
+					continue
+				}
+				createBullet(m, betaBulletName, enemyBulletAttr, dx, 1, betaBulletSpeed, x, y)
+			}
+		},
+	})
+	s := &spriteBeta{cgame.NewSpriteBase(m.g, m.winArena, betaName, betaFrame,
+		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(betaFrame).W), 0)}
+	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
 }
 
-func shouldBetaFireShot() bool {
-	return rand.Int()%betaFiringProb == 0
+/*
+var (
+	betaDeathName    = "beta_death"
+	betaDeathFrameTxts = []string{
+		betaFrameTxt,
+		strings.Trim(`
+_┃┃_
+ \/
+`, "\n"),
+		strings.Trim(`
+_\/_
+ \/
+`, "\n"),
+		strings.Trim(`
+_\/_
+ ||
+`, "\n"),
+		strings.Trim(`
+_\/_
+ /\
+`, "\n"),
+		strings.Trim(`
+'  '
+'  '
+`, "\n"),
+	}
+	betaDeathSpeed = cgame.CharPerSec(5)
+)
+
+type spriteBetaDeath struct {
+	*cgame.SpriteAnimated
 }
 
-func newSpriteBeta(g *cgame.Game, parent *cwin.Win, x, y int) *spriteBeta {
-	return &spriteBeta{
+func newSpriteBetaDeath(g *cgame.Game, parent *cwin.Win, x, y int) *spriteBetaDeath {
+	return &spriteBetaDeath{
 		cgame.NewSpriteAnimated(g, parent,
 			cgame.SpriteAnimatedCfg{
-				Name: betaName,
-				Frames: [][]cgame.Cell{
-					cgame.StringToCells(betaImgTxt, betaAttr), // single frame
-				},
-				DY:        1,
-				MoveSpeed: betaSpeed,
-				AfterMove: func(s cgame.Sprite) {
-					if !shouldBetaFireShot() {
-						return
-					}
-					b := s.(*cgame.SpriteAnimated)
-					r := b.W.Rect()
-					b.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet1(
-						g, parent, betaBullet1Name, betaBullet1Attr,
-						-1, 1, betaBullet1Speed, r.X+r.W/2, r.Y+r.H)))
-					b.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet1(
-						g, parent, betaBullet1Name, betaBullet1Attr,
-						0, 1, betaBullet1Speed, r.X+r.W/2, r.Y+r.H)))
-					b.Mgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBullet1(
-						g, parent, betaBullet1Name, betaBullet1Attr,
-						1, 1, betaBullet1Speed, r.X+r.W/2, r.Y+r.H)))
-
-				},
+				Name:       betaDeathName,
+				Frames:     cgame.FramesFromString(betaDeathImgTxts, betaAttr),
+				FrameSpeed: betaDeathSpeed,
 			},
 			x, y)}
 }
+*/

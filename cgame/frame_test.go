@@ -4,18 +4,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStringToCells(t *testing.T) {
-	testAttr := cwin.ChAttr{Fg: termbox.ColorBlue, Bg: termbox.ColorWhite}
+func TestStringToFrame(t *testing.T) {
+	testAttr := cwin.ChAttr{Fg: cterm.ColorBlue, Bg: cterm.ColorWhite}
 	for _, test := range []struct {
 		name string
 		s    string
 		attr cwin.ChAttr
-		exp  []Cell
+		exp  Frame
 	}{
 		{
 			name: "4x2",
@@ -38,7 +38,7 @@ func TestStringToCells(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.exp,
-				StringToCells(strings.Trim(test.s, "\n"), test.attr))
+				FrameFromString(strings.Trim(test.s, "\n"), test.attr))
 		})
 	}
 }

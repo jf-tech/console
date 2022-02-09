@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/go-corelib/maths"
-	"github.com/nsf/termbox-go"
 )
 
 type Align int
@@ -37,7 +37,7 @@ var (
 )
 
 type ChAttr struct {
-	Fg, Bg termbox.Attribute // termbox.ColorRed | ColorGreen | ...
+	Fg, Bg cterm.Attribute // cterm.ColorRed | ColorGreen | ...
 }
 
 type Chx struct {
@@ -66,7 +66,6 @@ type WinCfg struct {
 	NoTitle         bool // in case user sets Name (for debug purpose) and border, but doesn't want actual Title
 	NoHPaddingTitle bool // most cases, have a one-space padding on each side of title looks nice
 	NoHPaddingText  bool // most cases, have a one-space padding on each side of text block looks nice
-	StartHidden     bool
 }
 
 func hidden_s(hidden bool) string {
@@ -101,12 +100,77 @@ func (w *Win) Parent() *Win {
 	return w.parent
 }
 
+func (w *Win) removeFromParent() {
+	if w.parent == nil {
+		return
+	}
+	prev := w.prev
+	next := w.next
+	if prev != nil {
+		prev.next = next
+	}
+	if next != nil {
+		next.prev = prev
+	}
+	if w.parent.child1 == w {
+		w.parent.child1 = next
+	}
+	if w.parent.childn == w {
+		w.parent.childn = prev
+	}
+	w.parent = nil
+	w.prev = nil
+	w.next = nil
+}
+
+func (w *Win) ToBottom() {
+	parent := w.parent
+	if parent == nil {
+		return
+	}
+	w.removeFromParent()
+	w.parent = parent
+	w.next = parent.child1
+	if parent.child1 != nil {
+		parent.child1.prev = w
+	}
+	parent.child1 = w
+	if parent.childn == nil {
+		parent.childn = w
+	}
+}
+
+func (w *Win) ToTop() {
+	parent := w.parent
+	if parent == nil {
+		return
+	}
+	w.removeFromParent()
+	w.parent = parent
+	w.prev = parent.childn
+	if parent.childn != nil {
+		parent.childn.next = w
+	}
+	parent.childn = w
+	if parent.child1 == nil {
+		parent.child1 = w
+	}
+}
+
 func (w *Win) bufIdx(x, y int) int {
 	return y*w.cfg.R.W + x
 }
 
+func (w *Win) get(x, y int) Chx {
+	return w.buf[w.bufIdx(x, y)]
+}
+
 func (w *Win) put(x, y int, chx Chx) {
 	w.buf[w.bufIdx(x, y)] = chx
+}
+
+func (w *Win) GetClient(cx, cy int) Chx {
+	return w.get(w.clientR.X+cx, w.clientR.Y+cy)
 }
 
 func (w *Win) PutClient(cx, cy int, chx Chx) {
@@ -137,16 +201,27 @@ func (w *Win) FillClient(cr Rect, chx Chx) {
 	}
 }
 
-func (w *Win) SetHidden(hidden bool) {
-	w.hidden = hidden
-}
-
 func (w *Win) Rect() Rect {
 	return w.cfg.R
 }
 
 func (w *Win) ClientRect() Rect {
 	return w.clientR
+}
+
+func (w *Win) VisibleInParentClientRect() bool {
+	if w.hidden {
+		return false
+	}
+	if w.parent == nil {
+		return true
+	}
+	overlapped, _ := w.parent.ClientRect().ToOrigin().Overlap(w.Rect())
+	return overlapped
+}
+
+func (w *Win) SetHidden(hidden bool) {
+	w.hidden = hidden
 }
 
 func (w *Win) SetPosAbs(x, y int) {
@@ -266,7 +341,7 @@ func (w *Win) DumpTree(indent int) string {
 	return s
 }
 
-func newWin(parent *Win, c WinCfg) *Win {
+func NewWin(parent *Win, c WinCfg) *Win {
 	cw := &Win{cfg: c, parent: parent}
 	cw.clientR = Rect{0, 0, cw.cfg.R.W, cw.cfg.R.H}
 	if !cw.cfg.NoBorder {

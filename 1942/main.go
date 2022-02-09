@@ -1,42 +1,75 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
 	"os"
-	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 const (
-	exitCodeNormalQuit int = iota
-	exitCodeGameInit
+	codeQuit int = iota
+	codeReplay
+	codeGameInitFailure
+
+	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
+	gameOverTxt = `
+
+ .d8888b.                                        .d88888b.                                 888
+d88P  Y88b                                      d88P" "Y88b                                888
+888    888                                      888     888                                888
+888         8888b.  88888b.d88b.   .d88b.       888     888 888  888  .d88b.  888d888      888
+888  88888     "88b 888 "888 "88b d8P  Y8b      888     888 888  888 d8P  Y8b 888P"        888
+888    888 .d888888 888  888  888 88888888      888     888 Y88  88P 88888888 888          Y8P
+Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     888           "
+ "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
+
+
+                            Press ESC or 'q' to quit, 'r' to replay.`
+
+	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=You%20Won%20!
+	youWonTxt = `
+
+Y88b   d88P                     888       888                        888
+ Y88b d88P                      888   o   888                        888
+  Y88o88P                       888  d8b  888                        888
+   Y888P  .d88b.  888  888      888 d888b 888  .d88b.  88888b.       888
+    888  d88""88b 888  888      888d88888b888 d88""88b 888 "88b      888
+    888  888  888 888  888      88888P Y88888 888  888 888  888      Y8P
+    888  Y88..88P Y88b 888      8888P   Y8888 Y88..88P 888  888       "
+    888   "Y88P"   "Y88888      888P     Y888  "Y88P"  888  888      888
+
+
+                  Press ESC or 'q' to quit, 'r' to replay.`
 )
 
 type myGame struct {
-	g        *cgame.Game
-	winArena *cwin.Win
-	winStats *cwin.Win
-
-	bgWW1942AnimationDone bool
+	g          *cgame.Game
+	winHeader  *cwin.Win
+	winArena   *cwin.Win
+	winStats   *cwin.Win
+	easyMode   bool
+	invincible bool
 }
 
-func (m *myGame) main() (int, error) {
+func (m *myGame) main() int {
 	var err error
-	m.g, err = cgame.Init()
+	m.g, err = cgame.Init(cterm.TCell)
 	if err != nil {
-		return exitCodeGameInit, err
+		return codeGameInitFailure
 	}
 	defer m.g.Close()
 
+	m.g.SoundMgr.AvoidSameClipConcurrentPlaying()
 	m.winSetup()
-	m.initSprites()
-	m.g.Pause()
 	m.g.WinSys.Update()
-	if !m.g.WinSys.MessageBox(nil, "WWII - 1942", `
+
+	m.g.SoundMgr.PlayMP3(sfxBackgroundFile, sfxBackgroundVol, -1)
+
+	e := m.g.WinSys.MessageBoxEx(m.winArena,
+		append(cwin.Keys(cterm.KeyEnter), append(gameOverKeys, easyModeKeys...)...),
+		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
 fighting is quickly approaching the final stage. Both sides have suffered
 extremely heavy losses. As a newly-recruited pilot, your assignment is to
@@ -46,59 +79,57 @@ final battle!
 
 Good luck, solider!
 
-Press Enter to start the game; ESC to quit.
-`) {
-		return exitCodeNormalQuit, nil
+Press Enter to start the game; ESC or 'q' to quit.
+('e' to start in Easy Mode, if you bother reading this :)
+`)
+	if cwin.FindKey(gameOverKeys, e) {
+		return codeQuit
 	}
+	m.easyMode = cwin.FindKey(easyModeKeys, e)
+
 	m.g.Resume()
 
-	alpha := m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
-	m.g.SetupEventListening()
+	m.g.SoundMgr.PlayMP3(sfxGameStartFile, sfxClipVol, 1)
 
-loop:
-	for !m.g.IsGameOver() {
-		if ev := m.g.TryGetEvent(); ev.Type == termbox.EventKey {
-			if ev.Key == termbox.KeyEsc || ev.Ch == 'q' {
-				break loop
-			} else if ev.Ch == 'p' {
-				if m.g.IsPaused() {
-					m.g.Resume()
-				} else {
-					m.g.Pause()
-				}
-			} else if ev.Key == termbox.KeyArrowUp {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
-			} else if ev.Key == termbox.KeyArrowDown {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 1))
-			} else if ev.Key == termbox.KeyArrowLeft {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
-			} else if ev.Key == termbox.KeyArrowRight {
-				m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
-			} else if ev.Key == termbox.KeySpace {
-				alpha.fireWeapon()
-			}
-		}
-		m.moreSprites()
-		m.g.SpriteMgr.ProcessAll()
-		m.setStats()
-		m.g.WinSys.Update()
+	stageExchange := &interStageExchange{}
+	for i := 0; i < totalStages && !m.g.IsGameOver(); i++ {
+		stage := newStage(m, i, stageExchange)
+		stage.Run()
+		stageExchange = stage.exchange
 	}
 
-	m.g.ShutdownEventListening()
-
-	return exitCodeNormalQuit, nil
+	if m.g.IsGameOver() {
+		m.g.SoundMgr.PlayMP3(sfxGameOverFile, sfxClipVol, 1)
+	} else {
+		m.g.SoundMgr.PlayMP3(sfxYouWonFile, sfxClipVol, 1)
+	}
+	e = m.g.WinSys.MessageBoxEx(m.winArena,
+		append(gameOverKeys, replayGameKeys...),
+		"Result",
+		func() string {
+			if m.g.IsGameOver() {
+				return gameOverTxt
+			}
+			return youWonTxt
+		}())
+	if e.Ch == 'r' {
+		return codeReplay
+	}
+	return codeQuit
 }
 
 const (
-	winArenaW        = 101
+	winHeaderW       = 103
+	winHeaderH       = 1
+	winArenaW        = winHeaderW - 2
 	winStatsW        = 40
 	winInstructionsH = 7
-	winGameW         = 3 + winArenaW + 2 + winStatsW + 2
+	winGameW         = 1 /*border*/ + 1 /*space*/ + winHeaderW + 1 /*space*/ + winStatsW + 1 /*space*/ + 1 /*border*/
 
-	textInstructions = `Press ESC or 'q' at anytime to quit the game.
-Press arrow keys to move your airplane.
+	textInstructions = `Press ESC or 'q' to quit the game.
+Press arrows to move your airplane.
 Press space bar to fire your weapon.
-Press 'b' to launch a bomb.
+Press 'i' for invincible cheat mode.
 Press 'p' to pause/unpause the game.`
 )
 
@@ -114,22 +145,32 @@ func (m *myGame) winSetup() {
 		NoTitle: true,
 	})
 	winGameClientR := winGame.ClientRect()
-	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
-		R:          cwin.Rect{X: 1, Y: 0, W: 1, H: winGameClientR.H},
+	m.winHeader = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
+		R: cwin.Rect{
+			X: 1,
+			Y: 0,
+			W: winHeaderW,
+			H: winHeaderH},
+		Name:       "header",
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: termbox.ColorRed},
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
-		R:          cwin.Rect{X: winArenaW + 2, Y: 0, W: 1, H: winGameClientR.H},
+		R:          cwin.Rect{X: 1, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: termbox.ColorRed},
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
+	})
+	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
+		R:          cwin.Rect{X: winHeaderW, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
+		NoBorder:   true,
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
 	})
 	m.winArena = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R: cwin.Rect{
 			X: 2,
-			Y: 0,
+			Y: winHeaderH,
 			W: winArenaW,
-			H: winGameClientR.H},
+			H: winGameClientR.H - winHeaderH},
 		Name:     "arena",
 		NoBorder: true,
 	})
@@ -148,83 +189,16 @@ func (m *myGame) winSetup() {
 			W: m.winStats.Rect().W,
 			H: winGameClientR.H - m.winStats.Rect().H},
 		Name:       "Keyboard",
-		BorderAttr: cwin.ChAttr{Bg: termbox.ColorBlue},
-		ClientAttr: cwin.ChAttr{Bg: termbox.ColorBlue},
+		BorderAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
+		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
 	})
 	winInstructions.SetText(textInstructions)
 }
 
-func (m *myGame) initSprites() {
-	// background text: "WW II"
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(
-		newSpriteBackgroundStatic(m.g, m.winArena,
-			(m.winArena.ClientRect().W-cwin.TextDimension(bgWWImgTxt).W)/2,
-			(m.winArena.ClientRect().H/2-cwin.TextDimension(bgWWImgTxt).H)/2,
-			bgWWStaticName, bgWWImgTxt)))
-	// background text: "1942"
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(
-		newSpriteBackgroundStatic(m.g, m.winArena,
-			(m.winArena.ClientRect().W-cwin.TextDimension(bg1942ImgTxt).W)/2,
-			(m.winArena.ClientRect().H*3/2-cwin.TextDimension(bg1942ImgTxt).H)/2,
-			bg1942StaticName, bg1942ImgTxt)))
-	// alpha - player airplane
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
-		cgame.NewSpriteBase(m.g, m.winArena,
-			cgame.SpriteCfg{Name: alphaName, Cells: cgame.StringToCells(alphaImgTxt, alphaAttr)},
-			(m.winArena.ClientRect().W-cwin.TextDimension(alphaImgTxt).W)/2,
-			m.winArena.ClientRect().H-cwin.TextDimension(alphaImgTxt).H),
-		m, 0}))
-	m.g.SpriteMgr.ProcessAll()
-}
-
-func (m *myGame) moreSprites() {
-	if m.g.IsPaused() {
-		return
-	}
-	if m.g.Clock.SinceOrigin() > bgInitialWait && !m.bgWW1942AnimationDone {
-		s1 := m.g.SpriteMgr.FindByName(bgWWStaticName)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s1))
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundAnimated(
-			m.g, m.winArena, s1.Win().Rect().X, s1.Win().Rect().Y, bgWWAnimatedName, bgWWImgTxt, 1)))
-		s2 := m.g.SpriteMgr.FindByName(bg1942StaticName)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s2))
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBackgroundAnimated(
-			m.g, m.winArena, s2.Win().Rect().X, s2.Win().Rect().Y, bg1942AnimatedName, bg1942ImgTxt, -1)))
-		m.bgWW1942AnimationDone = true
-	}
-	if shouldGenBeta() {
-		x := rand.Int() % (m.winArena.ClientRect().W - cwin.TextDimension(betaImgTxt).W)
-		m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(newSpriteBeta(m.g, m.winArena, x, 0)))
-	}
-}
-
-func (m *myGame) setStats() {
-	m.winStats.SetText(fmt.Sprintf(`
-Game stats:
-----------------------------
-Time passed: %s %s
-Total Beta Kills: %d
-
-Internals:
-----------------------------
-Alpha Position: %s
-%s`,
-		time.Duration(m.g.Clock.SinceOrigin()/(time.Second))*(time.Second),
-		func() string {
-			if m.g.IsPaused() {
-				return "(paused)"
-			}
-			return ""
-		}(),
-		m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha).betaKills,
-		m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha).W.Rect(),
-		m.g.SpriteMgr.DbgStats()))
-}
-
 func main() {
-	code, err := (&myGame{}).main()
-	if err != nil {
-		fmt.Fprint(os.Stderr, err.Error())
+	code := codeReplay
+	for code == codeReplay {
+		code = (&myGame{}).main()
 	}
 	os.Exit(code)
 }

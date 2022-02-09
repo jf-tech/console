@@ -2,128 +2,107 @@ package cgame
 
 import (
 	"math/rand"
+	"runtime"
 	"time"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
-	"github.com/nsf/termbox-go"
 )
 
 type Game struct {
-	WinSys    *cwin.Sys
-	Clock     *GameClock
-	SpriteMgr *SpriteManager
+	WinSys      *cwin.Sys
+	MasterClock *Clock
+	SpriteMgr   *SpriteManager
+	SoundMgr    *SoundManager
 
-	stopEventListening chan struct{}
-	evChan             chan termbox.Event
-
-	// false: the entire world (incl. time) freezes;
-	// true: time freezes, sprites still might be moved around by keys (if key binded)
-	timePauseOnly bool
-	gameOver      bool
+	loopsDone int64
+	gameOver  bool
 }
 
-func Init() (*Game, error) {
+func Init(provider cterm.Provider) (*Game, error) {
 	rand.Seed(time.Now().UnixNano())
-
-	winSys, err := cwin.Init()
+	winSys, err := cwin.Init(provider)
 	if err != nil {
 		return nil, err
 	}
-	g := &Game{
-		WinSys: winSys,
-		Clock:  newGameClock(),
-	}
+	g := &Game{WinSys: winSys, MasterClock: newClock()}
 	g.SpriteMgr = newSpriteManager(g)
+	g.SoundMgr = newSoundManager()
+	g.SoundMgr.Init()
+	g.Pause()
 	return g, nil
 }
 
 func (g *Game) Close() {
+	g.Pause()
+	g.SoundMgr.Close()
 	g.WinSys.Close()
-	if g.stopEventListening != nil {
-		close(g.stopEventListening)
-	}
-	if g.evChan != nil {
-		close(g.evChan)
-	}
 }
 
-func (g *Game) SetupEventListening() {
-	if g.stopEventListening != nil {
-		panic("SetupEventListening called twice")
-	}
-	g.stopEventListening = make(chan struct{})
-	g.evChan = make(chan termbox.Event, 100)
+func (g *Game) Run(
+	gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc func(ev cterm.Event) bool) {
 
-	// main go routine listening for stop signal and termbox event polling.
-	go func() {
-	loop:
-		for {
-			select {
-			case <-g.stopEventListening:
-				break loop
-			default:
-				g.evChan <- termbox.PollEvent()
+	stop := false
+	for !stop && !g.IsGameOver() {
+		var ev cterm.Event
+		if ev = g.WinSys.TryGetEvent(); ev.Type == cterm.EventKey {
+			if cwin.FindKey(gameOverKeys, ev) {
+				g.GameOver()
+				return
+			}
+			if cwin.FindKey(pauseKeys, ev) {
+				if g.IsPaused() {
+					g.Resume()
+				} else {
+					g.Pause()
+				}
 			}
 		}
-	}()
-}
-
-func (g *Game) ShutdownEventListening() {
-	if g.stopEventListening == nil {
-		panic("SetupEventListening not called")
+		if optionalRunFunc != nil {
+			stop = optionalRunFunc(ev)
+		}
+		g.SpriteMgr.Process()
+		g.WinSys.Update()
+		g.loopsDone++
 	}
-	close(g.stopEventListening)
-	g.stopEventListening = nil
-	// importantly need to call termbox.Interrupt() before closing the evChan because
-	// termbox.Interrupt() synchronously waits for termbox.PollEvent finishes so there
-	// might be one last event coming through into the evChan. If we close it before
-	// calling termbox.Interrupt(), we might get a panic.
-	termbox.Interrupt()
-	close(g.evChan)
-	g.evChan = nil
-}
-
-// This is a non-blocking call
-func (g *Game) TryGetEvent() termbox.Event {
-	if g.evChan == nil {
-		panic("SetupEventListening not called")
-	}
-	select {
-	case ev := <-g.evChan:
-		return ev
-	default:
-		return termbox.Event{Type: termbox.EventNone}
-	}
-}
-
-func (g *Game) SetTimePauseOnly() {
-	g.timePauseOnly = true
 }
 
 func (g *Game) Pause() {
-	g.Clock.pause()
-	if !g.timePauseOnly {
-		g.SpriteMgr.pause()
-	}
+	g.MasterClock.Pause()
+	g.SoundMgr.PauseAll()
 }
 
 func (g *Game) Resume() {
-	g.Clock.resume()
-	if !g.timePauseOnly {
-		g.SpriteMgr.resume()
-	}
+	g.SoundMgr.ResumeAll()
+	g.MasterClock.Resume()
 }
 
 func (g *Game) IsPaused() bool {
-	return g.Clock.isPaused()
+	return g.MasterClock.IsPaused()
 }
 
 func (g *Game) GameOver() {
 	g.gameOver = true
-	g.timePauseOnly = false // Game over, freeze the world regardless what the initial setting is
-	g.Pause()
 }
 
 func (g *Game) IsGameOver() bool {
 	return g.gameOver
+}
+
+func (g *Game) TotalLoops() int64 {
+	return g.loopsDone
+}
+
+func (g *Game) FPS() float64 {
+	now := g.MasterClock.Now()
+	if now == 0 {
+		return float64(0)
+	}
+	return float64(g.loopsDone) / (float64(now) / float64(time.Second))
+}
+
+func (g *Game) HeapUsageInBytes() int64 {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return int64(m.HeapAlloc)
 }
