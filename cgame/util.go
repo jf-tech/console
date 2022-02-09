@@ -1,6 +1,10 @@
 package cgame
 
-import "sync"
+import (
+	"path"
+	"runtime"
+	"sync"
+)
 
 type PairInt struct {
 	A, B int
@@ -34,4 +38,9 @@ func NewThreadSafeFIFO(cap int) *ThreadSafeFIFO {
 	return &ThreadSafeFIFO{
 		elems: make([]interface{}, 0, cap),
 	}
+}
+
+func GetCurFileDir() string {
+	_, filename, _, _ := runtime.Caller(1)
+	return path.Dir(filename)
 }

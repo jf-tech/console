@@ -112,7 +112,8 @@ func (b *spriteBoss) fireBulletSquare(x, y int) {
 func createBoss(m *myGame) {
 	s := &spriteBoss{
 		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, bossName, bossFrame,
-			rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(bossFrame).W), 0),
+			rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(bossFrame).W),
+			-cgame.FrameRect(bossFrame).H+1),
 		m:      m,
 		hpLeft: bossHP}
 	s.drawHP()
@@ -130,6 +131,18 @@ type bossWaypoints struct {
 }
 
 func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
+	curR := bw.s.Win().Rect()
+	parentClientR := bw.s.Win().Parent().ClientRect().ToOrigin()
+	if overlapped, ro := curR.Overlap(parentClientR); !overlapped || curR != ro {
+		dist := -curR.Y
+		// this is when the boss is still fully or partially out of the arena
+		return cgame.Waypoint{
+			Type: cgame.WaypointRelative,
+			X:    0,
+			Y:    dist,
+			T:    time.Duration(cgame.CharPerSec(abs(dist))/bossSpeed) * time.Second,
+		}, true
+	}
 	for {
 		dist := rand.Int() % (bossMaxDistToGoBeforeDirChange - bossMinDistToGoBeforeDirChange + 1)
 		dist += bossMinDistToGoBeforeDirChange

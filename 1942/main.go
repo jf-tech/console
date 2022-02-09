@@ -61,8 +61,11 @@ func (m *myGame) main() int {
 	}
 	defer m.g.Close()
 
+	m.g.SoundMgr.AvoidSameClipConcurrentPlaying()
 	m.winSetup()
 	m.g.WinSys.Update()
+
+	m.g.SoundMgr.PlayMP3(sfxBackgroundFile, sfxBackgroundVol, -1)
 
 	e := m.g.WinSys.MessageBoxEx(m.winArena,
 		append(cwin.Keys(cterm.KeyEnter), append(gameOverKeys, easyModeKeys...)...),
@@ -86,6 +89,8 @@ Press Enter to start the game; ESC or 'q' to quit.
 
 	m.g.Resume()
 
+	m.g.SoundMgr.PlayMP3(sfxGameStartFile, sfxClipVol, 1)
+
 	stageExchange := &interStageExchange{}
 	for i := 0; i < totalStages && !m.g.IsGameOver(); i++ {
 		stage := newStage(m, i, stageExchange)
@@ -93,6 +98,11 @@ Press Enter to start the game; ESC or 'q' to quit.
 		stageExchange = stage.exchange
 	}
 
+	if m.g.IsGameOver() {
+		m.g.SoundMgr.PlayMP3(sfxGameOverFile, sfxClipVol, 1)
+	} else {
+		m.g.SoundMgr.PlayMP3(sfxYouWonFile, sfxClipVol, 1)
+	}
 	e = m.g.WinSys.MessageBoxEx(m.winArena,
 		append(gameOverKeys, replayGameKeys...),
 		"Result",

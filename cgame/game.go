@@ -13,6 +13,7 @@ type Game struct {
 	WinSys      *cwin.Sys
 	MasterClock *Clock
 	SpriteMgr   *SpriteManager
+	SoundMgr    *SoundManager
 
 	loopsDone int64
 	gameOver  bool
@@ -26,12 +27,15 @@ func Init(provider cterm.Provider) (*Game, error) {
 	}
 	g := &Game{WinSys: winSys, MasterClock: newClock()}
 	g.SpriteMgr = newSpriteManager(g)
+	g.SoundMgr = newSoundManager()
+	g.SoundMgr.Init()
 	g.Pause()
 	return g, nil
 }
 
 func (g *Game) Close() {
 	g.Pause()
+	g.SoundMgr.Close()
 	g.WinSys.Close()
 }
 
@@ -65,9 +69,11 @@ func (g *Game) Run(
 
 func (g *Game) Pause() {
 	g.MasterClock.Pause()
+	g.SoundMgr.PauseAll()
 }
 
 func (g *Game) Resume() {
+	g.SoundMgr.ResumeAll()
 	g.MasterClock.Resume()
 }
 
@@ -77,7 +83,6 @@ func (g *Game) IsPaused() bool {
 
 func (g *Game) GameOver() {
 	g.gameOver = true
-	g.Pause()
 }
 
 func (g *Game) IsGameOver() bool {

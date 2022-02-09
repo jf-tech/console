@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -15,6 +16,23 @@ var (
 	skipStageKeys      = cwin.Keys('s')
 	easyModeKeys       = cwin.Keys('e')
 	invincibleModeKeys = cwin.Keys('i')
+
+	sfxBackgroundVol = float64(-2)
+	sfxClipVol       = float64(-1)
+
+	sfxAllFiles = []string{}
+	sfxFile     = func(relpath string) string {
+		sfxAllFiles = append(sfxAllFiles, path.Join(cgame.GetCurFileDir(), relpath))
+		return relpath
+	}
+	sfxBackgroundFile     = sfxFile("resources/background.mp3")
+	sfxGameStartFile      = sfxFile("resources/game-start.mp3")
+	sfxPewFile            = sfxFile("resources/pew.mp3")
+	sfxWoodsBeenHitFile   = sfxFile("resources/voodoo-one-woods-been-hit.mp3")
+	sfxBossIsHereFile     = sfxFile("resources/boss-is-here.mp3")
+	sfxGameOverFile       = sfxFile("resources/game-over.mp3")
+	sfxWeaponUpgradedFile = sfxFile("resources/weapon-upgraded.mp3")
+	sfxYouWonFile         = sfxFile("resources/you-won.mp3")
 
 	totalStages                    = 3
 	stageDurations                 = []time.Duration{time.Minute, time.Minute, time.Minute}

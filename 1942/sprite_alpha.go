@@ -60,6 +60,7 @@ func (a *spriteAlpha) fireWeapon() {
 			panic(fmt.Sprintf("unknown weapon name: %s", a.gpWeapon.name))
 		}
 	}
+	a.m.g.SoundMgr.PlayMP3(sfxPewFile, sfxClipVol, 1)
 }
 
 func (a *spriteAlpha) weaponStats() (name, remaining string) {
@@ -89,11 +90,14 @@ func (a *spriteAlpha) Collided(other cgame.Sprite) {
 			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
 		}
 		a.stage.exchange.gpWeapon = a.gpWeapon
+		a.m.g.SoundMgr.PlayMP3(sfxWeaponUpgradedFile, sfxClipVol, 1)
 	default:
 		a.hit++
 		if !a.m.invincible {
 			a.m.g.GameOver()
+			return
 		}
+		a.m.g.SoundMgr.PlayMP3(sfxWoodsBeenHitFile, sfxClipVol, 1)
 	}
 }
 

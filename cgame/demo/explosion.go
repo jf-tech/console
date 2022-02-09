@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -77,8 +76,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
 }
 
 func readFile(relPath string) string {
-	_, filename, _, _ := runtime.Caller(1)
-	b, err := ioutil.ReadFile(path.Join(path.Dir(filename), relPath))
+	b, err := ioutil.ReadFile(path.Join(cgame.GetCurFileDir(), relPath))
 	if err != nil {
 		panic(err)
 	}

@@ -59,7 +59,7 @@ func (s *stage) Run() {
 			s.displayStats(alpha)
 			return false
 		})
-	if !s.m.g.IsGameOver() {
+	if !s.m.g.IsGameOver() && s.stageIdx != totalStages-1 {
 		s.runStagePassedBanner()
 	}
 }
@@ -140,9 +140,8 @@ func (s *stage) genDelta() {
 }
 
 func (s *stage) genBoss() {
-	if _, ok := s.m.g.SpriteMgr.TryFindByName(bossName); !ok {
-		createBoss(s.m)
-	}
+	createBoss(s.m)
+	s.m.g.SoundMgr.PlayMP3(sfxBossIsHereFile, sfxClipVol, 1)
 }
 
 func (s *stage) genGiftPack() {
