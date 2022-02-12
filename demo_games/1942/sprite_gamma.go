@@ -2,7 +2,6 @@ package main
 
 import (
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -12,10 +11,10 @@ import (
 
 var (
 	gammaName  = "gamma"
-	gammaFrame = cgame.FrameFromString(strings.Trim(`
+	gammaFrame = cgame.FrameFromString(`
 /^#^\
 \vvv/
-`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightBlue})
+`, cwin.ChAttr{Fg: cterm.ColorLightBlue})
 
 	gammaBulletName = "gamma_bullet"
 )
@@ -66,49 +65,3 @@ func createGamma(m *myGame, stageIdx int) {
 		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(gammaFrame).W), 0)}
 	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
 }
-
-/*
-
-var (
-	gammaDeathName    = "gamma_death"
-	gammaDeathImgTxts = []string{
-		gammaImgTxt,
-		strings.Trim(`
-/^#^\
-\vvv/
-`, "\n"),
-		strings.Trim(`
-|^.^|
-|.v.|
-`, "\n"),
-		strings.Trim(`
-\'.'/
-/ . \
-`, "\n"),
-		strings.Trim(`
-~  '~
-~'  ~
-`, "\n"),
-		strings.Trim(`
-'   '
-'   '
-`, "\n"),
-	}
-	gammaDeathSpeed = betaDeathSpeed
-)
-
-type spriteGammaDeath struct {
-	*cgame.SpriteAnimated
-}
-
-func newSpriteGammaDeath(g *cgame.Game, parent *cwin.Win, x, y int) *spriteGammaDeath {
-	return &spriteGammaDeath{
-		cgame.NewSpriteAnimated(g, parent,
-			cgame.SpriteAnimatedCfg{
-				Name:       gammaDeathName,
-				Frames:     cgame.FramesFromString(gammaDeathImgTxts, gammaAttr),
-				FrameSpeed: gammaDeathSpeed,
-			},
-			x, y)}
-}
-*/

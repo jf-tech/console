@@ -2,7 +2,6 @@ package main
 
 import (
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -14,7 +13,7 @@ import (
 var (
 	bossName          = "boss"
 	bossExplosionName = "boss_explosion"
-	bossFrame         = cgame.FrameFromString(strings.Trim(`
+	bossFrame         = cgame.FrameFromString(`
 [========================================]
 
                |||      |||
@@ -32,7 +31,7 @@ var (
                    \  /
                    \  /
                     \/
-`, "\n"), cwin.ChAttr{Fg: cterm.ColorWhite})
+`, cwin.ChAttr{Fg: cterm.ColorWhite})
 	bossHPAttr     = cwin.ChAttr{Fg: cterm.ColorRed}
 	bossBulletName = "boss_bullet"
 
@@ -149,8 +148,8 @@ func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
 		w := bw.s.Win()
 		newR := w.Rect()
-		newR.X += cgame.DirOffSetXY[dirIdx].A * dist
-		newR.Y += cgame.DirOffSetXY[dirIdx].B * dist
+		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
+		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
 		if overlapped, ro := newR.Overlap(w.Parent().ClientRect().ToOrigin()); overlapped && ro == newR {
 			return cgame.Waypoint{
 				Type: cgame.WaypointAbs,

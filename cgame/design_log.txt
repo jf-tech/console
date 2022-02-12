@@ -1,0 +1,48 @@
+[2022/02/12 - cgame]
+- [✅] Need to reconsider How AnimatorWaypoint is implemented: currently it can't be combined with
+  other movement: e.g. if a sprite is dropping at a certain speed, we would use AnimatorWaypoint
+  to achieve this, each delta T time, Y increases dy. However, what if we also want the sprite
+  can be nudged around by keyboard event. It completely breaks down as the AnimatorWaypoint
+  comuptes and remembers src X/Y and dest X/Y at the beginning of T time, and then incrementally
+  move toward the dest X/Y. The problem is during the T period what if the position of the sprite
+  is changed by keyboard or maybe another animator? This problem stems from the fact we calculate
+  aboslute src/dest X/Y at the beginning of the period; solution should be we'd rather record
+  how much total remaining dx/dy is needed and as time goes on, we deduct remaining dx/dy until
+  they are zero.
+- [✅] Rename cgame.PairInt to cwin.Point
+-
+
+[2022/02/11 - cgame]
+- think about PositionSettable. should it be on spriteBase or not.
+  pro: easier; a bit more consistent: currently game can directly call its sprites to do
+  lots of things, like fire weapon, so why not setting its position?
+  con: messy in term of sprite management such as collision detection.
+
+- think about how collision detection should be done:
+  should collision be detected before or after overlap event? for bullet hitting stuff that
+  is probably fine, but for a ball bouncing off wall, collision detected after overlap seems
+  wrong. one caveat is even if when collision detected after overlap, but it is not yet shown
+  to the UI yet. remember, we only update UI (calling WinSys.Update()) after processing all the
+  events, sprites, and collisions. thus we might come up with a mechanism to alert game of
+  actual collision occurred, so they can change course. Now the problem is how could the game
+  dev know what the previous non-collided position would be? Should they always remember the
+  position or should sprite mgr do it.
+  one idea is to even more so strengthening the PositionSettable, all sprite position must be
+  set through PositionSettable so SpriteMgr would detect collision immediately. However, since
+  our SpriteBase expose Win() and there is nothing to prevent dev to directly mucking around
+  sprite Position. Should we introduce a new interface for sprite to shim all the necessary
+  cwin.Win functionality but remove the position setting method?
+
+- what about current Animator interface plus a... in SpriteEventCreate vs always a single
+Animator (or call it Animatable) but we can provide composor. With composer we (game dev) can
+easily start/stop an animation without impacting other ongoing animation on a sprite.
+
+- Any idea on how to do scripting / choreography - not all (in fact most) games do random gen
+  stuff, most are actually scripted release of enemies.
+
+[2022/02/11 - tetris]
+- myGame have a WxH 2D slices to hold sprites - each of which occupies one settled/dead block.
+- <- or -> or natural drop would make a piece to go overlap with these dead sprites, when colliable
+  is called back, we know we need to turn the active piece into 4 small dead blocks
+  the problem is, how do i know where those dead bocks would be - since the current collided
+  position is after a combination of <- / -> / natural drop.

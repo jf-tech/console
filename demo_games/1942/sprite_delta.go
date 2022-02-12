@@ -2,7 +2,6 @@ package main
 
 import (
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -12,11 +11,11 @@ import (
 
 var (
 	deltaName  = "delta"
-	deltaFrame = cgame.FrameFromString(strings.Trim(`
+	deltaFrame = cgame.FrameFromString(`
   /^\
 << X >>
   \v/
-`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightGreen})
+`, cwin.ChAttr{Fg: cterm.ColorLightGreen})
 )
 
 type spriteDelta struct {

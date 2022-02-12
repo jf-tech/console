@@ -2,7 +2,6 @@ package main
 
 import (
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -12,10 +11,10 @@ import (
 
 var (
 	betaName  = "beta"
-	betaFrame = cgame.FrameFromString(strings.Trim(`
+	betaFrame = cgame.FrameFromString(`
 \┃┃/
  \/
-`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightCyan})
+`, cwin.ChAttr{Fg: cterm.ColorLightCyan})
 
 	betaBulletName = "beta_bullet"
 )
@@ -64,48 +63,3 @@ func createBeta(m *myGame, stageIdx int) {
 		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(betaFrame).W), 0)}
 	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
 }
-
-/*
-var (
-	betaDeathName    = "beta_death"
-	betaDeathFrameTxts = []string{
-		betaFrameTxt,
-		strings.Trim(`
-_┃┃_
- \/
-`, "\n"),
-		strings.Trim(`
-_\/_
- \/
-`, "\n"),
-		strings.Trim(`
-_\/_
- ||
-`, "\n"),
-		strings.Trim(`
-_\/_
- /\
-`, "\n"),
-		strings.Trim(`
-'  '
-'  '
-`, "\n"),
-	}
-	betaDeathSpeed = cgame.CharPerSec(5)
-)
-
-type spriteBetaDeath struct {
-	*cgame.SpriteAnimated
-}
-
-func newSpriteBetaDeath(g *cgame.Game, parent *cwin.Win, x, y int) *spriteBetaDeath {
-	return &spriteBetaDeath{
-		cgame.NewSpriteAnimated(g, parent,
-			cgame.SpriteAnimatedCfg{
-				Name:       betaDeathName,
-				Frames:     cgame.FramesFromString(betaDeathImgTxts, betaAttr),
-				FrameSpeed: betaDeathSpeed,
-			},
-			x, y)}
-}
-*/

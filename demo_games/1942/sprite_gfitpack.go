@@ -18,9 +18,7 @@ var (
 	giftPackName              = "gift_pack"
 	giftPackSymbolPlaceholder = giftPackSymbol{'?', '?', '?'}
 	// https://www.fileformat.info/info/unicode/char/25d0/index.htm
-	giftPackFrameTxt = strings.Trim(`
-⸨⸨???⸩⸩
-`, "\n")
+	giftPackFrameTxt = `⸨⸨???⸩⸩`
 )
 
 type spriteGiftPack struct {

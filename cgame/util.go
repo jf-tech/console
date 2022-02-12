@@ -6,10 +6,6 @@ import (
 	"sync"
 )
 
-type PairInt struct {
-	A, B int
-}
-
 type ThreadSafeFIFO struct {
 	sync.Mutex
 	elems []interface{}

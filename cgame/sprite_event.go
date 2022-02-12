@@ -2,6 +2,8 @@ package cgame
 
 import (
 	"fmt"
+
+	"github.com/jf-tech/console/cwin"
 )
 
 type SpriteEventType int
@@ -58,6 +60,6 @@ func NewSpriteEventSetPosRelative(s Sprite, dx, dy int) *SpriteEvent {
 	return &SpriteEvent{
 		eventType: SpriteEventSetPosRelative,
 		s:         s,
-		body:      PairInt{A: dx, B: dy},
+		body:      cwin.Point{X: dx, Y: dy},
 	}
 }

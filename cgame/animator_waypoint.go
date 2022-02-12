@@ -16,31 +16,27 @@ type AnimatorWaypoint struct {
 
 	clock *Clock
 
-	curWP                    Waypoint
-	curWPStartX, curWPStartY int
-	curWPDestX, curWPDestY   int
-	curWPStartedTime         time.Duration
+	wp             Waypoint
+	dxDone, dyDone int
+	wpStartedTime  time.Duration
 }
 
 func (aw *AnimatorWaypoint) Animate(s Sprite) AnimatorState {
 	aw.checkToInit(s)
-	elapsed := aw.clock.Now() - aw.curWPStartedTime
+	elapsed := aw.clock.Now() - aw.wpStartedTime
 	ratio := float64(1)
-	if elapsed < aw.curWP.T {
-		ratio = float64(elapsed) / float64(aw.curWP.T)
+	if elapsed < aw.wp.T {
+		ratio = float64(elapsed) / float64(aw.wp.T)
 	}
 	// move proportionally to the elapsed time over aw.curWP.T
-	newX := aw.curWPStartX + int(float64(aw.curWPDestX-aw.curWPStartX)*ratio)
-	newY := aw.curWPStartY + int(float64(aw.curWPDestY-aw.curWPStartY)*ratio)
-	if s.Win().Rect().X != newX || s.Win().Rect().Y != newY {
-		// only make this actual move if the newX/Y is different than current position.
-		s.Win().SetPosAbs(newX, newY)
+	dx, dy := int(float64(aw.wp.X)*ratio), int(float64(aw.wp.Y)*ratio)
+	if aw.dxDone != dx || aw.dyDone != dy {
+		s.Win().SetPosRelative(dx-aw.dxDone, dy-aw.dyDone)
+		aw.dxDone, aw.dyDone = dx, dy
 		if aw.cfg.AfterMove != nil {
 			aw.cfg.AfterMove(s)
 		}
 	}
-	// always checking in case the sprite was created out of bound before the animator even
-	// started, but before the actual move occurs
 	if !s.Win().VisibleInParentClientRect() {
 		if !aw.cfg.KeepAliveWhenOutOfBound {
 			s.Mgr().AddEvent(NewSpriteEventDelete(s))
@@ -50,7 +46,7 @@ func (aw *AnimatorWaypoint) Animate(s Sprite) AnimatorState {
 			return AnimatorCompleted
 		}
 	}
-	if elapsed < aw.curWP.T {
+	if elapsed < aw.wp.T {
 		return AnimatorRunning
 	}
 	if aw.setupNextWaypoint(s) {
@@ -66,17 +62,16 @@ func (aw *AnimatorWaypoint) Animate(s Sprite) AnimatorState {
 }
 
 func (aw *AnimatorWaypoint) setupNextWaypoint(s Sprite) (more bool) {
-	if aw.curWP, more = aw.cfg.Waypoints.Next(); !more {
+	if aw.wp, more = aw.cfg.Waypoints.Next(); !more {
 		return false
 	}
-	curR := s.Win().Rect()
-	aw.curWPStartX, aw.curWPStartY = curR.X, curR.Y
-	aw.curWPDestX, aw.curWPDestY = aw.curWP.X, aw.curWP.Y
-	if aw.curWP.Type == WaypointRelative {
-		aw.curWPDestX += curR.X
-		aw.curWPDestY += curR.Y
+	if aw.wp.Type == WaypointAbs {
+		aw.wp.X -= s.Win().Rect().X
+		aw.wp.Y -= s.Win().Rect().Y
+		aw.wp.Type = WaypointRelative
 	}
-	aw.curWPStartedTime = aw.clock.Now()
+	aw.dxDone, aw.dyDone = 0, 0
+	aw.wpStartedTime = aw.clock.Now()
 	return true
 }
 

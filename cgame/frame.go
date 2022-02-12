@@ -16,6 +16,19 @@ type Cell struct {
 
 type Frame []Cell
 
+func CopyFrame(src Frame) Frame {
+	dst := make(Frame, len(src))
+	copy(dst, src)
+	return dst
+}
+
+func SetAttrInFrame(f Frame, attr cwin.ChAttr) Frame {
+	for i := 0; i < len(f); i++ {
+		f[i].Chx.Attr = attr
+	}
+	return f
+}
+
 func FrameFromStringEx(s string, attr cwin.ChAttr, spaceEqualsTransparency bool) Frame {
 	s = strings.Trim(s, "\n")
 	rect := cwin.TextDimension(s)
@@ -76,12 +89,32 @@ func FrameToWin(f Frame, w *cwin.Win) {
 
 type Frames []Frame
 
-func FramesFromString(ss []string, attr cwin.ChAttr) Frames {
-	var ret Frames
+func FramesFromString(ss []string, attr cwin.ChAttr) (Frames, cwin.Rect) {
+	// Unlike a single frame func FrameFromString where the frame hosting rect
+	// can be implied from the frame content, multiple frames can have different
+	// sizes with which we need to do some normalization:
+	// - compute the bounding rect large enough for all frames.
+	// - use that rect as a container, to "put" all frames in the center of it -
+	//   which means adjusting each frame cell's coordinates.
+	var fs Frames
+	var maxR cwin.Rect
 	for _, s := range ss {
-		ret = append(ret, FrameFromString(s, attr))
+		f := FrameFromString(s, attr)
+		fsR := FrameRect(f)
+		maxR.W = maths.MaxInt(maxR.W, fsR.W)
+		maxR.H = maths.MaxInt(maxR.H, fsR.H)
+		fs = append(fs, f)
 	}
-	return ret
+	for i := 0; i < len(fs); i++ {
+		fsR := FrameRect(fs[i])
+		dx := (maxR.W - fsR.W) / 2
+		dy := (maxR.H - fsR.H) / 2
+		for j := 0; j < len(fs[i]); j++ {
+			fs[i][j].X += dx
+			fs[i][j].Y += dy
+		}
+	}
+	return fs, maxR
 }
 
 type FrameProvider interface {

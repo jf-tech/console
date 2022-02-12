@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -12,10 +11,10 @@ import (
 
 var (
 	alphaName  = "alpha"
-	alphaFrame = cgame.FrameFromString(strings.Trim(`
+	alphaFrame = cgame.FrameFromString(`
   ┃
 -█-█-
-`, "\n"), cwin.ChAttr{Fg: cterm.ColorLightYellow})
+`, cwin.ChAttr{Fg: cterm.ColorLightYellow})
 	alphaBulletName = "alpha_bullet"
 )
 
@@ -97,7 +96,7 @@ func (a *spriteAlpha) Collided(other cgame.Sprite) {
 			a.m.g.GameOver()
 			return
 		}
-		a.m.g.SoundMgr.PlayMP3(sfxWoodsBeenHitFile, sfxClipVol, 1)
+		a.m.g.SoundMgr.PlayMP3(sfxOuchFile, sfxClipVol, 1)
 	}
 }
 

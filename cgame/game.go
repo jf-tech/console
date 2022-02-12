@@ -14,6 +14,7 @@ type Game struct {
 	MasterClock *Clock
 	SpriteMgr   *SpriteManager
 	SoundMgr    *SoundManager
+	Exchange    *Exchange
 
 	loopsDone int64
 	gameOver  bool
@@ -29,6 +30,7 @@ func Init(provider cterm.Provider) (*Game, error) {
 	g.SpriteMgr = newSpriteManager(g)
 	g.SoundMgr = newSoundManager()
 	g.SoundMgr.Init()
+	g.Exchange = newExchange()
 	g.Pause()
 	return g, nil
 }
@@ -57,6 +59,9 @@ func (g *Game) Run(
 					g.Pause()
 				}
 			}
+		}
+		if g.IsPaused() {
+			continue
 		}
 		if optionalRunFunc != nil {
 			stop = optionalRunFunc(ev)
