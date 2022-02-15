@@ -23,17 +23,21 @@ type spriteBeta struct {
 	*cgame.SpriteBase
 }
 
-func (b *spriteBeta) Collided(other cgame.Sprite) {
-	if other.Name() == alphaBulletName || other.Name() == alphaName {
-		b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
-		cgame.CreateExplosion(b, cgame.ExplosionCfg{MaxDuration: betaExplosionDuration})
-		b.Mgr().FindByName(alphaName).(*spriteAlpha).betaKills++
-	}
+func (b *spriteBeta) IsCollidableWith(other cgame.Collidable) bool {
+	return other.Name() == alphaBulletName || other.Name() == alphaName
+}
+
+func (b *spriteBeta) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+	cgame.CreateExplosion(b.SpriteBase, cgame.ExplosionCfg{MaxDuration: betaExplosionDuration})
+	b.Mgr().FindByName(alphaName).(*spriteAlpha).betaKills++
+	return cgame.CollisionAllowed
 }
 
 func createBeta(m *myGame, stageIdx int) {
+	s := &spriteBeta{cgame.NewSpriteBase(m.g, m.winArena, betaName, betaFrame,
+		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(betaFrame).W), 0)}
 	dist := 1000 // large enough to go out of window (and auto destroy)
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
@@ -41,12 +45,12 @@ func createBeta(m *myGame, stageIdx int) {
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(betaSpeed)) * float64(time.Second)),
 			}}),
-		AfterMove: func(s cgame.Sprite) {
+		AfterMove: func() {
 			if !cgame.CheckProbability(betaFiringProbPerStage[stageIdx]) {
 				return
 			}
-			x := s.Win().Rect().X + s.Win().Rect().W/2
-			y := s.Win().Rect().Y + s.Win().Rect().H
+			x := s.Rect().X + s.Rect().W/2
+			y := s.Rect().Y + s.Rect().H
 			pellets := betaFiringPelletsPerStage[stageIdx]
 			if m.easyMode {
 				pellets /= 2
@@ -59,7 +63,6 @@ func createBeta(m *myGame, stageIdx int) {
 			}
 		},
 	})
-	s := &spriteBeta{cgame.NewSpriteBase(m.g, m.winArena, betaName, betaFrame,
-		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(betaFrame).W), 0)}
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }

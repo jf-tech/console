@@ -22,12 +22,14 @@ type spriteDelta struct {
 	*cgame.SpriteBase
 }
 
-func (d *spriteDelta) Collided(other cgame.Sprite) {
-	if other.Name() == alphaBulletName || other.Name() == alphaName {
-		d.Mgr().AddEvent(cgame.NewSpriteEventDelete(d))
-		cgame.CreateExplosion(d, cgame.ExplosionCfg{MaxDuration: deltaExplosionDuration})
-		d.Mgr().FindByName(alphaName).(*spriteAlpha).deltaKills++
-	}
+func (d *spriteDelta) IsCollidableWith(other cgame.Collidable) bool {
+	return other.Name() == alphaBulletName || other.Name() == alphaName
+}
+
+func (d *spriteDelta) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+	cgame.CreateExplosion(d.SpriteBase, cgame.ExplosionCfg{MaxDuration: deltaExplosionDuration})
+	d.Mgr().FindByName(alphaName).(*spriteAlpha).deltaKills++
+	return cgame.CollisionAllowed
 }
 
 func createDelta(m *myGame) {
@@ -39,14 +41,15 @@ func createDelta(m *myGame) {
 }
 
 func createVerticalDelta(m *myGame) {
+	y := 0
+	x := rand.Int() % (m.winArena.ClientRect().W - cgame.FrameRect(deltaFrame).W)
+	s := &spriteDelta{cgame.NewSpriteBase(m.g, m.winArena, deltaName, deltaFrame, x, y)}
 	vspeed := deltaVerticalSpeed
 	if m.easyMode {
 		vspeed *= cgame.CharPerSec(deltaSpeedDiscountEasy)
 	}
 	dist := 1000 // large enough to go out of window (and auto destroy)
-	y := 0
-	x := rand.Int() % (m.winArena.ClientRect().W - cgame.FrameRect(deltaFrame).W)
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
@@ -54,18 +57,20 @@ func createVerticalDelta(m *myGame) {
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(vspeed)) * float64(time.Second)),
 			}})})
-	s := &spriteDelta{cgame.NewSpriteBase(m.g, m.winArena, deltaName, deltaFrame, x, y)}
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }
 
 func createHorizontalDelta(m *myGame) {
 	x := -cgame.FrameRect(deltaFrame).W + 1
+	y := rand.Int() % (m.winArena.ClientRect().H - cgame.FrameRect(deltaFrame).H)
+	s := &spriteDelta{cgame.NewSpriteBase(m.g, m.winArena, deltaName, deltaFrame, x, y)}
 	dist := 1000 // large enough to go out of window (and auto destroy)
 	if cgame.CheckProbability("50%") {
 		x = m.winArena.ClientRect().W - 1
 		dist = -dist
 	}
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
@@ -73,7 +78,6 @@ func createHorizontalDelta(m *myGame) {
 				Y:    0,
 				T:    time.Duration((float64(abs(dist)) / float64(deltaHorizontalSpeed)) * float64(time.Second)),
 			}})})
-	y := rand.Int() % (m.winArena.ClientRect().H - cgame.FrameRect(deltaFrame).H)
-	s := &spriteDelta{cgame.NewSpriteBase(m.g, m.winArena, deltaName, deltaFrame, x, y)}
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }

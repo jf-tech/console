@@ -15,21 +15,30 @@ type spriteBullet struct {
 	*cgame.SpriteBase
 }
 
-func (b *spriteBullet) Collided(other cgame.Sprite) {
+func (b *spriteBullet) IsCollidableWith(other cgame.Collidable) bool {
 	if b.Name() == alphaBulletName {
 		switch other.Name() {
 		case betaName, gammaName, deltaName, bossName:
-			b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
+			return true
 		}
-	} else if other.Name() == alphaName {
-		b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
+		return false
 	}
+	return other.Name() == alphaName
+}
+
+func (b *spriteBullet) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+	b.Mgr().DeleteSprite(b)
+	return cgame.CollisionAllowed
 }
 
 func createBullet(m *myGame, name string, attr cwin.ChAttr,
 	dx, dy int, speed cgame.CharPerSec, x, y int) {
+
+	s := &spriteBullet{cgame.NewSpriteBase(
+		m.g, m.winArena, name, cgame.FrameFromString(bulletFrameTxt, attr), x, y)}
+
 	dist := 1000 // large enough to go out of window (and auto destroy)
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
@@ -37,7 +46,6 @@ func createBullet(m *myGame, name string, attr cwin.ChAttr,
 				Y:    dy * dist,
 				T:    time.Duration((float64(dist) / float64(speed)) * float64(time.Second)),
 			}})})
-	s := &spriteBullet{cgame.NewSpriteBase(
-		m.g, m.winArena, name, cgame.FrameFromString(bulletFrameTxt, attr), x, y)}
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }

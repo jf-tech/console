@@ -5,19 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
 )
 
-type interStageExchange struct {
-	gpWeapon *giftPack
-}
-
 type stage struct {
 	m        *myGame
 	stageIdx int
-	exchange *interStageExchange
 
 	stageStartTime time.Duration
 	stageSkipped   bool
@@ -38,13 +32,16 @@ func (s *stage) Run() {
 				// also let retreat (down) a bit faster than up to make the game exp
 				// better.
 				if ev.Key == cterm.KeyArrowUp {
-					s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
+					alpha.SetPosRel(&cwin.Point{X: 0, Y: -1}, func() {
+						alpha.SetPosRel(&cwin.Point{X: 0, Y: 1})
+					})
+					alpha.SetPosRel(&cwin.Point{X: 0, Y: -1})
 				} else if ev.Key == cterm.KeyArrowDown {
-					s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 2))
+					alpha.SetPosRel(&cwin.Point{X: 0, Y: 2})
 				} else if ev.Key == cterm.KeyArrowLeft {
-					s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
+					alpha.SetPosRel(&cwin.Point{X: -3, Y: 0})
 				} else if ev.Key == cterm.KeyArrowRight {
-					s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
+					alpha.SetPosRel(&cwin.Point{X: 3, Y: 0})
 				} else if ev.Ch == ' ' {
 					alpha.fireWeapon()
 				} else if cwin.FindKey(skipStageKeys, ev) {
@@ -179,7 +176,7 @@ func (s *stage) checkStageDone() bool {
 		}
 	}
 	// we're truly down. remove all the non enemy sprites
-	s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDeleteAll())
+	s.m.g.SpriteMgr.DeleteAll()
 	return true
 }
 
@@ -247,7 +244,7 @@ Memory usage: %s
 		s.m.winArena.Rect(),
 		func() string {
 			if as, ok := s.m.g.SpriteMgr.TryFindByName(alphaName); ok {
-				return as.Win().Rect().String()
+				return as.Rect().String()
 			}
 			return "N/A"
 		}(),
@@ -257,6 +254,6 @@ Memory usage: %s
 		s.m.g.SpriteMgr.DbgStats()))
 }
 
-func newStage(m *myGame, idx int, e *interStageExchange) *stage {
-	return &stage{m: m, stageIdx: idx, exchange: e}
+func newStage(m *myGame, idx int) *stage {
+	return &stage{m: m, stageIdx: idx}
 }

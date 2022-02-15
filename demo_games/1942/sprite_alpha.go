@@ -21,7 +21,6 @@ var (
 type spriteAlpha struct {
 	*cgame.SpriteBase
 	m          *myGame
-	stage      *stage
 	betaKills  int
 	gammaKills int
 	deltaKills int
@@ -29,21 +28,12 @@ type spriteAlpha struct {
 	gpWeapon   *giftPack
 }
 
-func (a *spriteAlpha) SetPosRelative(dx, dy int) {
-	newR := a.Win().Rect()
-	newR.X += dx
-	newR.Y += dy
-	if overlapped, r := a.m.winArena.ClientRect().ToOrigin().Overlap(newR); overlapped && r == newR {
-		a.Win().SetPosRelative(dx, dy)
-	}
-}
-
 func (a *spriteAlpha) fireWeapon() {
-	x := a.Win().Rect().X + a.Win().Rect().W/2
-	y := a.Win().Rect().Y - 1
+	x := a.Rect().X + a.Rect().W/2
+	y := a.Rect().Y - 1
 	if a.gpWeapon == nil || a.gpWeapon.remainingLife() <= 0 {
 		a.gpWeapon = nil
-		a.stage.exchange.gpWeapon = nil
+		delete(a.m.g.Exchange.StringData, exchangeGiftPackWeapon)
 		createBullet(a.m, alphaBulletName, alphaBulletAttr, 0, -1, alphaBulletSpeed, x, y)
 	} else {
 		switch a.gpWeapon.name {
@@ -77,10 +67,13 @@ func (a *spriteAlpha) killStats() map[string]int {
 	}
 }
 
-func (a *spriteAlpha) Collided(other cgame.Sprite) {
-	a.Win().ToBottom()
+func (a *spriteAlpha) IsCollidableWith(other cgame.Collidable) bool {
+	return other.Name() != alphaBulletName
+}
+
+func (a *spriteAlpha) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+	ret := cgame.CollisionAllowed
 	switch other.Name() {
-	case alphaBulletName:
 	case giftPackName:
 		switch other.(*spriteGiftPack).gpSym {
 		case gpShotgunSym:
@@ -88,24 +81,30 @@ func (a *spriteAlpha) Collided(other cgame.Sprite) {
 		case gpShotgun2Sym:
 			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
 		}
-		a.stage.exchange.gpWeapon = a.gpWeapon
+		a.m.g.Exchange.GenericData[exchangeGiftPackWeapon] = a.gpWeapon
 		a.m.g.SoundMgr.PlayMP3(sfxWeaponUpgradedFile, sfxClipVol, 1)
 	default:
 		a.hit++
 		if !a.m.invincible {
 			a.m.g.GameOver()
-			return
+			return ret
 		}
 		a.m.g.SoundMgr.PlayMP3(sfxOuchFile, sfxClipVol, 1)
 	}
+	return ret
 }
 
 func createAlpha(m *myGame, stage *stage) {
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(&spriteAlpha{
+	gp := (*giftPack)(nil)
+	if d, ok := m.g.Exchange.GenericData[exchangeGiftPackWeapon]; ok {
+		gp = d.(*giftPack)
+	}
+	alpha := &spriteAlpha{
 		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, alphaName, alphaFrame,
 			(m.winArena.ClientRect().W-cgame.FrameRect(alphaFrame).W)/2,
 			m.winArena.ClientRect().H-cgame.FrameRect(alphaFrame).H),
 		m:        m,
-		stage:    stage,
-		gpWeapon: stage.exchange.gpWeapon}))
+		gpWeapon: gp}
+	alpha.SetParentRectBound(true)
+	m.g.SpriteMgr.AddSprite(alpha)
 }

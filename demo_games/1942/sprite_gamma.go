@@ -23,17 +23,21 @@ type spriteGamma struct {
 	*cgame.SpriteBase
 }
 
-func (g *spriteGamma) Collided(other cgame.Sprite) {
-	if other.Name() == alphaBulletName || other.Name() == alphaName {
-		g.Mgr().AddEvent(cgame.NewSpriteEventDelete(g))
-		cgame.CreateExplosion(g, cgame.ExplosionCfg{MaxDuration: gammaExplosionDuration})
-		g.Mgr().FindByName(alphaName).(*spriteAlpha).gammaKills++
-	}
+func (d *spriteGamma) IsCollidableWith(other cgame.Collidable) bool {
+	return other.Name() == alphaBulletName || other.Name() == alphaName
+}
+
+func (g *spriteGamma) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+	cgame.CreateExplosion(g.SpriteBase, cgame.ExplosionCfg{MaxDuration: gammaExplosionDuration})
+	g.Mgr().FindByName(alphaName).(*spriteAlpha).gammaKills++
+	return cgame.CollisionAllowed
 }
 
 func createGamma(m *myGame, stageIdx int) {
+	s := &spriteGamma{cgame.NewSpriteBase(m.g, m.winArena, gammaName, gammaFrame,
+		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(gammaFrame).W), 0)}
 	dist := 1000 // large enough to go out of window (and auto destroy)
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
@@ -41,12 +45,12 @@ func createGamma(m *myGame, stageIdx int) {
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(gammaSpeed)) * float64(time.Second)),
 			}}),
-		AfterMove: func(s cgame.Sprite) {
+		AfterMove: func() {
 			if !cgame.CheckProbability(gammaFiringProbPerStage[stageIdx]) {
 				return
 			}
-			centerX := s.Win().Rect().X + s.Win().Rect().W/2
-			centerY := s.Win().Rect().Y + s.Win().Rect().H/2
+			centerX := s.Rect().X + s.Rect().W/2
+			centerY := s.Rect().Y + s.Rect().H/2
 			for y := -1; y <= 1; y++ {
 				for x := -1; x <= 1; x++ {
 					if x == 0 && y == 0 {
@@ -61,7 +65,6 @@ func createGamma(m *myGame, stageIdx int) {
 			}
 		},
 	})
-	s := &spriteGamma{cgame.NewSpriteBase(m.g, m.winArena, gammaName, gammaFrame,
-		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(gammaFrame).W), 0)}
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }

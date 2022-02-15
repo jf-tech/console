@@ -8,10 +8,10 @@ import (
 
 func createSlideInOutBanner(
 	m *myGame, frame cgame.Frame, inOut, stay time.Duration, afterFinish func()) {
-
 	frameR := cgame.FrameRect(frame)
 	y := (m.winArena.ClientRect().H - frameR.H) / 2
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	s := cgame.NewSpriteBase(m.g, m.winArena, "banner", frame, -frameR.W+1, y)
+	a := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointAbs,
@@ -32,10 +32,10 @@ func createSlideInOutBanner(
 				T:    inOut,
 			},
 		}),
-		AfterFinish: func(cgame.Sprite) {
+		AfterFinish: func() {
 			afterFinish()
 		},
 	})
-	s := cgame.NewSpriteBase(m.g, m.winArena, "banner", frame, -frameR.W+1, y)
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }

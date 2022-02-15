@@ -26,15 +26,24 @@ type spriteGiftPack struct {
 	gpSym giftPackSymbol
 }
 
-func (g *spriteGiftPack) Collided(other cgame.Sprite) {
-	if other.Name() == alphaName {
-		g.Mgr().AddEvent(cgame.NewSpriteEventDelete(g))
-	}
+func (g *spriteGiftPack) IsCollidableWith(other cgame.Collidable) bool {
+	return other.Name() == alphaName
+}
+
+func (g *spriteGiftPack) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+	g.Mgr().DeleteSprite(g)
+	return cgame.CollisionAllowed
 }
 
 func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.ChAttr) {
+	frame := cgame.FrameFromString(strings.ReplaceAll(
+		giftPackFrameTxt, string(giftPackSymbolPlaceholder[:]), string(sym[:])), symAttr)
+	s := &spriteGiftPack{
+		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, giftPackName, frame,
+			rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(frame).W), 0),
+		gpSym: sym}
 	dist := 1000 // large enough to go out of window (and auto destroy)
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
@@ -42,13 +51,8 @@ func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.ChAttr) {
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(giftPackMoveSpeed)) * float64(time.Second)),
 			}})})
-	frame := cgame.FrameFromString(strings.ReplaceAll(
-		giftPackFrameTxt, string(giftPackSymbolPlaceholder[:]), string(sym[:])), symAttr)
-	s := &spriteGiftPack{
-		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, giftPackName, frame,
-			rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(frame).W), 0),
-		gpSym: sym}
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }
 
 type giftPack struct {

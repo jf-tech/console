@@ -1,0 +1,147 @@
+[2022/02/15 - cgame/demo/particle]
+- There is still a bug when a new particle circle is created, it collision tested fine, but
+  when it's added to the system, somehow it intersects with other particle circle.
+  [✅] figured out. the two circle are "across" but amazingly none of their characters are
+  overlapping with others!! Gist is: this is a terminal/character based system, so it's possible
+  things like this happen. If truly want to avoid it, don't make the interior of the circle all
+  TransparentChx.
+- [❎] also think about how real speed (vector) work in a non-zero sized circle; think about
+  introducing Speed (velocity + theta angle) - table it now. not doing it.
+[2022/02/15 - cgame]
+- [✅] added ColliableRegistry in SpriteManager - it's an easy way to declare who can collide
+  with whom
+- [✅] new collision detection orchestration. Finally a system I'm reasonably happy, that it
+  provides immediacy as well as avoidance of infinite recursion. And simplied quite a bit too:
+
+  Basically Sprite now has a single method called Update. Update can update the sprite's position
+  (by dx,dy) or sprite's frame, or both. The Update arg has flags to indicate whether it should
+  do boundary checking and/or collision checking.
+
+  If either check fails, it will call a PreUpdateNotify (specified in the Update arg) to notify
+  whoever is calling the Update - be it from the game code directly or from an Animator.
+
+  The protocol is PreUpdateNotify should never directly or indrectly call Update with boundary check
+  or collision detection check flags turned on - to avoid infinite recursion.
+
+  Doing this, we've avoided multiple interfaces proposed below. In fac there is no other interface
+  than just Sprite itself and its almighty SpriteBase implementation.
+- [✅] fixed a bug in Sprite.inBoundsCheck where it's always return OK until sprite is fully out
+   of sight.
+- [✅] demo/particle.go is added. Pretty cool visualizatoin in a terminal based system!!
+- However, there seems to be a bug where some particles can get stuck for unknown reasons.
+
+[2022/02/14 - cgame]
+- a bug in the collision detection: if the implementation of CollisionResolvable.ResolveCollision
+  calls SpriteBase.SetPosRel or SpriteBase.SetPosFrame, we might got into infinite recursion:
+  A bullet hits a sprite, the sprite's ResolveCollision calls SetPosFrame (say, to update its
+  image to update the hp bar), which causes collision again, since the bullet is still there (even
+  though it's scheduled to be deleted by the bullet's collision resolution, but that delete event
+  is Q'ed so not happened yet). Even if we change SetPosRel/SetPosFrame into event/Q based, the
+  problem still exists - we just turn infinite recursion into infinite Q operation: a bullet hit the
+  sprite, the sprite schedule an event to update its frame. It's still possible that that set frame
+  event gets processed before the bullet destruction event. Now you might argue, eventually the
+  bullet destrution event will get processed? True, but that's just one example, what if the other
+  colliding party doesn't go away, we still end up in this infinite Q operaton.
+
+  what should be the solution? We can somehow have a flag to suppress collision detecction during
+  CollisionResolvable.ResolveCollision call. That might lead into a new situation where we have a
+  collision, then in the resolution, we set a new position or a new frame, which causes a collision
+  but its detection is suppressed. And since all collision detection now is motion based - either
+  by SetPosRel or SetPosFrame, which means as long as there are no such calls, the collision would
+  persist without handling. Maybe a necessary evil to tolerate with?
+- In Sprite.setWithCollisionDetection, we use
+    ```
+    s, _ := sb.Mgr().TryFindByUID(sb.UID())
+	  thisCollidable, _ = s.(Collidable)
+	  thisResolvable, _ := s.(CollisionResolvable)
+    ```
+  to type cast, which means you can't use SetPosFrame/SetPosRel if the sprite isn't added into
+  SpriteMgr yet (not just merely call SpriteMgr.AddSprite, you have to wait until the Create
+  msg has been processed). Is this a big problem? Since why do you have to do collision detection
+  before your sprite even added into the system?
+- Collidable.IsCollidableWith is too clumsy to use. Ideally any sprite with Collidable should be
+  considered by default colliable. And by default it's collision resolution is Not Allowed.
+
+
+[2022/02/13 - cgame]
+- add layer support in cgame? So things like background sprites never interact with foreground stuff
+
+[2022/02/13 - cgame]
+- [✅] Move SetPosRel to Sprite interface; remove PositionSettable
+- [✅] Create CollideResolvable
+- [❎] Rename Animator to Animatable
+- [✅] We have 4 interfaces:
+  - Sprite
+  - Collidable
+  - CollideResolvable
+  - Animatable
+- [✅] a sprite can implement some or all of them.
+- [✅] cgame.SpriteBase will implement Sprite
+  - Sprite doesn't provide access to Win() anymore. It does provide, Rect().
+- [✅] Collidable means the sprite isn't a "ghost" or "transparent" thingy, it can be collided
+  with other Collidable. If a sprite is Collidable then it's considered a concrete thing
+  that will prevent other Colliable from intruding.
+- [✅] CollideResolvable contains Colliable. It means it can figure out what to do if collision
+  happens, instead just of stopping.
+- [✅] Animatable means the sprite can change pos/frame by itself (presumably over time).
+  - we can have composite Animatable to seq multple animation together (such as both position
+  change as well as frame change)
+
+- [✅] If a keyboard event comes, game dev can call sprite.SetPosFrame. SpriteBase's SetPosFrame
+  will see if itself is not Collidable, then just set the position and/or frame, done.
+- [✅] If the sprite is Colliable/CollideResolvable, then ask SpriteMgr to do a collision check with
+  the new pos/frame. If not collided, then set Pos/Frame done.
+  So now it's collided, if the sprite is only Colliable, then don't do any thing on this sprite
+  (basically not setting the new pos/frame). If it's CollideResolvable, let it know.
+  For the other collision involved parties (could bemore than one), if they are only collidables,
+  then nothing needs to be done; if they are CollideResolvable, let them know.
+
+
+[2022/02/12 - cgame]
+- [✅] Need to reconsider How AnimatorWaypoint is implemented: currently it can't be combined with
+  other movement: e.g. if a sprite is dropping at a certain speed, we would use AnimatorWaypoint
+  to achieve this, each delta T time, Y increases dy. However, what if we also want the sprite
+  can be nudged around by keyboard event. It completely breaks down as the AnimatorWaypoint
+  comuptes and remembers src X/Y and dest X/Y at the beginning of T time, and then incrementally
+  move toward the dest X/Y. The problem is during the T period what if the position of the sprite
+  is changed by keyboard or maybe another animator? This problem stems from the fact we calculate
+  aboslute src/dest X/Y at the beginning of the period; solution should be we'd rather record
+  how much total remaining dx/dy is needed and as time goes on, we deduct remaining dx/dy until
+  they are zero.
+- [✅] Rename cgame.PairInt to cwin.Point
+-
+
+[2022/02/11 - cgame]
+- [✅] think about PositionSettable. should it be on spriteBase or not.
+  pro: easier; a bit more consistent: currently game can directly call its sprites to do
+  lots of things, like fire weapon, so why not setting its position?
+  con: messy in term of sprite management such as collision detection.
+
+- [✅] think about how collision detection should be done:
+  should collision be detected before or after overlap event? for bullet hitting stuff that
+  is probably fine, but for a ball bouncing off wall, collision detected after overlap seems
+  wrong. one caveat is even if when collision detected after overlap, but it is not yet shown
+  to the UI yet. remember, we only update UI (calling WinSys.Update()) after processing all the
+  events, sprites, and collisions. thus we might come up with a mechanism to alert game of
+  actual collision occurred, so they can change course. Now the problem is how could the game
+  dev know what the previous non-collided position would be? Should they always remember the
+  position or should sprite mgr do it.
+  one idea is to even more so strengthening the PositionSettable, all sprite position must be
+  set through PositionSettable so SpriteMgr would detect collision immediately. However, since
+  our SpriteBase expose Win() and there is nothing to prevent dev to directly mucking around
+  sprite Position. Should we introduce a new interface for sprite to shim all the necessary
+  cwin.Win functionality but remove the position setting method?
+
+- [❎] what about current Animator interface plus a... in SpriteEventCreate vs always a single
+Animator (or call it Animatable) but we can provide composor. With composer we (game dev) can
+easily start/stop an animation without impacting other ongoing animation on a sprite.
+
+- Any idea on how to do scripting / choreography - not all (in fact most) games do random gen
+  stuff, most are actually scripted release of enemies.
+
+[2022/02/11 - tetris]
+- myGame have a WxH 2D slices to hold sprites - each of which occupies one settled/dead block.
+- <- or -> or natural drop would make a piece to go overlap with these dead sprites, when colliable
+  is called back, we know we need to turn the active piece into 4 small dead blocks
+  the problem is, how do i know where those dead bocks would be - since the current collided
+  position is after a combination of <- / -> / natural drop.

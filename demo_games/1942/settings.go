@@ -95,4 +95,6 @@ var (
 	gpShotgun2Life     = time.Minute
 	gpShotgun2Prob     = cgame.NewPeriodicProbabilityChecker("2%", time.Second)
 	gpShotgun2ProbEasy = cgame.NewPeriodicProbabilityChecker("10%", time.Second)
+
+	exchangeGiftPackWeapon = "giftpack_weapon"
 )

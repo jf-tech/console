@@ -20,8 +20,12 @@ type Game struct {
 	gameOver  bool
 }
 
-func Init(provider cterm.Provider) (*Game, error) {
-	rand.Seed(time.Now().UnixNano())
+func Init(provider cterm.Provider, seed ...int64) (*Game, error) {
+	if len(seed) > 0 {
+		rand.Seed(seed[0])
+	} else {
+		rand.Seed(time.Now().UnixNano())
+	}
 	winSys, err := cwin.Init(provider)
 	if err != nil {
 		return nil, err
@@ -58,6 +62,7 @@ func (g *Game) Run(
 				} else {
 					g.Pause()
 				}
+				continue
 			}
 		}
 		if g.IsPaused() {

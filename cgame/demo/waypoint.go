@@ -34,8 +34,6 @@ func main() {
 	g.Resume()        // game (master clock) is always paused right after init.
 
 	doDemo(g, demoWin)
-
-	g.WinSys.SyncExpectKey(nil)
 }
 
 func doDemo(g *cgame.Game, demoWin *cwin.Win) {
@@ -47,10 +45,9 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	// create a sprite
 	startX, startY := -cgame.FrameRect(frame).W+1, (demoWin.ClientRect().H-cgame.FrameRect(frame).H)/2
 	s := cgame.NewSpriteBase(g, demoWin, "demo_sprite", frame, startX, startY)
-
 	// create a simple waypoint animator has only one waypoint that gets
 	// the sprite to go across the demo window.
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	s.AddAnimator(cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointAbs,
@@ -59,24 +56,23 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 				T:    3 * time.Second,
 			},
 		}),
-		AfterMove: func(s cgame.Sprite) {
-			demoWin.SetTitle(
-				fmt.Sprintf("Demo: Sprite%s", s.Win().Rect()),
-				cwin.AlignLeft)
+		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
+			AfterUpdate: func() {
+				demoWin.SetTitle(
+					fmt.Sprintf("Demo: Sprite%s", s.Rect()),
+					cwin.AlignLeft)
+			},
+			AfterFinish: func() {
+				demoWin.SetTitle(
+					fmt.Sprintf("Demo: Sprite%s. Press any key to exit.", s.Rect()),
+					cwin.AlignLeft)
+				g.GameOver()
+			},
 		},
-		AfterFinish: func(s cgame.Sprite) {
-			demoWin.SetTitle(
-				fmt.Sprintf("Demo: Sprite%s. Press any key to exit.", s.Win().Rect()),
-				cwin.AlignLeft)
-			g.GameOver()
-		},
-	})
-
-	// add the sprite and its animator to the sprite manager
-	g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
-
+	}))
+	g.SpriteMgr.AddSprite(s)
 	// run the demo
-	g.Run(nil, nil, nil)
+	g.Run(cwin.Keys('q', cterm.KeyEsc), nil, nil)
 }
 
 func readFile(relPath string) string {

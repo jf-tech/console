@@ -15,8 +15,10 @@ var (
 )
 
 func createBackgroundStar(m *myGame) {
+	s := cgame.NewSpriteBase(m.g, m.winArena, bgStarName, bgStarFrame,
+		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(bgStarFrame).W), 0)
 	dist := 1000 // large enough to go out of window (and auto destroy)
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
 				Type: cgame.WaypointRelative,
@@ -24,9 +26,8 @@ func createBackgroundStar(m *myGame) {
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(bgStarSpeed)) * float64(time.Second)),
 			}}),
-		AfterMove: func(s cgame.Sprite) { s.Win().ToBottom() },
 	})
-	s := cgame.NewSpriteBase(m.g, m.winArena, bgStarName, bgStarFrame,
-		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(bgStarFrame).W), 0)
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	// TODO how make the star goto bottom.
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AddSprite(s)
 }

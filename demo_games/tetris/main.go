@@ -66,12 +66,13 @@ func (m *myGame) main() int {
 
 	m.createCountDown()
 	m.g.Run(nil, nil, func(ev cterm.Event) bool {
-		_, ok := m.g.Exchange.BData["countdown_done"]
+		_, ok := m.g.Exchange.BoolData["countdown_done"]
 		return ok
 	})
 
 	m.s = m.genRandomSpritePiece(m.winArena, cwin.Point{X: 4, Y: 0})
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(m.s, m.s.createNaturalDropAnimator()))
+	m.s.AddAnimator(m.s.createNaturalDropAnimator())
+	m.g.SpriteMgr.AddSprite(m.s)
 	m.s.setupShadow(m.s)
 	m.g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys('p'), func(ev cterm.Event) bool {
 		if ev.Type == cterm.EventKey {
@@ -279,16 +280,16 @@ Y88b  d88P Y88..88P       "
  "Y8888P88  "Y88P"       888
 `,
 	}, cwin.ChAttr{Fg: cterm.ColorLightYellow})
-	a := cgame.NewAnimatorFrame(cgame.AnimatorFrameCfg{
+	s := cgame.NewSpriteBaseR(m.g, m.winArena, "count_down", frames[0], framesR)
+	a := cgame.NewAnimatorFrame(s, cgame.AnimatorFrameCfg{
 		Frames: cgame.NewSimpleFrameProvider(frames, 800*time.Millisecond, false),
-		AfterFinish: func(s cgame.Sprite) {
-			m.g.Exchange.BData["countdown_done"] = true
+		AfterFinish: func() {
+			m.g.Exchange.BoolData["countdown_done"] = true
 		},
 	})
 	framesR.X = (m.winArena.ClientRect().W - framesR.W) / 2
 	framesR.Y = (m.winArena.ClientRect().H - framesR.H) / 2
-	s := cgame.NewSpriteBaseR(m.g, m.winArena, "count_down", frames[0], framesR)
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	m.g.SpriteMgr.AddSprite(s)
 }
 
 func (m *myGame) createSpritePiece(
@@ -447,7 +448,7 @@ func (s *spritePiece) move(dlx int) {
 
 func (*spritePiece) setupShadow(s *spritePiece) {
 	if s.m.shadow != nil {
-		s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s.m.shadow))
+		s.m.g.SpriteMgr.DeleteSprite(s.m.shadow)
 		s.m.shadow = nil
 	}
 	for y := s.m.lh - 1; y >= Y2LY(s.Win().Rect().Y+s.Win().Rect().H); y-- {
@@ -473,7 +474,7 @@ func (s *spritePiece) down() {
 }
 
 func (s *spritePiece) createNaturalDropAnimator() cgame.Animator {
-	return cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{Waypoints: s})
+	return cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{Waypoints: s})
 }
 
 func (s *spritePiece) Next() (cgame.Waypoint, bool) {

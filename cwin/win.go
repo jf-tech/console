@@ -229,7 +229,7 @@ func (w *Win) SetPosAbs(x, y int) {
 	w.cfg.R.Y = y
 }
 
-func (w *Win) SetPosRelative(dx, dy int) {
+func (w *Win) SetPosRel(dx, dy int) {
 	w.SetPosAbs(w.cfg.R.X+dx, w.cfg.R.Y+dy)
 }
 

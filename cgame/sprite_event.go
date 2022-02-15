@@ -2,64 +2,44 @@ package cgame
 
 import (
 	"fmt"
-
-	"github.com/jf-tech/console/cwin"
 )
 
-type SpriteEventType int
+type spriteEventType int
 
 const (
-	SpriteEventCreate SpriteEventType = iota
-	SpriteEventDelete
-	SpriteEventDeleteAll
-	SpriteEventSetPosRelative
+	spriteEventCreate spriteEventType = iota
+	spriteEventDelete
+	spriteEventDeleteAll
 	spriteEventCount
 )
 
-func (t SpriteEventType) String() string {
+func (t spriteEventType) String() string {
 	switch t {
-	case SpriteEventCreate:
-		return "SpriteEventCreate"
-	case SpriteEventDelete:
-		return "SpriteEventDelete"
-	case SpriteEventDeleteAll:
-		return "SpriteEventDeleteAll"
-	case SpriteEventSetPosRelative:
-		return "SpriteEventSetPosRelative"
+	case spriteEventCreate:
+		return "spriteEventCreate"
+	case spriteEventDelete:
+		return "spriteEventDelete"
+	case spriteEventDeleteAll:
+		return "spriteEventDeleteAll"
 	default:
-		panic(fmt.Sprintf("Unknown SpriteEvent value: %d", int(t)))
+		panic(fmt.Sprintf("unknown spriteEventType value: %d", int(t)))
 	}
 }
 
-type SpriteEvent struct {
-	eventType SpriteEventType
+type spriteEvent struct {
+	eventType spriteEventType
 	s         Sprite
 	body      interface{}
 }
 
-func NewSpriteEventCreate(s Sprite, animators ...Animator) *SpriteEvent {
-	return &SpriteEvent{
-		eventType: SpriteEventCreate,
-		s:         s,
-		body:      animators,
-	}
+func newSpriteEventCreate(s Sprite) *spriteEvent {
+	return &spriteEvent{eventType: spriteEventCreate, s: s}
 }
 
-func NewSpriteEventDelete(s Sprite) *SpriteEvent {
-	return &SpriteEvent{
-		eventType: SpriteEventDelete,
-		s:         s,
-	}
+func newSpriteEventDelete(s Sprite) *spriteEvent {
+	return &spriteEvent{eventType: spriteEventDelete, s: s}
 }
 
-func NewSpriteEventDeleteAll() *SpriteEvent {
-	return &SpriteEvent{eventType: SpriteEventDeleteAll}
-}
-
-func NewSpriteEventSetPosRelative(s Sprite, dx, dy int) *SpriteEvent {
-	return &SpriteEvent{
-		eventType: SpriteEventSetPosRelative,
-		s:         s,
-		body:      cwin.Point{X: dx, Y: dy},
-	}
+func newSpriteEventDeleteAll() *spriteEvent {
+	return &spriteEvent{eventType: spriteEventDeleteAll}
 }
