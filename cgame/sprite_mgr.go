@@ -113,7 +113,6 @@ func (sm *SpriteManager) DbgStats() string {
 	for _, k := range keys {
 		sb.WriteString(fmt.Sprintf("- '%s': %d\n", k, spriteNums[k]))
 	}
-	sb.WriteString(fmt.Sprintf("CollidableRegistry:\n%s", sm.collidableRegistry.DbgStats()))
 	return sb.String()
 }
 
