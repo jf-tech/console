@@ -15,20 +15,9 @@ type spriteBullet struct {
 	*cgame.SpriteBase
 }
 
-func (b *spriteBullet) IsCollidableWith(other cgame.Collidable) bool {
-	if b.Name() == alphaBulletName {
-		switch other.Name() {
-		case betaName, gammaName, deltaName, bossName:
-			return true
-		}
-		return false
-	}
-	return other.Name() == alphaName
-}
-
-func (b *spriteBullet) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+func (b *spriteBullet) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
 	b.Mgr().DeleteSprite(b)
-	return cgame.CollisionAllowed
+	return cgame.CollisionResponseJustDoIt
 }
 
 func createBullet(m *myGame, name string, attr cwin.ChAttr,
@@ -45,7 +34,8 @@ func createBullet(m *myGame, name string, attr cwin.ChAttr,
 				X:    dx * dist,
 				Y:    dy * dist,
 				T:    time.Duration((float64(dist) / float64(speed)) * float64(time.Second)),
-			}})})
+			}}),
+	})
 	s.AddAnimator(a)
 	m.g.SpriteMgr.AddSprite(s)
 }

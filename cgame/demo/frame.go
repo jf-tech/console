@@ -75,7 +75,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 				return fmt.Sprintf(
 					"Demo - space to pause/resume, any other key to exit. Dir: %s. Dist: %2d Time: %s",
 					g.Exchange.StringData["curDir"], g.Exchange.IntData["curDist"],
-					g.MasterClock.Now()/time.Millisecond*time.Millisecond)
+					g.MasterClock.Now().Round(time.Millisecond))
 			}(),
 			cwin.AlignLeft)
 		if ev.Type != cterm.EventKey {

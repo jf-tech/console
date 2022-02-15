@@ -45,24 +45,23 @@ type spriteBoss struct {
 	hpLeft int
 }
 
-func (b *spriteBoss) IsCollidableWith(other cgame.Collidable) bool {
-	return other.Name() == alphaBulletName || other.Name() == alphaName
-}
-
-func (b *spriteBoss) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+func (b *spriteBoss) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
 	b.hpLeft--
-	// TODO/BUG, infinite recursion.
-	b.SetFrame(createBossFrameWithHP(b.hpLeft))
-	// a bullet hits me, so during collision resolution i'm setting up the new frame.
-	// since the bullet still here, the action of setting up new frame causes collision
-	// so on and so forth.
+	b.Update(cgame.UpdateArg{
+		F: createBossFrameWithHP(b.hpLeft),
+		// must off, or we turn into infinite recursion, because whatever hits the boss (alpha
+		// or alpha bullet) is still there, thus the frame update would still generate a collision
+		// event which would call this, so on and so forth.
+		CD: cgame.CollisionDetectionOff,
+	})
 	if b.hpLeft <= 0 {
 		cgame.CreateExplosion(b.SpriteBase, cgame.ExplosionCfg{
 			MaxDuration: bossExplosionDuration,
 			SpriteName:  bossExplosionName,
 		})
 	}
-	return cgame.CollisionAllowed
+	return cgame.CollisionResponseJustDoIt
+
 }
 
 func createBossFrameWithHP(hpLeft int) cgame.Frame {
@@ -123,8 +122,10 @@ func createBoss(m *myGame) {
 		hpLeft: bossHP}
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: &bossWaypoints{s: s},
-		AfterMove: func() {
-			s.fireWeapon()
+		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
+			AfterUpdate: func() {
+				s.fireWeapon()
+			},
 		},
 	})
 	s.AddAnimator(a)

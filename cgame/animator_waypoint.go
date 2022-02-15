@@ -46,10 +46,9 @@ func (aw *AnimatorWaypoint) Animate() {
 		// If collision is detected or in-bounds check fails, and PreUpdateNotify decides to abandon
 		// then the this animator is finished.
 		if !aw.s.Update(UpdateArg{
-			DXY:    &cwin.Point{X: dx - aw.dxDone, Y: dy - aw.dyDone},
-			IBC:    aw.cfg.InBoundsCheckTypeToFinish,
-			CD:     aw.cfg.CollisionDetectionTypeToFinish,
-			Notify: aw.cfg.PreUpdateNotify}) {
+			DXY: &cwin.Point{X: dx - aw.dxDone, Y: dy - aw.dyDone},
+			IBC: aw.cfg.InBoundsCheckType,
+			CD:  aw.cfg.CollisionDetectionType}) {
 			finish()
 			return
 		}

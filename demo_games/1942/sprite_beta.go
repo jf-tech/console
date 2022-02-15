@@ -23,14 +23,11 @@ type spriteBeta struct {
 	*cgame.SpriteBase
 }
 
-func (b *spriteBeta) IsCollidableWith(other cgame.Collidable) bool {
-	return other.Name() == alphaBulletName || other.Name() == alphaName
-}
-
-func (b *spriteBeta) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+// cgame.CollisionResponse
+func (b *spriteBeta) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
 	cgame.CreateExplosion(b.SpriteBase, cgame.ExplosionCfg{MaxDuration: betaExplosionDuration})
 	b.Mgr().FindByName(alphaName).(*spriteAlpha).betaKills++
-	return cgame.CollisionAllowed
+	return cgame.CollisionResponseJustDoIt
 }
 
 func createBeta(m *myGame, stageIdx int) {
@@ -45,22 +42,24 @@ func createBeta(m *myGame, stageIdx int) {
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(betaSpeed)) * float64(time.Second)),
 			}}),
-		AfterMove: func() {
-			if !cgame.CheckProbability(betaFiringProbPerStage[stageIdx]) {
-				return
-			}
-			x := s.Rect().X + s.Rect().W/2
-			y := s.Rect().Y + s.Rect().H
-			pellets := betaFiringPelletsPerStage[stageIdx]
-			if m.easyMode {
-				pellets /= 2
-			}
-			for dx := -(pellets / 2); dx <= pellets/2; dx++ {
-				if pellets%2 == 0 && dx == 0 {
-					continue
+		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
+			AfterUpdate: func() {
+				if !cgame.CheckProbability(betaFiringProbPerStage[stageIdx]) {
+					return
 				}
-				createBullet(m, betaBulletName, enemyBulletAttr, dx, 1, betaBulletSpeed, x, y)
-			}
+				x := s.Rect().X + s.Rect().W/2
+				y := s.Rect().Y + s.Rect().H
+				pellets := betaFiringPelletsPerStage[stageIdx]
+				if m.easyMode {
+					pellets /= 2
+				}
+				for dx := -(pellets / 2); dx <= pellets/2; dx++ {
+					if pellets%2 == 0 && dx == 0 {
+						continue
+					}
+					createBullet(m, betaBulletName, enemyBulletAttr, dx, 1, betaBulletSpeed, x, y)
+				}
+			},
 		},
 	})
 	s.AddAnimator(a)

@@ -32,16 +32,13 @@ func (s *stage) Run() {
 				// also let retreat (down) a bit faster than up to make the game exp
 				// better.
 				if ev.Key == cterm.KeyArrowUp {
-					alpha.SetPosRel(&cwin.Point{X: 0, Y: -1}, func() {
-						alpha.SetPosRel(&cwin.Point{X: 0, Y: 1})
-					})
-					alpha.SetPosRel(&cwin.Point{X: 0, Y: -1})
+					alpha.move(0, -1)
 				} else if ev.Key == cterm.KeyArrowDown {
-					alpha.SetPosRel(&cwin.Point{X: 0, Y: 2})
+					alpha.move(0, 2)
 				} else if ev.Key == cterm.KeyArrowLeft {
-					alpha.SetPosRel(&cwin.Point{X: -3, Y: 0})
+					alpha.move(-3, 0)
 				} else if ev.Key == cterm.KeyArrowRight {
-					alpha.SetPosRel(&cwin.Point{X: 3, Y: 0})
+					alpha.move(3, 0)
 				} else if ev.Ch == ' ' {
 					alpha.fireWeapon()
 				} else if cwin.FindKey(skipStageKeys, ev) {
@@ -234,7 +231,7 @@ Memory usage: %s
 			}
 			if s.m.invincible {
 				ss = append(ss, "Invincible Mode: On")
-				ss = append(ss, fmt.Sprintf("Hits on Alpha: %d", alpha.hit))
+				ss = append(ss, fmt.Sprintf("Hits on Alpha: %d", alpha.hits))
 			}
 			if len(ss) <= 0 {
 				return ""

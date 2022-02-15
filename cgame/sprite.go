@@ -82,174 +82,81 @@ func (sb *SpriteBase) DeleteAnimator(as ...Animator) {
 	}
 }
 
-type InBoundsCheckType int
+func (sb *SpriteBase) ToBottom() {
+	sb.win.ToBottom()
+}
 
-const (
-	InBoundsCheckNone = InBoundsCheckType(iota)
-	InBoundsCheckFullyVisible
-	InBoundsCheckPartiallyVisible
-)
-
-type InBoundsCheckResult int
-
-const (
-	InBoundsCheckResultOK = InBoundsCheckResult(iota)
-	InBoundsCheckResultN  // breanch to the north
-	InBoundsCheckResultE  // breanch to the east
-	InBoundsCheckResultS  // breanch to the south
-	InBoundsCheckResultW  // breanch to the west
-)
-
-type PreUpdateNotifyResponseType int
-
-const (
-	PreUpdateNotifyResponseAbandon = PreUpdateNotifyResponseType(iota)
-	PreUpdateNotifyResponseJustDoIt
-)
-
-type PreUpdateNotify func(
-	inBoundsCheckResult InBoundsCheckResult, collided []Sprite) PreUpdateNotifyResponseType
+func (sb *SpriteBase) ToTop() {
+	sb.win.ToTop()
+}
 
 type UpdateArg struct {
 	DXY *cwin.Point            // update the sprite position by (dx,dy), if non nil.
 	F   Frame                  // If nil, no frame update; If empty (len=0), frame will be wiped clean
 	IBC InBoundsCheckType      // default to no in-bounds check.
 	CD  CollisionDetectionType // default to collision detection
-	// This is only invoked when either the in-bounds check fails or collision check fails.
-	// If the return value is PreUpdateNotifyResponseJustDoIt, the update will be carried out;
-	// If PreUpdateNotifyResponseAbandon, update will be abandoned. If no Notify is given
-	// for the Update call, then update will be abandoned.
-	// !!! IMPORTANT !!! If the Notify implementation needs to call Update, make sure
-	// UpdateArg.IBC and UpdateArg.CD are turned off, or we would get into infinite recursion!
-	Notify PreUpdateNotify
 }
 
-// return true if update is carried out; false if not.
+// returns true if update is carried out; false if not.
+// Important, do not call Update with IBC/CD turned on from your InBoundsCheckResponse.Notify
+// or CollisionResponse.Notify or it might cause infinite recursion.
 func (sb *SpriteBase) Update(arg UpdateArg) bool {
-	r := sb.Rect()
+	s := sb.toSprite()
+	r := s.Rect()
 	if arg.DXY != nil {
 		r.X += arg.DXY.X
 		r.Y += arg.DXY.Y
 	}
 	f := arg.F
 	if f == nil {
-		f = sb.Frame()
+		f = s.Frame()
 	}
 	inBoundsCheckResult := InBoundsCheckResultOK
 	if arg.IBC != InBoundsCheckNone {
-		inBoundsCheckResult = sb.inBoundsCheck(arg.IBC, r, f)
+		inBoundsCheckResult = InBoundsCheck(arg.IBC, r, f, s.ParentRect())
+	}
+	if inBoundsCheckResult != InBoundsCheckResultOK {
+		resp := InBoundsCheckResponseAbandon
+		if r, ok := s.(InBoundsCheckResponse); ok {
+			resp = r.InBoundsCheckNotify(inBoundsCheckResult)
+		}
+		if resp == InBoundsCheckResponseAbandon {
+			return false
+		}
 	}
 	var collided []Sprite
 	if arg.CD == CollisionDetectionOn {
-		collided = sb.Mgr().CheckCollision(sb, r, f)
+		collided = s.Mgr().CheckCollision(s, r, f)
 	}
-	if (inBoundsCheckResult == InBoundsCheckResultOK && len(collided) <= 0) ||
-		(arg.Notify != nil &&
-			arg.Notify(inBoundsCheckResult, collided) == PreUpdateNotifyResponseJustDoIt) {
-		sb.win.SetPosAbs(r.X, r.Y)
-		FrameToWin(f, sb.win)
-		return true
+	if len(collided) > 0 {
+		resp := CollisionResponseAbandon
+		if r, ok := s.(CollisionResponse); ok {
+			resp = r.CollisionNotify(true, collided)
+		}
+		if resp == CollisionResponseAbandon {
+			return false
+		}
+		for _, c := range collided {
+			if r, ok := c.(CollisionResponse); ok {
+				r.CollisionNotify(false, []Sprite{s})
+			}
+		}
 	}
-	return false
+	sb.win.SetPosAbs(r.X, r.Y)
+	FrameToWin(f, sb.win)
+	return true
 }
 
-func (sb *SpriteBase) inBoundsCheck(
-	checkType InBoundsCheckType, newR cwin.Rect, newF Frame) InBoundsCheckResult {
-	// Note the parent rect is really parent windows' client rect shifted to origin - i.e.
-	// from POV of the sprite. So we only use it's W/H components, as its X/Y are always 0.
-	parentR := sb.ParentRect()
-	xRegion := func(x int) int {
-		if x < 0 {
-			return -1
-		} else if x < parentR.W {
-			return 0
-		}
-		return 1
+func (sb *SpriteBase) toSprite() Sprite {
+	// Most the time, game sprite uses *SpriteBase as an embedded field (so to have all
+	// Sprite interface functionalities plus extra for free). But we sometimes need to
+	// get the actual sprite object so we can interface type assertion. Since the sprites
+	// are typically added to the SpriteManager using its object, not SpriteBase, thus we
+	// can query that Sprite interface from SpriteManager and then we can do type assertion.
+	if s, ok := sb.Mgr().TryFindByUID(sb.UID()); ok {
+		return s
 	}
-	yRegion := func(y int) int {
-		if y < 0 {
-			return -1
-		} else if y < parentR.H {
-			return 0
-		}
-		return 1
-	}
-	totalCells := 0
-	result := map[InBoundsCheckResult]int{}
-	for i := 0; i < len(newF); i++ {
-		if newF[i].Chx == cwin.TransparentChx() {
-			continue
-		}
-		totalCells++
-		x := newR.X + newF[i].X
-		y := newR.Y + newF[i].Y
-		xReg, yReg := xRegion(x), yRegion(y)
-		switch xReg {
-		case -1:
-			switch yReg {
-			case -1:
-				if -x > -y {
-					result[InBoundsCheckResultW]++
-				} else {
-					result[InBoundsCheckResultN]++
-				}
-			case 0:
-				result[InBoundsCheckResultW]++
-			case 1:
-				if -x > y-parentR.H+1 {
-					result[InBoundsCheckResultW]++
-				} else {
-					result[InBoundsCheckResultS]++
-				}
-			}
-		case 0:
-			switch yReg {
-			case -1:
-				result[InBoundsCheckResultN]++
-			case 0:
-				result[InBoundsCheckResultOK]++
-			case 1:
-				result[InBoundsCheckResultS]++
-			}
-		case 1:
-			switch yReg {
-			case -1:
-				if x-parentR.W+1 > -y {
-					result[InBoundsCheckResultE]++
-				} else {
-					result[InBoundsCheckResultN]++
-				}
-			case 0:
-				result[InBoundsCheckResultE]++
-			case 1:
-				if x-parentR.W+1 > y-parentR.H+1 {
-					result[InBoundsCheckResultE]++
-				} else {
-					result[InBoundsCheckResultS]++
-				}
-			}
-		}
-	}
-	var maxNonOkResult InBoundsCheckResult
-	maxNonOkResultCount := 0
-	for k, v := range result {
-		if k != InBoundsCheckResultOK && v > maxNonOkResultCount {
-			maxNonOkResult, maxNonOkResultCount = k, v
-		}
-	}
-	switch checkType {
-	case InBoundsCheckFullyVisible:
-		if result[InBoundsCheckResultOK] == totalCells {
-			return InBoundsCheckResultOK
-		}
-		return maxNonOkResult
-	case InBoundsCheckPartiallyVisible:
-		if result[InBoundsCheckResultOK] > 0 {
-			return InBoundsCheckResultOK
-		}
-		return maxNonOkResult
-	}
-	return InBoundsCheckResultOK
+	return sb
 }
 
 func NewSpriteBase(g *Game, parent *cwin.Win, name string, f Frame, x, y int) *SpriteBase {

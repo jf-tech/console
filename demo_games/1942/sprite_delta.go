@@ -22,14 +22,11 @@ type spriteDelta struct {
 	*cgame.SpriteBase
 }
 
-func (d *spriteDelta) IsCollidableWith(other cgame.Collidable) bool {
-	return other.Name() == alphaBulletName || other.Name() == alphaName
-}
-
-func (d *spriteDelta) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+// cgame.CollisionResponse
+func (d *spriteDelta) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
 	cgame.CreateExplosion(d.SpriteBase, cgame.ExplosionCfg{MaxDuration: deltaExplosionDuration})
 	d.Mgr().FindByName(alphaName).(*spriteAlpha).deltaKills++
-	return cgame.CollisionAllowed
+	return cgame.CollisionResponseJustDoIt
 }
 
 func createDelta(m *myGame) {

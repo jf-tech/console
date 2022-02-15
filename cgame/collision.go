@@ -4,24 +4,17 @@ import (
 	"github.com/jf-tech/console/cwin"
 )
 
-type CollisionDetectionType int
-
-const (
-	CollisionDetectionOn = CollisionDetectionType(iota)
-	CollisionDetectionOff
-)
+type CollidableRegistry struct {
+	reg map[string]map[string]bool
+}
 
 const (
 	CollidableRegistryMatchAll = "*"
 )
 
-type CollidableRegistry struct {
-	reg map[string]map[string]bool
-}
-
 // supported:
 //  - name1, name2
-//  - name1, name1
+//  - name, name
 //  - name, * or *, name
 //  - *, *
 func (cd *CollidableRegistry) Register(spriteName1, spriteName2 string) *CollidableRegistry {
@@ -70,10 +63,33 @@ func newCollidableRegistry() *CollidableRegistry {
 	return &CollidableRegistry{}
 }
 
+type CollisionDetectionType int
+
+const (
+	CollisionDetectionOn = CollisionDetectionType(iota)
+	CollisionDetectionOff
+)
+
 var (
 	collisionDetectionBuf = make([]bool, 0, 100)
 )
 
+// Be aware certain quirky situation: given this is a terminal/character based system
+// it's possible to have two sprites actually cross/on top of each other without actually
+// having any overlapping characters. Think the following simple example:
+// - sprite 1 looks like this:
+//     \
+//      \
+// - sprite 2 looks like this:
+//      /
+//     /
+// They can be perfectly on top of each other/across, without causing an overlapping character
+// situation:
+//     \/
+//     /\
+// Thus DetectCollision fails here. No good general solutions in mind yet, just need to be
+// careful. For "enclosed" sprite, such as circle, one can fill the interior with characters
+// not just TransparencyChx, that will alleviate the problem.
 func DetectCollision(r1 cwin.Rect, f1 Frame, r2 cwin.Rect, f2 Frame) bool {
 	if overlapped, ro := r1.Overlap(r2); overlapped {
 		collisionDetectionBuf = collisionDetectionBuf[:0]
@@ -96,4 +112,15 @@ func DetectCollision(r1 cwin.Rect, f1 Frame, r2 cwin.Rect, f2 Frame) bool {
 		}
 	}
 	return false
+}
+
+type CollisionResponseType int
+
+const (
+	CollisionResponseAbandon = CollisionResponseType(iota)
+	CollisionResponseJustDoIt
+)
+
+type CollisionResponse interface {
+	CollisionNotify(initiator bool, collidedWith []Sprite) CollisionResponseType
 }

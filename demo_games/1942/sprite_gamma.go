@@ -23,14 +23,11 @@ type spriteGamma struct {
 	*cgame.SpriteBase
 }
 
-func (d *spriteGamma) IsCollidableWith(other cgame.Collidable) bool {
-	return other.Name() == alphaBulletName || other.Name() == alphaName
-}
-
-func (g *spriteGamma) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+// cgame.CollisionResponse
+func (g *spriteGamma) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
 	cgame.CreateExplosion(g.SpriteBase, cgame.ExplosionCfg{MaxDuration: gammaExplosionDuration})
 	g.Mgr().FindByName(alphaName).(*spriteAlpha).gammaKills++
-	return cgame.CollisionAllowed
+	return cgame.CollisionResponseJustDoIt
 }
 
 func createGamma(m *myGame, stageIdx int) {
@@ -45,24 +42,26 @@ func createGamma(m *myGame, stageIdx int) {
 				Y:    1 * dist,
 				T:    time.Duration((float64(dist) / float64(gammaSpeed)) * float64(time.Second)),
 			}}),
-		AfterMove: func() {
-			if !cgame.CheckProbability(gammaFiringProbPerStage[stageIdx]) {
-				return
-			}
-			centerX := s.Rect().X + s.Rect().W/2
-			centerY := s.Rect().Y + s.Rect().H/2
-			for y := -1; y <= 1; y++ {
-				for x := -1; x <= 1; x++ {
-					if x == 0 && y == 0 {
-						continue
-					}
-					if m.easyMode && abs(x)+abs(y) == 1 {
-						continue
-					}
-					createBullet(m, gammaBulletName, enemyBulletAttr,
-						x, y, gammaBulletSpeed, centerX, centerY)
+		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
+			AfterUpdate: func() {
+				if !cgame.CheckProbability(gammaFiringProbPerStage[stageIdx]) {
+					return
 				}
-			}
+				centerX := s.Rect().X + s.Rect().W/2
+				centerY := s.Rect().Y + s.Rect().H/2
+				for y := -1; y <= 1; y++ {
+					for x := -1; x <= 1; x++ {
+						if x == 0 && y == 0 {
+							continue
+						}
+						if m.easyMode && abs(x)+abs(y) == 1 {
+							continue
+						}
+						createBullet(m, gammaBulletName, enemyBulletAttr,
+							x, y, gammaBulletSpeed, centerX, centerY)
+					}
+				}
+			},
 		},
 	})
 	s.AddAnimator(a)

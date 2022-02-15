@@ -69,45 +69,54 @@ func (sp *spriteParticle) Next() (cgame.Waypoint, bool) {
 	return wp, true
 }
 
-func (sp *spriteParticle) createAnimator() {
+// implements cgame.InBoundsCheckResponse
+func (sp *spriteParticle) InBoundsCheckNotify(result cgame.InBoundsCheckResult) cgame.InBoundsCheckResponseType {
+	switch result {
+	case cgame.InBoundsCheckResultN, cgame.InBoundsCheckResultS:
+		sp.dy = -sp.dy
+		sp.resetAnimator()
+		sp.hitBoundsCount()
+		return cgame.InBoundsCheckResponseAbandon
+	case cgame.InBoundsCheckResultE, cgame.InBoundsCheckResultW:
+		sp.dx = -sp.dx
+		sp.resetAnimator()
+		sp.hitBoundsCount()
+		return cgame.InBoundsCheckResponseAbandon
+	}
+	return cgame.InBoundsCheckResponseJustDoIt
+}
+
+// implements cgame.CollisionResponse
+func (sp *spriteParticle) CollisionNotify(
+	initiator bool, collidedWith []cgame.Sprite) cgame.CollisionResponseType {
+	if !initiator {
+		// let the collision initiating particle to handle speed exchange.
+		// this non collision initiator's response doesn't matter, always ignored.
+		return cgame.CollisionResponseAbandon
+	}
+	dx, dy := sp.dx, sp.dy
+	speed := sp.speed
+	other := collidedWith[0].(*spriteParticle)
+	sp.dx, sp.dy = other.dx, other.dy
+	sp.speed = other.speed
+	other.dx, other.dy = dx, dy
+	other.speed = speed
+	sp.resetAnimator()
+	other.resetAnimator()
+	sp.collisionCount()
+	return cgame.CollisionResponseAbandon
+}
+
+func (sp *spriteParticle) resetAnimator() {
 	if sp.animator != nil {
 		sp.DeleteAnimator(sp.animator)
 	}
 	aw := cgame.NewAnimatorWaypoint(sp.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: sp,
 		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
-			InBoundsCheckTypeToFinish:      cgame.InBoundsCheckFullyVisible,
-			CollisionDetectionTypeToFinish: cgame.CollisionDetectionOn,
-			KeepAliveWhenFinished:          true,
-			PreUpdateNotify: func(inBoundsCheckResult cgame.InBoundsCheckResult,
-				collided []cgame.Sprite) cgame.PreUpdateNotifyResponseType {
-				switch inBoundsCheckResult {
-				case cgame.InBoundsCheckResultN, cgame.InBoundsCheckResultS:
-					sp.dy = -sp.dy
-					sp.createAnimator()
-					sp.hitBoundsCount()
-					return cgame.PreUpdateNotifyResponseAbandon
-				case cgame.InBoundsCheckResultE, cgame.InBoundsCheckResultW:
-					sp.dx = -sp.dx
-					sp.createAnimator()
-					sp.hitBoundsCount()
-					return cgame.PreUpdateNotifyResponseAbandon
-				}
-				if len(collided) > 0 {
-					dx, dy := sp.dx, sp.dy
-					speed := sp.speed
-					other := collided[0].(*spriteParticle)
-					sp.dx, sp.dy = other.dx, other.dy
-					sp.speed = other.speed
-					other.dx, other.dy = dx, dy
-					other.speed = speed
-					sp.createAnimator()
-					other.createAnimator()
-					sp.collisionCount()
-					return cgame.PreUpdateNotifyResponseAbandon
-				}
-				return cgame.PreUpdateNotifyResponseAbandon
-			},
+			InBoundsCheckType:      cgame.InBoundsCheckFullyVisible,
+			CollisionDetectionType: cgame.CollisionDetectionOn,
+			KeepAliveWhenFinished:  true,
 		},
 	})
 	sp.animator = aw
@@ -166,20 +175,25 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 			s.Destroy() // do remember to destroy the sprite as its cwin is already created.
 			return false
 		}
-		s.createAnimator()
+		s.resetAnimator()
 		g.SpriteMgr.AddSprite(s)
 		ids = append(ids, s.UID())
 		return true
 	}
 	createParticle(r.W/2-30, r.H/2, 1, 0, cterm.ColorLightYellow, 40)
 	createParticle(r.W/2+30, r.H/2, -1, 0, cterm.ColorLightCyan, 20)
+
+	dc := cgame.NewDurationCounter(g.MasterClock)
+
 	showDebugInfo := func() {
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprint("Stats:\n"))
-		sb.WriteString(fmt.Sprintf("- Time: %s\n",
-			g.MasterClock.Now()/(100*time.Millisecond)*(100*time.Millisecond)))
-		sb.WriteString(fmt.Sprintf("- Particle #: %d\n", len(ids)))
+		sb.WriteString(fmt.Sprintf("- Time: %s\n", g.MasterClock.Now().Round(time.Millisecond)))
 		sb.WriteString(fmt.Sprintf("- FPS: %.0f\n", g.FPS()))
+		sb.WriteString(fmt.Sprintf("- Mem: %s\n", cwin.ByteSizeStr(g.HeapUsageInBytes())))
+		sb.WriteString(fmt.Sprintf("- Pixels: %s\n", cwin.ByteSizeStr(g.WinSys.TotalChxRendered())))
+		sb.WriteString(fmt.Sprintf("- Loop time: %s\n", dc.Total()))
+		sb.WriteString(fmt.Sprintf("- Particle #: %d\n", len(ids)))
 		sb.WriteString(fmt.Sprintf("- Collisions: %d\n", collision))
 		sb.WriteString(fmt.Sprintf("- Boundary Hits: %d\n", hitBounds))
 		sb.WriteString(fmt.Sprint("\n"))
@@ -191,10 +205,13 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 				sp.UID(), sp.Rect().X, sp.Rect().Y, sp.dx, sp.dy, sp.speed))
 		}
 		debugWin.SetText(sb.String())
+		dc.Reset()
 	}
 
 	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) bool {
 		showDebugInfo()
+		dc.Start()
+		defer dc.Stop()
 		if ev.Type == cterm.EventKey {
 			if ev.Key == cterm.KeyArrowUp {
 				for {

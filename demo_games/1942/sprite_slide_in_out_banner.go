@@ -32,8 +32,10 @@ func createSlideInOutBanner(
 				T:    inOut,
 			},
 		}),
-		AfterFinish: func() {
-			afterFinish()
+		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
+			AfterFinish: func() {
+				afterFinish()
+			},
 		},
 	})
 	s.AddAnimator(a)

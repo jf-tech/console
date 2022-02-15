@@ -4,6 +4,7 @@ import (
 	"path"
 	"runtime"
 	"sync"
+	"time"
 )
 
 type ThreadSafeFIFO struct {
@@ -39,4 +40,48 @@ func NewThreadSafeFIFO(cap int) *ThreadSafeFIFO {
 func GetCurFileDir() string {
 	_, filename, _, _ := runtime.Caller(1)
 	return path.Dir(filename)
+}
+
+type DurationCounter struct {
+	clock     *Clock
+	total     time.Duration
+	startedOn time.Duration
+}
+
+func (d *DurationCounter) Start() {
+	if d.started() {
+		panic("cannot Start() a started counter")
+	}
+	d.startedOn = d.clock.Now()
+}
+
+func (d *DurationCounter) Stop() {
+	if !d.started() {
+		panic("cannot Stop() a stopped counter")
+	}
+	d.total += d.clock.Now() - d.startedOn
+	d.startedOn = -1
+}
+
+func (d *DurationCounter) Reset() {
+	if d.started() {
+		panic("cannot Reset() a started counter")
+	}
+	d.total = 0
+	d.startedOn = -1
+}
+
+func (d *DurationCounter) Total() time.Duration {
+	if d.started() {
+		panic("cannot get Total() on a started counter")
+	}
+	return d.total
+}
+
+func (d *DurationCounter) started() bool {
+	return d.startedOn >= 0
+}
+
+func NewDurationCounter(clock *Clock) *DurationCounter {
+	return &DurationCounter{clock: clock, startedOn: -1}
 }

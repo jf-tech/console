@@ -26,13 +26,9 @@ type spriteGiftPack struct {
 	gpSym giftPackSymbol
 }
 
-func (g *spriteGiftPack) IsCollidableWith(other cgame.Collidable) bool {
-	return other.Name() == alphaName
-}
-
-func (g *spriteGiftPack) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
+func (g *spriteGiftPack) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
 	g.Mgr().DeleteSprite(g)
-	return cgame.CollisionAllowed
+	return cgame.CollisionResponseJustDoIt
 }
 
 func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.ChAttr) {

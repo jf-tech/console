@@ -1,3 +1,30 @@
+[2022/02/16 - cgame]
+- [✅] decide to create 2 interfaces: InBoundsCheckResponse, CollisionResponse
+  Sprite.Update will call them:
+  - if InBoundsCheck fails, calls Sprite's InBoundsCheckResponse interface if implemented; if not,
+  treat it as repsonded with JustDoIt
+  - call collision detection only InBoundsCheck response is JustDoIt.
+  - If collision occurs, call collider Sprite for response; then call all the collidee sprites
+  for FYI, their responses will be ignored. Also the call to collidee will indicate they're called
+  as a collidee.
+
+[2022/02/15 - demo_games/1942]
+- created a universal preUpdateNotify as the entry point for all Update.Notify
+- created a game specific/private collisionNotify interface so preUpdateNotify can forward
+  the call to the sprite that caused the collision.
+- an issue: if alpha (not its bullet) hits a beta, it will increase the kill, but if beta hits
+  alpha, assuming alpha in invincible mode, only beta's collisionNotify gets invoked, so alpha's
+  beta kill isn't increased. seem the root problem is Sprite.Update only informs the sprite that
+  causes the collision, but doesn't tell the collided sprites. I think we should, the only diff
+  is the result of the notify call to the sprite that causes the collision should be used to decide
+  whether the update should be abandoned or just do it; while the notify calls to the collided
+  should simply be treated as FYI.
+  so maybe we do need CollisionNotify interface after all. If sprite doesn't implement it, then
+  the collision initiated by it will be abandoned. also the collidee's notify call result will be
+  ignored, it's simply an FYI --- or we should somehow indicate to collidee it's an FYI call?
+  what about the inBoundsCheck param, it doesn't make sense to send to collidee's notify interface
+  call. hm.....
+
 [2022/02/15 - cgame/demo/particle]
 - There is still a bug when a new particle circle is created, it collision tested fine, but
   when it's added to the system, somehow it intersects with other particle circle.

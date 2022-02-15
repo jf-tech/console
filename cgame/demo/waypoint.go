@@ -43,7 +43,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 		cwin.ChAttr{Fg: cterm.ColorLightYellow})
 
 	// create a sprite
-	startX, startY := -cgame.FrameRect(frame).W+1, (demoWin.ClientRect().H-cgame.FrameRect(frame).H)/2
+	startX, startY := -cgame.FrameRect(frame).W, (demoWin.ClientRect().H-cgame.FrameRect(frame).H)/2
 	s := cgame.NewSpriteBase(g, demoWin, "demo_sprite", frame, startX, startY)
 	// create a simple waypoint animator has only one waypoint that gets
 	// the sprite to go across the demo window.
@@ -63,9 +63,6 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 					cwin.AlignLeft)
 			},
 			AfterFinish: func() {
-				demoWin.SetTitle(
-					fmt.Sprintf("Demo: Sprite%s. Press any key to exit.", s.Rect()),
-					cwin.AlignLeft)
 				g.GameOver()
 			},
 		},

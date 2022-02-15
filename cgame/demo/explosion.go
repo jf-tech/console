@@ -85,7 +85,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
 		return false
 	}
 	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' done. Used %s. Any key for next",
-		fn, g.MasterClock.Now()-startTime), cwin.AlignLeft)
+		fn, (g.MasterClock.Now()-startTime).Round(time.Millisecond)), cwin.AlignLeft)
 	g.WinSys.Update()
 	g.WinSys.SyncExpectKey(func(k cterm.Key, r rune) bool {
 		if k == cterm.KeyEsc || r == 'q' {

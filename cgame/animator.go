@@ -5,9 +5,8 @@ type Animator interface {
 }
 
 type AnimatorCfgCommon struct {
-	InBoundsCheckTypeToFinish      InBoundsCheckType      // none by default
-	CollisionDetectionTypeToFinish CollisionDetectionType // on by default
-	KeepAliveWhenFinished          bool
-	PreUpdateNotify                PreUpdateNotify
-	AfterUpdate, AfterFinish       func()
+	InBoundsCheckType        InBoundsCheckType      // partially visible check by default
+	CollisionDetectionType   CollisionDetectionType // on by default
+	KeepAliveWhenFinished    bool
+	AfterUpdate, AfterFinish func()
 }

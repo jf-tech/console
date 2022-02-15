@@ -57,7 +57,7 @@ type myGame struct {
 
 func (m *myGame) main() int {
 	var err error
-	m.g, err = cgame.Init(cterm.TermBox)
+	m.g, err = cgame.Init(cterm.TCell)
 	if err != nil {
 		return codeGameInitFailure
 	}
@@ -82,7 +82,7 @@ final battle!
 Good luck, solider!
 
 Press Enter to start the game; ESC or 'q' to quit.
-('e' to start in Easy Mode, if you're patient enough til this point :)
+('e' to start in Easy Mode, if you're patient enough to read :)
 `)
 	if cwin.FindKey(gameOverKeys, e) {
 		return codeQuit
@@ -92,6 +92,8 @@ Press Enter to start the game; ESC or 'q' to quit.
 	m.g.Resume()
 
 	m.g.SoundMgr.PlayMP3(sfxGameStartFile, sfxClipVol, 1)
+
+	registerCollidable(m.g.SpriteMgr)
 
 	for i := 0; i < totalStages && !m.g.IsGameOver(); i++ {
 		stage := newStage(m, i)

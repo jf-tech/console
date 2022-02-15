@@ -43,10 +43,9 @@ func (af *AnimatorFrame) setNextFrame() (more bool) {
 		return false
 	}
 	if !af.s.Update(UpdateArg{
-		F:      f,
-		IBC:    af.cfg.InBoundsCheckTypeToFinish,
-		CD:     af.cfg.CollisionDetectionTypeToFinish,
-		Notify: af.cfg.PreUpdateNotify}) {
+		F:   f,
+		IBC: af.cfg.InBoundsCheckType,
+		CD:  af.cfg.CollisionDetectionType}) {
 		return false
 	}
 	af.curFrameStartedTime = af.clock.Now()

@@ -24,8 +24,55 @@ type spriteAlpha struct {
 	betaKills  int
 	gammaKills int
 	deltaKills int
-	hit        int
+	hits       int
 	gpWeapon   *giftPack
+}
+
+// cgame.InBoundsCheckResponse
+func (a *spriteAlpha) InBoundsCheckNotify(
+	result cgame.InBoundsCheckResult) cgame.InBoundsCheckResponseType {
+	return cgame.InBoundsCheckResponseAbandon
+}
+
+// cgame.CollisionResponse
+func (a *spriteAlpha) CollisionNotify(_ bool, collidedWith []cgame.Sprite) cgame.CollisionResponseType {
+	hits := 0
+	gp := cgame.Sprite(nil)
+	for i := len(collidedWith) - 1; i >= 0; i-- {
+		if collidedWith[i].Name() == giftPackName {
+			if gp == nil {
+				gp = collidedWith[i]
+			}
+		} else {
+			hits++
+		}
+	}
+	if hits > 0 {
+		if !a.m.invincible {
+			a.m.g.GameOver()
+			return cgame.CollisionResponseJustDoIt
+		}
+		a.m.g.SoundMgr.PlayMP3(sfxOuchFile, sfxClipVol, 1)
+		a.hits += hits
+	}
+	if gp != nil {
+		switch gp.(*spriteGiftPack).gpSym {
+		case gpShotgunSym:
+			a.gpWeapon = newGiftPackShotgun(a.m.g.MasterClock)
+		case gpShotgun2Sym:
+			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
+		}
+		a.m.g.Exchange.GenericData[exchangeGiftPackWeapon] = a.gpWeapon
+		a.m.g.SoundMgr.PlayMP3(sfxWeaponUpgradedFile, sfxClipVol, 1)
+	}
+	return cgame.CollisionResponseJustDoIt
+}
+
+func (a *spriteAlpha) move(dx, dy int) {
+	a.Update(cgame.UpdateArg{
+		DXY: &cwin.Point{X: dx, Y: dy},
+		IBC: cgame.InBoundsCheckFullyVisible,
+	})
 }
 
 func (a *spriteAlpha) fireWeapon() {
@@ -33,7 +80,7 @@ func (a *spriteAlpha) fireWeapon() {
 	y := a.Rect().Y - 1
 	if a.gpWeapon == nil || a.gpWeapon.remainingLife() <= 0 {
 		a.gpWeapon = nil
-		delete(a.m.g.Exchange.StringData, exchangeGiftPackWeapon)
+		delete(a.m.g.Exchange.GenericData, exchangeGiftPackWeapon)
 		createBullet(a.m, alphaBulletName, alphaBulletAttr, 0, -1, alphaBulletSpeed, x, y)
 	} else {
 		switch a.gpWeapon.name {
@@ -67,33 +114,6 @@ func (a *spriteAlpha) killStats() map[string]int {
 	}
 }
 
-func (a *spriteAlpha) IsCollidableWith(other cgame.Collidable) bool {
-	return other.Name() != alphaBulletName
-}
-
-func (a *spriteAlpha) ResolveCollision(other cgame.Collidable) cgame.CollisionResolution {
-	ret := cgame.CollisionAllowed
-	switch other.Name() {
-	case giftPackName:
-		switch other.(*spriteGiftPack).gpSym {
-		case gpShotgunSym:
-			a.gpWeapon = newGiftPackShotgun(a.m.g.MasterClock)
-		case gpShotgun2Sym:
-			a.gpWeapon = newGiftPackShotgun2(a.m.g.MasterClock)
-		}
-		a.m.g.Exchange.GenericData[exchangeGiftPackWeapon] = a.gpWeapon
-		a.m.g.SoundMgr.PlayMP3(sfxWeaponUpgradedFile, sfxClipVol, 1)
-	default:
-		a.hit++
-		if !a.m.invincible {
-			a.m.g.GameOver()
-			return ret
-		}
-		a.m.g.SoundMgr.PlayMP3(sfxOuchFile, sfxClipVol, 1)
-	}
-	return ret
-}
-
 func createAlpha(m *myGame, stage *stage) {
 	gp := (*giftPack)(nil)
 	if d, ok := m.g.Exchange.GenericData[exchangeGiftPackWeapon]; ok {
@@ -105,6 +125,5 @@ func createAlpha(m *myGame, stage *stage) {
 			m.winArena.ClientRect().H-cgame.FrameRect(alphaFrame).H),
 		m:        m,
 		gpWeapon: gp}
-	alpha.SetParentRectBound(true)
 	m.g.SpriteMgr.AddSprite(alpha)
 }
