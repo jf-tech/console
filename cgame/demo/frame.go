@@ -58,7 +58,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 
 	// AnimatorWaypoint
 	aw := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
-		Waypoints: &waypointProvider{g: g, s: s, demoWin: demoWin}})
+		Waypoints: &waypointProvider{g: g, s: s}})
 
 	// AnimatorFrame
 	af := cgame.NewAnimatorFrame(s, cgame.AnimatorFrameCfg{Frames: fp})
@@ -86,8 +86,8 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 }
 
 type sineWaveFrameProvider struct {
-	g     *cgame.Game
-	shift int
+	g      *cgame.Game
+	xshift int
 }
 
 func (sfp *sineWaveFrameProvider) Next() (cgame.Frame, time.Duration, bool) {
@@ -117,18 +117,17 @@ func (sfp *sineWaveFrameProvider) Next() (cgame.Frame, time.Duration, bool) {
 		}
 	}
 	for x := 0; x < w; x++ {
-		y := fromRY(math.Sin(toRX(x+sfp.shift, w)), h)
+		y := fromRY(math.Sin(toRX(x+sfp.xshift, w)), h)
 		f[y*w+x].Chx =
 			cwin.Chx{Ch: '#', Attr: cwin.ChAttr{Fg: cterm.ColorYellow, Bg: cterm.ColorLightBlue}}
 	}
-	sfp.shift = (sfp.shift - 1 + w) % w
+	sfp.xshift = (sfp.xshift - 1 + w) % w
 	return f, 50 * time.Millisecond, true
 }
 
 type waypointProvider struct {
-	g       *cgame.Game
-	s       *cgame.SpriteBase
-	demoWin *cwin.Win
+	g *cgame.Game
+	s *cgame.SpriteBase
 }
 
 const (
@@ -144,14 +143,13 @@ func (wp *waypointProvider) Next() (cgame.Waypoint, bool) {
 		newR := wp.s.Rect()
 		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
 		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
-		if overlapped, ro := newR.Overlap(wp.demoWin.ClientRect().ToOrigin()); overlapped && ro == newR {
+		if overlapped, ro := newR.Overlap(wp.s.ParentRect()); overlapped && ro == newR {
 			wp.g.Exchange.StringData["curDir"] = string(cgame.DirSymbols[dirIdx])
 			wp.g.Exchange.IntData["curDist"] = dist
 			return cgame.Waypoint{
-				Type: cgame.WaypointAbs,
-				X:    newR.X,
-				Y:    newR.Y,
-				T:    time.Duration(dist) * 200 * time.Millisecond, // eachk "pixel" move takes 200ms.
+				DX: newR.X - wp.s.Rect().X,
+				DY: newR.Y - wp.s.Rect().Y,
+				T:  time.Duration(dist) * 200 * time.Millisecond, // eachk "pixel" move takes 200ms.
 			}, true
 		}
 	}

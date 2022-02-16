@@ -28,12 +28,6 @@ type spriteAlpha struct {
 	gpWeapon   *giftPack
 }
 
-// cgame.InBoundsCheckResponse
-func (a *spriteAlpha) InBoundsCheckNotify(
-	result cgame.InBoundsCheckResult) cgame.InBoundsCheckResponseType {
-	return cgame.InBoundsCheckResponseAbandon
-}
-
 // cgame.CollisionResponse
 func (a *spriteAlpha) CollisionNotify(_ bool, collidedWith []cgame.Sprite) cgame.CollisionResponseType {
 	hits := 0
@@ -69,10 +63,29 @@ func (a *spriteAlpha) CollisionNotify(_ bool, collidedWith []cgame.Sprite) cgame
 }
 
 func (a *spriteAlpha) move(dx, dy int) {
-	a.Update(cgame.UpdateArg{
-		DXY: &cwin.Point{X: dx, Y: dy},
-		IBC: cgame.InBoundsCheckFullyVisible,
-	})
+	if (dx == 0 && dy == 0) || (dx != 0 && dy != 0) {
+		panic("one and only one of dx, dy be non-zero")
+	}
+	// Why not a simple Update call? Why so much trouble and copmlexity here?
+	// For four directions, we don't always use 1 (or -1) as delta since in certain direction
+	// we want our alpha to move a bit faster. This leads to a situation where the alpha can't
+	// always reach the very edge of the arena. A hack here is to "nudge" the alpha back a little
+	// bit if an update position fails (that is of course, only when the game is still not over).
+	calcStep := func(delta int) int {
+		step := 0
+		if delta < 0 {
+			step = 1
+		} else if delta > 0 {
+			step = -1
+		}
+		return step
+	}
+	xstep, ystep := calcStep(dx), calcStep(dy)
+	for !a.Game().IsGameOver() && !a.Update(
+		cgame.UpdateArg{DXY: &cwin.Point{X: dx, Y: dy}, IBC: cgame.InBoundsCheckFullyVisible}) {
+		dx += xstep
+		dy += ystep
+	}
 }
 
 func (a *spriteAlpha) fireWeapon() {

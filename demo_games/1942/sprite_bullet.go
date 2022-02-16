@@ -30,10 +30,9 @@ func createBullet(m *myGame, name string, attr cwin.ChAttr,
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
-				Type: cgame.WaypointRelative,
-				X:    dx * dist,
-				Y:    dy * dist,
-				T:    time.Duration((float64(dist) / float64(speed)) * float64(time.Second)),
+				DX: dx * dist,
+				DY: dy * dist,
+				T:  time.Duration((float64(dist) / float64(speed)) * float64(time.Second)),
 			}}),
 	})
 	s.AddAnimator(a)

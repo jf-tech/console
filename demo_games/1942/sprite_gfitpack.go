@@ -42,10 +42,9 @@ func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.ChAttr) {
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
-				Type: cgame.WaypointRelative,
-				X:    0,
-				Y:    1 * dist,
-				T:    time.Duration((float64(dist) / float64(giftPackMoveSpeed)) * float64(time.Second)),
+				DX: 0,
+				DY: 1 * dist,
+				T:  time.Duration((float64(dist) / float64(giftPackMoveSpeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
 	m.g.SpriteMgr.AddSprite(s)

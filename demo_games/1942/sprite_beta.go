@@ -37,10 +37,9 @@ func createBeta(m *myGame, stageIdx int) {
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
-				Type: cgame.WaypointRelative,
-				X:    0,
-				Y:    1 * dist,
-				T:    time.Duration((float64(dist) / float64(betaSpeed)) * float64(time.Second)),
+				DX: 0,
+				DY: 1 * dist,
+				T:  time.Duration((float64(dist) / float64(betaSpeed)) * float64(time.Second)),
 			}}),
 		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
 			AfterUpdate: func() {

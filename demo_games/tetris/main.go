@@ -64,6 +64,10 @@ func (m *myGame) main() int {
 
 	m.gameSetup()
 
+	// all sprites can collide with each other. Actual pieces, shadwo, dead ones, etc.
+	m.g.SpriteMgr.CollidableRegistry().Register(
+		cgame.CollidableRegistryMatchAll, cgame.CollidableRegistryMatchAll)
+
 	m.createCountDown()
 	m.g.Run(nil, nil, func(ev cterm.Event) bool {
 		_, ok := m.g.Exchange.BoolData["countdown_done"]
@@ -73,7 +77,7 @@ func (m *myGame) main() int {
 	m.s = m.genRandomSpritePiece(m.winArena, cwin.Point{X: 4, Y: 0})
 	m.s.AddAnimator(m.s.createNaturalDropAnimator())
 	m.g.SpriteMgr.AddSprite(m.s)
-	m.s.setupShadow(m.s)
+	m.s.setupShadow()
 	m.g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys('p'), func(ev cterm.Event) bool {
 		if ev.Type == cterm.EventKey {
 			if ev.Key == cterm.KeyArrowUp {
@@ -292,24 +296,22 @@ Y88b  d88P Y88..88P       "
 	m.g.SpriteMgr.AddSprite(s)
 }
 
-func (m *myGame) createSpritePiece(
-	name string, idx int, color cterm.Attribute, w *cwin.Win, lxy cwin.Point) *spritePiece {
-	f := cgame.SetAttrInFrame(cgame.CopyFrame(pieceLib[name][idx].f), cwin.ChAttr{Bg: color})
+func (m *myGame) newSpritePiece(pieceName, spriteName string, rotationIdx int,
+	color cterm.Attribute, parentW *cwin.Win, lxy cwin.Point) *spritePiece {
+	f := cgame.SetAttrInFrame(cgame.CopyFrame(
+		pieceLibrary[pieceName][rotationIdx].f), cwin.ChAttr{Bg: color})
 	s := &spritePiece{
-		SpriteBase: cgame.NewSpriteBase(
-			m.g, w, name, f,
-			LX2X(lxy.X),
-			LY2Y(lxy.Y)),
-		color: color,
-		idx:   idx,
-		m:     m,
+		SpriteBase: cgame.NewSpriteBase(m.g, parentW, spriteName, f, LX2X(lxy.X), LY2Y(lxy.Y)),
+		color:      color,
+		idx:        rotationIdx,
+		m:          m,
 	}
 	return s
 }
 
 func (m *myGame) genRandomSpritePiece(w *cwin.Win, lxy cwin.Point) *spritePiece {
 	name := pieceNames[rand.Int()%len(pieceNames)]
-	return m.createSpritePiece(name, 0, pieceActiveColor, w, lxy)
+	return m.createSpritePiece(name, 0, pieceColor, w, lxy)
 }
 
 // Make one block of frame cells, without the color attributes.
@@ -365,10 +367,10 @@ func mkPiece(lxy []cwin.Point, offsetlxy cwin.Point) *piece {
 }
 
 var (
-	pieceZ1    = "Z1"
-	pieceNames = []string{pieceZ1}
-	pieceLib   = map[string][]*piece{
-		pieceZ1: {
+	z1Name       = "Z1"
+	pieceNames   = []string{z1Name}
+	pieceLibrary = map[string][]*piece{
+		z1Name: {
 			mkPiece(
 				[]cwin.Point{{X: 0, Y: 0}, {X: 1, Y: 0}, {X: 1, Y: 1}, {X: 2, Y: 1}},
 				cwin.Point{X: 0, Y: 1},
@@ -379,9 +381,13 @@ var (
 			),
 		},
 	}
-	pieceActiveColor  = cterm.ColorBlue
-	pieceShadowColor  = cterm.ColorBlack
-	pieceSettledColor = cterm.ColorDarkGray
+
+	shadowName  = "shadow"
+	settledName = "settled"
+
+	pieceColor   = cterm.ColorBlue
+	shadowColor  = cterm.ColorBlack
+	settledColor = cterm.ColorDarkGray
 )
 
 type spritePiece struct {
@@ -389,14 +395,6 @@ type spritePiece struct {
 	color cterm.Attribute
 	idx   int
 	m     *myGame
-}
-
-func (s *spritePiece) destroy() {
-	if _, found := s.m.g.SpriteMgr.TryFindByUID(s.UID()); found {
-		s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDelete(s))
-		return
-	}
-	s.m.g.WinSys.RemoveWin(s.Win())
 }
 
 func (*spritePiece) check(s *spritePiece, dxy cwin.Point) bool {
@@ -420,72 +418,82 @@ func (*spritePiece) check(s *spritePiece, dxy cwin.Point) bool {
 // because new piece will have its own brand new drop waypoint, thus if you're
 // rotating fast enough, the piece will never actually drop.
 func (s *spritePiece) rotate() {
-	lx, ly := X2LX(s.Win().Rect().X), Y2LY(s.Win().Rect().Y)
-	ps := pieceLib[s.Name()]
+	lx, ly := X2LX(s.Rect().X), Y2LY(s.Rect().Y)
+	ps := pieceLibrary[s.Name()]
 	nextIdx := (s.idx + 1) % len(ps)
 	p := ps[nextIdx]
 	lx += p.offsetFromPrev.X
 	ly += p.offsetFromPrev.Y
-	newS := s.m.createSpritePiece(s.Name(), nextIdx, s.color,
-		s.Win().Parent(), cwin.Point{X: lx, Y: ly})
-	if !s.check(newS, cwin.Point{}) {
-		newS.destroy()
+	newS := s.m.newSpritePiece(
+		s.Name(), s.Name(), nextIdx, s.color, s.m.winArena, cwin.Point{X: lx, Y: ly})
+	if !newS.Update(cgame.UpdateArg{
+		IBC: cgame.InBoundsCheckFullyVisible,
+		CD:  cgame.CollisionDetectionOn,
+	}) {
+		newS.Destroy()
 		return
 	}
-	s.Mgr().AddEvent(cgame.NewSpriteEventDelete(s))
+	newS.AddAnimator()
+	s.Mgr().DeleteSprite(s)
 	s.m.s = newS
+	s.Mgr().AddSprite(newS)
 	s.Mgr().AddEvent(cgame.NewSpriteEventCreate(newS, newS.createNaturalDropAnimator()))
 	s.setupShadow(newS)
 }
 
 func (s *spritePiece) move(dlx int) {
-	if !s.check(s, cwin.Point{X: dlx}) {
-		return
+	if s.Update(cgame.UpdateArg{
+		DXY: &cwin.Point{X: LX2X(dlx)},
+		IBC: cgame.InBoundsCheckFullyVisible,
+		CD:  cgame.CollisionDetectionOn,
+	}) {
+		s.setupShadow()
 	}
-	s.Win().SetPosRelative(LX2X(dlx), 0)
-	s.setupShadow(s)
 }
 
-func (*spritePiece) setupShadow(s *spritePiece) {
+func (s *spritePiece) setupShadow() {
 	if s.m.shadow != nil {
 		s.m.g.SpriteMgr.DeleteSprite(s.m.shadow)
 		s.m.shadow = nil
 	}
-	for y := s.m.lh - 1; y >= Y2LY(s.Win().Rect().Y+s.Win().Rect().H); y-- {
-		shadow := s.m.createSpritePiece(s.Name(),
-			s.idx, pieceShadowColor,
-			s.Win().Parent(), cwin.Point{X: X2LX(s.Win().Rect().X), Y: y})
-		if !s.check(shadow, cwin.Point{}) {
+	for y := s.m.lh - 1; y >= Y2LY(s.Rect().Y+1); y-- {
+		shadow := s.m.newSpritePiece(s.Name(), shadowName,
+			s.idx, shadowColor, s.m.winArena, cwin.Point{X: X2LX(s.Rect().X), Y: y})
+		// test if the shadow in boundary and without any collision?
+		if !shadow.Update(cgame.UpdateArg{
+			IBC: cgame.InBoundsCheckFullyVisible,
+			CD:  cgame.CollisionDetectionOn,
+		}) {
 			shadow.destroy()
 			continue
 		}
 		s.m.shadow = shadow
-		s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s.m.shadow))
+		s.Mgr().AddSprite(s.m.shadow)
 		break
 	}
 }
 
 func (s *spritePiece) down() {
-	if !s.check(s, cwin.Point{Y: 1}) {
-		return
+	if s.Update(cgame.UpdateArg{
+		DXY: &cwin.Point{Y: 1},
+		IBC: cgame.InBoundsCheckFullyVisible,
+		CD:  cgame.CollisionDetectionOn,
+	}) {
+		s.setupShadow()
 	}
-	s.Win().SetPosRelative(0, LY2Y(1))
-	s.setupShadow(s)
 }
 
+type dropAnim
 func (s *spritePiece) createNaturalDropAnimator() cgame.Animator {
 	return cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{Waypoints: s})
 }
 
+// cgame.WaypointProvider
 func (s *spritePiece) Next() (cgame.Waypoint, bool) {
-	ly := Y2LY(s.Win().Rect().Y)
-	if ly > 15 {
-		return cgame.Waypoint{}, false
-	}
 	return cgame.Waypoint{
-		Type: cgame.WaypointRelative,
-		X:    0,
-		Y:    LY2Y(1),
+		Type: cgame.WaypointRel,
+		DX:    0,
+		DY:    LY2Y(1),
 		T:    s.m.speed,
 	}, true
 }

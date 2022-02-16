@@ -50,10 +50,9 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	s.AddAnimator(cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
-				Type: cgame.WaypointAbs,
-				X:    demoWin.ClientRect().W,
-				Y:    startY,
-				T:    3 * time.Second,
+				DX: cgame.FrameRect(frame).W + demoWin.ClientRect().W,
+				DY: 0,
+				T:  3 * time.Second,
 			},
 		}),
 		AnimatorCfgCommon: cgame.AnimatorCfgCommon{

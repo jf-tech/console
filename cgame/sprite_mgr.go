@@ -130,11 +130,11 @@ func (sm *SpriteManager) processEvents() {
 			}
 			sm.ss = append(sm.ss, se.s)
 		case spriteEventDelete:
+			se.s.Destroy()
 			idx := sm.spriteIndex(se.s)
 			if idx < 0 {
 				return
 			}
-			sm.ss[idx].Destroy()
 			copy(sm.ss[idx:], sm.ss[idx+1:])
 			sm.ss = sm.ss[:len(sm.ss)-1]
 		case spriteEventDeleteAll:

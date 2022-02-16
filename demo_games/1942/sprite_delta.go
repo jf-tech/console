@@ -49,10 +49,9 @@ func createVerticalDelta(m *myGame) {
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
-				Type: cgame.WaypointRelative,
-				X:    0,
-				Y:    1 * dist,
-				T:    time.Duration((float64(dist) / float64(vspeed)) * float64(time.Second)),
+				DX: 0,
+				DY: 1 * dist,
+				T:  time.Duration((float64(dist) / float64(vspeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
 	m.g.SpriteMgr.AddSprite(s)
@@ -70,10 +69,9 @@ func createHorizontalDelta(m *myGame) {
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
-				Type: cgame.WaypointRelative,
-				X:    dist,
-				Y:    0,
-				T:    time.Duration((float64(abs(dist)) / float64(deltaHorizontalSpeed)) * float64(time.Second)),
+				DX: dist,
+				DY: 0,
+				T:  time.Duration((float64(abs(dist)) / float64(deltaHorizontalSpeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
 	m.g.SpriteMgr.AddSprite(s)

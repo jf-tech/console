@@ -22,10 +22,9 @@ func createBackgroundStar(m *myGame) {
 	a := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
 			{
-				Type: cgame.WaypointRelative,
-				X:    0,
-				Y:    1 * dist,
-				T:    time.Duration((float64(dist) / float64(bgStarSpeed)) * float64(time.Second)),
+				DX: 0,
+				DY: 1 * dist,
+				T:  time.Duration((float64(dist) / float64(bgStarSpeed)) * float64(time.Second)),
 			}}),
 	})
 	s.AddAnimator(a)

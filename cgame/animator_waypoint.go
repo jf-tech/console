@@ -41,7 +41,7 @@ func (aw *AnimatorWaypoint) Animate() {
 		ratio = float64(elapsed) / float64(aw.wp.T)
 	}
 	// move proportionally to the elapsed time over current waypoint duration aw.wp.T
-	dx, dy := int(float64(aw.wp.X)*ratio), int(float64(aw.wp.Y)*ratio)
+	dx, dy := int(float64(aw.wp.DX)*ratio), int(float64(aw.wp.DY)*ratio)
 	if aw.dxDone != dx || aw.dyDone != dy {
 		// If collision is detected or in-bounds check fails, and PreUpdateNotify decides to abandon
 		// then the this animator is finished.
@@ -69,11 +69,6 @@ func (aw *AnimatorWaypoint) Animate() {
 func (aw *AnimatorWaypoint) setupNextWaypoint() (more bool) {
 	if aw.wp, more = aw.cfg.Waypoints.Next(); !more {
 		return false
-	}
-	if aw.wp.Type == WaypointAbs {
-		aw.wp.X -= aw.s.Rect().X
-		aw.wp.Y -= aw.s.Rect().Y
-		aw.wp.Type = WaypointRelative
 	}
 	aw.dxDone, aw.dyDone = 0, 0
 	aw.wpStartedTime = aw.clock.Now()

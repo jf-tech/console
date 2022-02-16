@@ -60,9 +60,8 @@ func (sp *spriteParticle) Next() (cgame.Waypoint, bool) {
 	dx := sp.dx * dist
 	dy := sp.dy * dist
 	wp := cgame.Waypoint{
-		Type: cgame.WaypointRelative,
-		X:    dx,
-		Y:    dy,
+		DX: dx,
+		DY: dy,
 		T: time.Duration(
 			math.Sqrt(float64(dx*dx+dy*dy)) / float64(sp.speed) * float64(time.Second)),
 	}

@@ -2,20 +2,11 @@ package cgame
 
 import "time"
 
-type WaypointType int
-
-const (
-	WaypointAbs WaypointType = iota
-	WaypointRelative
-)
-
-// WaypointAbs: from current position to (X, Y) using time T
-// WaypointRel: from current position to (curX + X, curY + Y) using time T. Note a trick here
-// is to use X=Y=0, which means keep the sprite at the current location for time T.
+// From current position to (curX + DX, curY + DY) using time T. Note a trick here
+// is to use DX=DY=0 to keep the sprite at the current location for time T.
 type Waypoint struct {
-	Type WaypointType
-	X, Y int
-	T    time.Duration
+	DX, DY int
+	T      time.Duration
 }
 
 type WaypointProvider interface {

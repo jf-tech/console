@@ -138,15 +138,14 @@ type bossWaypoints struct {
 
 func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 	curR := bw.s.Rect()
-	parentClientR := bw.s.m.winArena.ClientRect().ToOrigin()
+	parentClientR := bw.s.ParentRect()
 	if overlapped, ro := curR.Overlap(parentClientR); !overlapped || curR != ro {
 		dist := -curR.Y
 		// this is when the boss is still fully or partially out of the arena
 		return cgame.Waypoint{
-			Type: cgame.WaypointRelative,
-			X:    0,
-			Y:    dist,
-			T:    time.Duration(cgame.CharPerSec(abs(dist))/bossSpeed) * time.Second,
+			DX: 0,
+			DY: dist,
+			T:  time.Duration(cgame.CharPerSec(abs(dist))/bossSpeed) * time.Second,
 		}, true
 	}
 	for {
@@ -158,10 +157,9 @@ func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
 		if overlapped, ro := newR.Overlap(parentClientR); overlapped && ro == newR {
 			return cgame.Waypoint{
-				Type: cgame.WaypointAbs,
-				X:    newR.X,
-				Y:    newR.Y,
-				T:    time.Duration(cgame.CharPerSec(dist)/bossSpeed) * time.Second,
+				DX: newR.X - bw.s.Rect().X,
+				DY: newR.Y - bw.s.Rect().Y,
+				T:  time.Duration(cgame.CharPerSec(dist)/bossSpeed) * time.Second,
 			}, true
 		}
 	}
