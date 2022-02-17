@@ -1,9 +1,9 @@
 [2022/02/18]
 - [✅] move clock.go from cgame to cwin
-- add Run on Sys, obviously no gameover or pause key, just a func with a return value
-- change the return value from bool to typed flags, to avoid confusion.
-- cgame.Game.Run still there but with gameover and pause key, then relay the to the cwin.Sys.Run
-- cwin.Rect.Overlap swap the return value order. bool second just like every other similar constructs in go.
+- [✅] add Run on Sys, obviously no gameover or pause key, just a func with a return value
+- [✅] change the return value from bool to typed flags, to avoid confusion.
+- [✅] cgame.Game.Run still there but with gameover and pause key, then relay the to the cwin.Sys.Run
+- [✅] cwin.Rect.Overlap swap the return value order. bool second just like every other similar constructs in go.
 - [✅] move FIFO and fileLoadingCache into cutil.
 - [✅] move probability to cutil
 - [✅] move direction.go to cwin

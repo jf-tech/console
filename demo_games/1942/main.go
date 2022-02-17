@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"runtime/debug"
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
@@ -198,12 +196,6 @@ func (m *myGame) winSetup() {
 }
 
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			cterm.Close()
-			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
-		}
-	}()
 	code := codeReplay
 	for code == codeReplay {
 		code = (&myGame{}).main()

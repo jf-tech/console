@@ -21,37 +21,36 @@ type stage struct {
 func (s *stage) Run() {
 	s.init()
 	s.runStageIntroBanner()
-	s.m.g.Run(gameOverKeys, pauseGameKeys,
-		func(ev cterm.Event) bool {
-			if s.checkStageDone() {
-				return true
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.MsgLoopResponseType {
+		if s.checkStageDone() {
+			return cwin.MsgLoopStop
+		}
+		alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
+		alpha.ToTop()
+		if ev.Type == cterm.EventKey {
+			// due to console aspect ration, make left/right move a bit faster.
+			// also let retreat (down) a bit faster than up to make the game exp
+			// better.
+			if ev.Key == cterm.KeyArrowUp {
+				alpha.move(0, -1)
+			} else if ev.Key == cterm.KeyArrowDown {
+				alpha.move(0, 2)
+			} else if ev.Key == cterm.KeyArrowLeft {
+				alpha.move(-3, 0)
+			} else if ev.Key == cterm.KeyArrowRight {
+				alpha.move(3, 0)
+			} else if ev.Ch == ' ' {
+				alpha.fireWeapon()
+			} else if cwin.FindKey(skipStageKeys, ev) {
+				s.stageSkipped = true
+			} else if cwin.FindKey(invincibleModeKeys, ev) {
+				s.m.invincible = !s.m.invincible
 			}
-			alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
-			alpha.ToTop()
-			if ev.Type == cterm.EventKey {
-				// due to console aspect ration, make left/right move a bit faster.
-				// also let retreat (down) a bit faster than up to make the game exp
-				// better.
-				if ev.Key == cterm.KeyArrowUp {
-					alpha.move(0, -1)
-				} else if ev.Key == cterm.KeyArrowDown {
-					alpha.move(0, 2)
-				} else if ev.Key == cterm.KeyArrowLeft {
-					alpha.move(-3, 0)
-				} else if ev.Key == cterm.KeyArrowRight {
-					alpha.move(3, 0)
-				} else if ev.Ch == ' ' {
-					alpha.fireWeapon()
-				} else if cwin.FindKey(skipStageKeys, ev) {
-					s.stageSkipped = true
-				} else if cwin.FindKey(invincibleModeKeys, ev) {
-					s.m.invincible = !s.m.invincible
-				}
-			}
-			s.genSprites()
-			s.displayStats(alpha)
-			return false
-		})
+		}
+		s.genSprites()
+		s.displayStats(alpha)
+		return cwin.MsgLoopContinue
+	})
 	if !s.m.g.IsGameOver() && s.stageIdx != totalStages-1 {
 		s.runStagePassedBanner()
 	}
@@ -75,7 +74,9 @@ func (s *stage) runStageIntroBanner() {
 		createAlpha(s.m, s)
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(cterm.Event) bool { return bannerDone })
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.MsgLoopResponseType {
+		return cwin.TrueForMsgLoopStop(bannerDone)
+	})
 }
 
 func (s *stage) runStagePassedBanner() {
@@ -83,7 +84,9 @@ func (s *stage) runStagePassedBanner() {
 	createStagePassedBanner(s.m, func() {
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(cterm.Event) bool { return bannerDone })
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.MsgLoopResponseType {
+		return cwin.TrueForMsgLoopStop(bannerDone)
+	})
 }
 
 func (s *stage) genSprites() {

@@ -79,8 +79,8 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
 			done = true
 		},
 	})
-	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), nil, func(_ cterm.Event) bool {
-		return done
+	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), nil, func(ev cterm.Event) cwin.MsgLoopResponseType {
+		return cwin.TrueForMsgLoopStop(done)
 	})
 	if g.IsGameOver() {
 		return false

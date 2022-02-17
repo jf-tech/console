@@ -17,7 +17,7 @@ type Game struct {
 	SoundMgr    *SoundManager
 	Exchange    *Exchange
 
-	loopsDone int64
+	loopCount int64
 	gameOver  bool
 }
 
@@ -46,16 +46,13 @@ func (g *Game) Close() {
 	g.WinSys.Close()
 }
 
-func (g *Game) Run(
-	gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc func(ev cterm.Event) bool) {
-
-	stop := false
-	for !stop && !g.IsGameOver() {
-		var ev cterm.Event
-		if ev = g.WinSys.TryGetEvent(); ev.Type == cterm.EventKey {
+func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc cwin.MsgLoopFunc) {
+	g.WinSys.Run(func(ev cterm.Event) cwin.MsgLoopResponseType {
+		g.loopCount++
+		if ev.Type == cterm.EventKey {
 			if cwin.FindKey(gameOverKeys, ev) {
 				g.GameOver()
-				return
+				return cwin.MsgLoopStop
 			}
 			if cwin.FindKey(pauseKeys, ev) {
 				if g.IsPaused() {
@@ -63,19 +60,20 @@ func (g *Game) Run(
 				} else {
 					g.Pause()
 				}
-				continue
+				return cwin.MsgLoopContinue
 			}
 		}
+		// Reach here because of either EventNone, or  EvenKey but not game over or pause key...
 		if g.IsPaused() {
-			continue
+			return cwin.MsgLoopContinue
 		}
+		resp := cwin.MsgLoopContinue
 		if optionalRunFunc != nil {
-			stop = optionalRunFunc(ev)
+			resp = optionalRunFunc(ev)
 		}
 		g.SpriteMgr.Process()
-		g.WinSys.Update()
-		g.loopsDone++
-	}
+		return resp
+	})
 }
 
 func (g *Game) Pause() {
@@ -100,16 +98,12 @@ func (g *Game) IsGameOver() bool {
 	return g.gameOver
 }
 
-func (g *Game) TotalLoops() int64 {
-	return g.loopsDone
-}
-
 func (g *Game) FPS() float64 {
 	now := g.MasterClock.Now()
 	if now == 0 {
 		return float64(0)
 	}
-	return float64(g.loopsDone) / (float64(now) / float64(time.Second))
+	return float64(g.loopCount) / (float64(now) / float64(time.Second))
 }
 
 func (g *Game) HeapUsageInBytes() int64 {

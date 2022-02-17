@@ -32,6 +32,24 @@ func Init(provider cterm.Provider) (*Sys, error) {
 	return s, nil
 }
 
+func (s *Sys) Run(f MsgLoopFunc) {
+loop:
+	for {
+		resp := f(s.TryGetEvent())
+		switch resp {
+		case MsgLoopStop:
+			s.Refresh()
+			break loop
+		case MsgLoopContinue:
+			s.Update()
+		case MsgLoopContinueWithFullRefresh:
+			s.Refresh()
+		default:
+			panic(fmt.Sprintf("unknown response: %d", int(resp)))
+		}
+	}
+}
+
 func (s *Sys) GetSysWin() *Win {
 	return s.sysWin
 }
@@ -178,6 +196,11 @@ func (s *Sys) MessageBox(parent *Win, title, format string, a ...interface{}) bo
 func (s *Sys) Update() {
 	s.doUpdate(true)
 	cterm.Flush()
+}
+
+func (s *Sys) Refresh() {
+	s.doUpdate(false)
+	cterm.Sync()
 }
 
 func (s *Sys) TotalChxRendered() int64 {

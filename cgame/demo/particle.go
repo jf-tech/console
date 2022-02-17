@@ -188,7 +188,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 	createParticle(r.W/2+2, r.H/2, 0, 0, cterm.ColorLightBlue, 0)
 	createParticle(r.W/2+3, r.H/2, 0, 0, cterm.ColorWhite, 0)
 
-	dc := cutil.NewStopwatch(g.MasterClock)
+	stopwatch := cutil.NewStopwatch(g.MasterClock)
 
 	showDebugInfo := func() {
 		var sb strings.Builder
@@ -197,7 +197,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 		sb.WriteString(fmt.Sprintf("- FPS: %.0f\n", g.FPS()))
 		sb.WriteString(fmt.Sprintf("- Mem: %s\n", cwin.ByteSizeStr(g.HeapUsageInBytes())))
 		sb.WriteString(fmt.Sprintf("- Pixels: %s\n", cwin.ByteSizeStr(g.WinSys.TotalChxRendered())))
-		sb.WriteString(fmt.Sprintf("- Loop time: %s\n", dc.Total()))
+		sb.WriteString(fmt.Sprintf("- Loop time: %s\n", stopwatch.Total()))
 		sb.WriteString(fmt.Sprintf("- Particle #: %d\n", len(ids)))
 		sb.WriteString(fmt.Sprintf("- Collisions: %d\n", collision))
 		sb.WriteString(fmt.Sprintf("- Boundary Hits: %d\n", hitBounds))
@@ -210,13 +210,13 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 				sp.UID(), sp.Rect().X, sp.Rect().Y, sp.dx, sp.dy, sp.speed))
 		}
 		debugWin.SetText(sb.String())
-		dc.Reset()
+		stopwatch.Reset()
 	}
 
-	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) bool {
+	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) cwin.MsgLoopResponseType {
 		showDebugInfo()
-		dc.Start()
-		defer dc.Stop()
+		stopwatch.Start()
+		defer stopwatch.Stop()
 		if ev.Type == cterm.EventKey {
 			if ev.Key == cterm.KeyArrowUp {
 				for {
@@ -230,7 +230,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 						break
 					}
 				}
-				return false
+				return cwin.MsgLoopContinue
 			}
 			if ev.Key == cterm.KeyArrowDown {
 				if len(ids) > 0 {
@@ -241,10 +241,10 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 					copy(ids[idx:], ids[idx+1:])
 					ids = ids[:len(ids)-1]
 				}
-				return false
+				return cwin.MsgLoopContinue
 			}
-			return true
+			return cwin.MsgLoopStop
 		}
-		return false
+		return cwin.MsgLoopContinue
 	})
 }

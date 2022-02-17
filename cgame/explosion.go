@@ -38,7 +38,7 @@ func CreateExplosion(s *SpriteBase, c ExplosionCfg) {
 var (
 	explosionRunes               = []rune("\"~'`.")
 	fire                         = '🔥'
-	fireProb                     = "33%"
+	fireProb                     = "50%"
 	explosionFPS                 = 8
 	changeIntoExplosionRunesProb = "50%"
 	explosionRuneFwdProb         = "80%"

@@ -16,6 +16,10 @@ func (p *providerTermBox) Flush() error {
 	return termbox.Flush()
 }
 
+func (p *providerTermBox) Sync() error {
+	return termbox.Sync()
+}
+
 func (p *providerTermBox) Size() (int, int) {
 	return termbox.Size()
 }
