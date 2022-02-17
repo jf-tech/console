@@ -1,3 +1,9 @@
+[2022/02/17 - cgame]
+- async helper and chaining in SpriteMgr.
+- AsyncCreateSprite -> AsyncAddSprite
+- actually i'm questioning it again, shuld the SpriteMgr programming mode be async or
+  sync? Okay, let's finish tetris before doing another around of sync/async experiment.
+
 [2022/02/16 - cgame]
 - [✅] decide to create 2 interfaces: InBoundsCheckResponse, CollisionResponse
   Sprite.Update will call them:
@@ -83,7 +89,7 @@
 	  thisResolvable, _ := s.(CollisionResolvable)
     ```
   to type cast, which means you can't use SetPosFrame/SetPosRel if the sprite isn't added into
-  SpriteMgr yet (not just merely call SpriteMgr.AddSprite, you have to wait until the Create
+  SpriteMgr yet (not just merely call SpriteMgr.AsyncCreateSprite, you have to wait until the Create
   msg has been processed). Is this a big problem? Since why do you have to do collision detection
   before your sprite even added into the system?
 - Collidable.IsCollidableWith is too clumsy to use. Ideally any sprite with Collidable should be

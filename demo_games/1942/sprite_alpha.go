@@ -138,5 +138,5 @@ func createAlpha(m *myGame, stage *stage) {
 			m.winArena.ClientRect().H-cgame.FrameRect(alphaFrame).H),
 		m:        m,
 		gpWeapon: gp}
-	m.g.SpriteMgr.AddSprite(alpha)
+	m.g.SpriteMgr.AsyncCreateSprite(alpha)
 }

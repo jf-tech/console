@@ -173,8 +173,8 @@ func (s *stage) checkStageDone() bool {
 			return false
 		}
 	}
-	// we're truly down. remove all the non enemy sprites
-	s.m.g.SpriteMgr.DeleteAll()
+	// we're truly done. remove all the non enemy sprites
+	s.m.g.SpriteMgr.AsyncDeleteAll()
 	return true
 }
 

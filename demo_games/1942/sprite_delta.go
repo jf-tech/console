@@ -54,7 +54,7 @@ func createVerticalDelta(m *myGame) {
 				T:  time.Duration((float64(dist) / float64(vspeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AddSprite(s)
+	m.g.SpriteMgr.AsyncCreateSprite(s)
 }
 
 func createHorizontalDelta(m *myGame) {
@@ -74,5 +74,5 @@ func createHorizontalDelta(m *myGame) {
 				T:  time.Duration((float64(abs(dist)) / float64(deltaHorizontalSpeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AddSprite(s)
+	m.g.SpriteMgr.AsyncCreateSprite(s)
 }

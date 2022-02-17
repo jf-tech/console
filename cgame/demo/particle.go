@@ -175,7 +175,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 			return false
 		}
 		s.resetAnimator()
-		g.SpriteMgr.AddSprite(s)
+		g.SpriteMgr.AsyncCreateSprite(s)
 		ids = append(ids, s.UID())
 		return true
 	}
@@ -231,7 +231,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 					idx := rand.Int() % len(ids)
 					id := ids[idx]
 					s := g.SpriteMgr.FindByUID(id)
-					g.SpriteMgr.DeleteSprite(s)
+					g.SpriteMgr.AsyncDeleteSprite(s)
 					copy(ids[idx:], ids[idx+1:])
 					ids = ids[:len(ids)-1]
 				}

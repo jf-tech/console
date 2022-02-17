@@ -64,5 +64,5 @@ func createGamma(m *myGame, stageIdx int) {
 		},
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AddSprite(s)
+	m.g.SpriteMgr.AsyncCreateSprite(s)
 }

@@ -67,7 +67,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	// decides direction and dist the sprite will travel and af will use the dir symbol
 	// as the frame background :)
 	s.AddAnimator(aw, af)
-	g.SpriteMgr.AddSprite(s)
+	g.SpriteMgr.AsyncCreateSprite(s)
 
 	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) bool {
 		demoWin.SetTitle(

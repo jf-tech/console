@@ -59,19 +59,26 @@ func (sm *SpriteManager) Process() {
 	sm.processEvents()
 }
 
-func (sm *SpriteManager) AddSprite(s Sprite) {
+func (sm *SpriteManager) AsyncCreateSprite(s Sprite) *SpriteManager {
 	sm.eventQ.Push(newSpriteEventCreate(s))
+	return sm
 }
 
-func (sm *SpriteManager) DeleteSprite(s Sprite) {
+func (sm *SpriteManager) AsyncDeleteSprite(s Sprite) *SpriteManager {
 	sm.eventQ.Push(newSpriteEventDelete(s))
+	return sm
 }
 
-func (sm *SpriteManager) DeleteAll() {
+func (sm *SpriteManager) AsyncDeleteAll() *SpriteManager {
 	sm.eventQ.Push(newSpriteEventDeleteAll())
+	return sm
 }
 
-// Similar notes to CheckParentRectBound's
+func (sm *SpriteManager) AsyncFunc(f func()) *SpriteManager {
+	sm.eventQ.Push(newSpriteEventFunc(f))
+	return sm
+}
+
 func (sm *SpriteManager) CheckCollision(s Sprite, newR cwin.Rect, newF Frame) []Sprite {
 	var collided []Sprite
 	for i := 0; i < len(sm.ss); i++ {
@@ -123,7 +130,7 @@ func (sm *SpriteManager) processEvents() {
 			break
 		}
 		se := e.(*spriteEvent)
-		switch se.eventType {
+		switch se.typ {
 		case spriteEventCreate:
 			if sm.spriteIndex(se.s) >= 0 {
 				panic(fmt.Sprintf("Sprite['%s',%d] is being re-added", se.s.Name(), se.s.UID()))
@@ -142,6 +149,8 @@ func (sm *SpriteManager) processEvents() {
 				s.Destroy()
 			}
 			sm.ss = sm.ss[:0]
+		case spriteEventFunc:
+			se.body.(func())()
 		}
 	}
 }

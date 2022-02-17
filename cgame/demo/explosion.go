@@ -57,7 +57,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
 	s := cgame.NewSpriteBase(g, demoWin, "s", f,
 		(demoWin.ClientRect().W-cgame.FrameRect(f).W)/2,
 		(demoWin.ClientRect().H-cgame.FrameRect(f).H)/2)
-	g.SpriteMgr.AddSprite(s)
+	g.SpriteMgr.AsyncCreateSprite(s)
 	g.WinSys.Update()
 	gameOver := false
 	g.WinSys.SyncExpectKey(func(k cterm.Key, r rune) bool {

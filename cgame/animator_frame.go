@@ -33,7 +33,7 @@ func (af *AnimatorFrame) Animate() {
 		af.cfg.AfterFinish()
 	}
 	if !af.cfg.KeepAliveWhenFinished {
-		af.s.Mgr().DeleteSprite(af.s)
+		af.s.Mgr().AsyncDeleteSprite(af.s)
 	}
 }
 

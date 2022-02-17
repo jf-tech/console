@@ -129,7 +129,7 @@ func createBoss(m *myGame) {
 		},
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AddSprite(s)
+	m.g.SpriteMgr.AsyncCreateSprite(s)
 }
 
 type bossWaypoints struct {

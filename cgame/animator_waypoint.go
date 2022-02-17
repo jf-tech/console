@@ -8,6 +8,10 @@ import (
 
 type AnimatorWaypointCfg struct {
 	Waypoints WaypointProvider
+	// instead of a "continuous" move, after the specified T of a waypoint, the move will be
+	// completed in one go. In most cases, we like the smooth movement; but in some case, like
+	// for example in tetris, we do want the tetris piece to drop in a discrete manner
+	SingleMovePerWaypoint bool
 	AnimatorCfgCommon
 }
 
@@ -31,13 +35,16 @@ func (aw *AnimatorWaypoint) Animate() {
 			aw.cfg.AfterFinish()
 		}
 		if !aw.cfg.KeepAliveWhenFinished {
-			aw.s.Mgr().DeleteSprite(aw.s)
+			aw.s.Mgr().AsyncDeleteSprite(aw.s)
 		}
 	}
 
 	elapsed := aw.clock.Now() - aw.wpStartedTime
 	ratio := float64(1)
 	if elapsed < aw.wp.T {
+		if aw.cfg.SingleMovePerWaypoint {
+			return
+		}
 		ratio = float64(elapsed) / float64(aw.wp.T)
 	}
 	// move proportionally to the elapsed time over current waypoint duration aw.wp.T

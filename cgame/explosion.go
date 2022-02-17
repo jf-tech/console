@@ -29,8 +29,8 @@ func CreateExplosion(s *SpriteBase, c ExplosionCfg) {
 			AfterFinish: c.AfterFinish,
 		},
 	}))
-	newS.Mgr().AddSprite(newS)
-	s.Mgr().DeleteSprite(s)
+	newS.Mgr().AsyncCreateSprite(newS)
+	s.Mgr().AsyncDeleteSprite(s)
 }
 
 var (
