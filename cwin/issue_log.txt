@@ -4,8 +4,8 @@
 - change the return value from bool to typed flags, to avoid confusion.
 - cgame.Game.Run still there but with gameover and pause key, then relay the to the cwin.Sys.Run
 - cwin.Rect.Overlap swap the return value order. bool second just like every other similar constructs in go.
-- move FIFO and fileLoadingCache into cutil.
+- [✅] move FIFO and fileLoadingCache into cutil.
 - [✅] move probability to cutil
-- move direction.go to cwin
-- move GetCurFileDir to cutil
-- move abs to cutil
+- [✅] move direction.go to cwin
+- [✅] move GetCurFileDir to cutil
+- [❎] move abs to cutil

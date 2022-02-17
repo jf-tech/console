@@ -255,8 +255,8 @@ Space  : direct drop
 's'    : shadow on/off
 'p'    : pause/resume
 ESC,'q': quit
-`, cgame.DirSymbols[cgame.DirLeft], cgame.DirSymbols[cgame.DirRight],
-		cgame.DirSymbols[cgame.DirUp], cgame.DirSymbols[cgame.DirDown]), "\n"))
+`, cwin.DirRunes[cwin.DirLeft], cwin.DirRunes[cwin.DirRight],
+		cwin.DirRunes[cwin.DirUp], cwin.DirRunes[cwin.DirDown]), "\n"))
 
 	m.naturalDropDelay = baseNaturalDropDelay
 

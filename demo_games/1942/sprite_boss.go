@@ -152,10 +152,10 @@ func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 	for {
 		dist := rand.Int() % (bossMaxDistToGoBeforeDirChange - bossMinDistToGoBeforeDirChange + 1)
 		dist += bossMinDistToGoBeforeDirChange
-		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
+		dirIdx := cwin.Dir(rand.Int() % cwin.DirCount)
 		newR := bw.s.Rect()
-		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
-		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
+		newR.X += cwin.DirOffSetXY[dirIdx].X * dist
+		newR.Y += cwin.DirOffSetXY[dirIdx].Y * dist
 		if overlapped, ro := newR.Overlap(parentClientR); overlapped && ro == newR {
 			return cgame.Waypoint{
 				DX: newR.X - bw.s.Rect().X,

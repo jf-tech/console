@@ -9,6 +9,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -72,7 +73,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 }
 
 func readFile(relPath string) string {
-	b, err := ioutil.ReadFile(path.Join(cgame.GetCurFileDir(), relPath))
+	b, err := ioutil.ReadFile(path.Join(cutil.GetCurFileDir(), relPath))
 	if err != nil {
 		panic(err)
 	}

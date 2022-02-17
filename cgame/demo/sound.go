@@ -7,6 +7,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -34,7 +35,7 @@ func main() {
 }
 
 func doDemo(g *cgame.Game, demoWin *cwin.Win) {
-	filepath := path.Join(cgame.GetCurFileDir(), "resources/doorbell.mp3")
+	filepath := path.Join(cutil.GetCurFileDir(), "resources/doorbell.mp3")
 	g.SoundMgr.PlayMP3(filepath, -1, -1)
 	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(cterm.Event) bool {
 		demoWin.SetTitle(

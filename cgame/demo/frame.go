@@ -139,12 +139,12 @@ func (wp *waypointProvider) Next() (cgame.Waypoint, bool) {
 	for {
 		dist := rand.Int() % (maxDistBeforeDirChange - minDistBeforeDirChange + 1)
 		dist += minDistBeforeDirChange
-		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
+		dir := cwin.Dir(rand.Int() % cwin.DirCount)
 		newR := wp.s.Rect()
-		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
-		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
+		newR.X += cwin.DirOffSetXY[dir].X * dist
+		newR.Y += cwin.DirOffSetXY[dir].Y * dist
 		if overlapped, ro := newR.Overlap(wp.s.ParentRect()); overlapped && ro == newR {
-			wp.g.Exchange.StringData["curDir"] = string(cgame.DirSymbols[dirIdx])
+			wp.g.Exchange.StringData["curDir"] = string(cwin.DirRunes[dir])
 			wp.g.Exchange.IntData["curDist"] = dist
 			return cgame.Waypoint{
 				DX: newR.X - wp.s.Rect().X,

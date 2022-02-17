@@ -10,6 +10,7 @@ import (
 	"github.com/faiface/beep/effects"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -90,7 +91,7 @@ func (sm *SoundManager) PlayMP3(mp3FilePath string, vol float64, loop int) (Soun
 			return id.(SoundID), nil
 		}
 	}
-	b, err := getResFile(mp3FilePath)
+	b, err := cutil.LoadCachedFile(mp3FilePath)
 	if err != nil {
 		return InvalidSoundID, err
 	}

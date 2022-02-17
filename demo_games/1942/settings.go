@@ -23,7 +23,7 @@ var (
 
 	sfxAllFiles = []string{}
 	sfxFile     = func(relpath string) string {
-		sfxAllFiles = append(sfxAllFiles, path.Join(cgame.GetCurFileDir(), relpath))
+		sfxAllFiles = append(sfxAllFiles, path.Join(cutil.GetCurFileDir(), relpath))
 		return relpath
 	}
 	sfxBackgroundFile     = sfxFile("resources/background.mp3")

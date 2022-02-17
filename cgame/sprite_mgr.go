@@ -5,13 +5,14 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
 type SpriteManager struct {
 	g                  *Game
 	ss                 []Sprite
-	eventQ             *ThreadSafeFIFO
+	eventQ             *cutil.ThreadSafeFIFO
 	collidableRegistry *CollidableRegistry
 }
 
@@ -181,7 +182,7 @@ func newSpriteManager(g *Game) *SpriteManager {
 	return &SpriteManager{
 		g:                  g,
 		ss:                 make([]Sprite, 0, defaultSpriteBufCap),
-		eventQ:             NewThreadSafeFIFO(defaultSpriteBufCap),
+		eventQ:             cutil.NewThreadSafeFIFO(defaultSpriteBufCap),
 		collidableRegistry: newCollidableRegistry(),
 	}
 }
