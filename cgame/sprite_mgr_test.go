@@ -1,7 +1,6 @@
 package cgame
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/jf-tech/console/cwin"
@@ -19,30 +18,30 @@ func TestDetectCollision(t *testing.T) {
 
 	// case 2: rects overlapping, but only transparent cells intersect
 	w1 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 0, Y: 0, W: 5, H: 5}, NoBorder: true})
-	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
+	FrameToWin(FrameFromString(`
 12345
 12
 1234
 12
-12345`, "\n"), cwin.ChAttr{}), w1)
+12345`, cwin.ChAttr{}), w1)
 	w2 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 2, Y: 1, W: 3, H: 3}, NoBorder: true})
-	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
+	FrameToWin(FrameFromString(`
 abc
   c
-abc`, "\n"), cwin.ChAttr{}), w2)
+abc`, cwin.ChAttr{}), w2)
 	assert.False(t, sm.detectCollision(w1, w2))
 
 	// case 3: rects overlapping, and one non-transparent cell intersects
 	w1 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 0, Y: 0, W: 3, H: 3}, NoBorder: true})
-	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
+	FrameToWin(FrameFromString(`
 123
 1 3
 123
-`, "\n"), cwin.ChAttr{}), w1)
+`, cwin.ChAttr{}), w1)
 	w2 = cwin.NewWin(nil, cwin.WinCfg{R: cwin.Rect{X: 2, Y: 2, W: 2, H: 2}, NoBorder: true})
-	putNormalizedCellsToWin(FrameFromString(strings.Trim(`
+	FrameToWin(FrameFromString(`
 ab
 ab
-`, "\n"), cwin.ChAttr{}), w2)
+`, cwin.ChAttr{}), w2)
 	assert.True(t, sm.detectCollision(w1, w2))
 }

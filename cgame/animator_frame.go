@@ -5,13 +5,13 @@ import (
 )
 
 type AnimatorFrameCfg struct {
-	Frames                  FrameProvider
-	KeepAliveWhenFinished   bool
-	AfterFrame, AfterFinish func(Sprite)
+	Frames FrameProvider
+	AnimatorCfgCommon
 }
 
 type AnimatorFrame struct {
 	cfg AnimatorFrameCfg
+	s   *SpriteBase
 
 	clock *Clock
 
@@ -19,47 +19,52 @@ type AnimatorFrame struct {
 	curFrameStartedTime time.Duration
 }
 
-func (af *AnimatorFrame) Animate(s Sprite) AnimatorState {
-	af.checkToInit(s)
+func (af *AnimatorFrame) Animate() {
+	af.checkToInit()
 	elapsed := af.clock.Now() - af.curFrameStartedTime
 	if elapsed < af.curFrameDuration {
-		return AnimatorRunning
+		return
 	}
-	if af.setNextFrame(s) {
-		return AnimatorRunning
+	if af.setNextFrame() {
+		return
+	}
+	af.s.DeleteAnimator(af)
+	if af.cfg.AfterFinish != nil {
+		af.cfg.AfterFinish()
 	}
 	if !af.cfg.KeepAliveWhenFinished {
-		s.Mgr().AddEvent(NewSpriteEventDelete(s))
+		af.s.Mgr().AsyncDeleteSprite(af.s)
 	}
-	if af.cfg.AfterFinish != nil {
-		af.cfg.AfterFinish(s)
-	}
-	return AnimatorCompleted
 }
 
-func (af *AnimatorFrame) setNextFrame(s Sprite) (more bool) {
+func (af *AnimatorFrame) setNextFrame() (more bool) {
 	var f Frame
 	if f, af.curFrameDuration, more = af.cfg.Frames.Next(); !more {
 		return false
 	}
-	FrameToWin(f, s.Win())
+	if !af.s.Update(UpdateArg{
+		F:   f,
+		IBC: af.cfg.InBoundsCheckType,
+		CD:  af.cfg.CollisionDetectionType}) {
+		return false
+	}
 	af.curFrameStartedTime = af.clock.Now()
-	if af.cfg.AfterFrame != nil {
-		af.cfg.AfterFrame(s)
+	if af.cfg.AfterUpdate != nil {
+		af.cfg.AfterUpdate()
 	}
 	return true
 }
 
-func (af *AnimatorFrame) checkToInit(s Sprite) {
+func (af *AnimatorFrame) checkToInit() {
 	if af.clock != nil {
 		return
 	}
-	af.clock = s.Game().MasterClock
-	if !af.setNextFrame(s) {
+	af.clock = af.s.Game().MasterClock
+	if !af.setNextFrame() {
 		panic("Frames cannot be empty")
 	}
 }
 
-func NewAnimatorFrame(c AnimatorFrameCfg) *AnimatorFrame {
-	return &AnimatorFrame{cfg: c}
+func NewAnimatorFrame(s *SpriteBase, c AnimatorFrameCfg) *AnimatorFrame {
+	return &AnimatorFrame{cfg: c, s: s}
 }

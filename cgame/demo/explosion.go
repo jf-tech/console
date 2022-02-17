@@ -42,11 +42,13 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 		"resources/spacecraft_small_2.txt",
 		"resources/spacecraft_large_1.txt",
 	} {
-		doExplosion(g, demoWin, p)
+		if !doExplosion(g, demoWin, p) {
+			break
+		}
 	}
 }
 
-func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
+func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
 	fn := path.Base(filepath)
 	demoWin.SetTitle(
 		fmt.Sprintf("Demo - Explosion '%s': any key to start", fn), cwin.AlignLeft)
@@ -55,11 +57,20 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
 	s := cgame.NewSpriteBase(g, demoWin, "s", f,
 		(demoWin.ClientRect().W-cgame.FrameRect(f).W)/2,
 		(demoWin.ClientRect().H-cgame.FrameRect(f).H)/2)
-	g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s))
-	g.SpriteMgr.Process()
+	g.SpriteMgr.AsyncCreateSprite(s)
 	g.WinSys.Update()
-	g.WinSys.SyncExpectKey(nil)
+	gameOver := false
+	g.WinSys.SyncExpectKey(func(k cterm.Key, r rune) bool {
+		if k == cterm.KeyEsc || r == 'q' {
+			gameOver = true
+		}
+		return true
+	})
+	if gameOver {
+		return false
+	}
 	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' in progress...", fn), cwin.AlignLeft)
+	startTime := g.MasterClock.Now()
 	done := false
 	cgame.CreateExplosion(s, cgame.ExplosionCfg{
 		MaxDuration: 2 * time.Second,
@@ -67,12 +78,22 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) {
 			done = true
 		},
 	})
-	g.Run(nil, nil, func(_ cterm.Event) bool {
+	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), nil, func(_ cterm.Event) bool {
 		return done
 	})
-	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' done. Any key for next", fn), cwin.AlignLeft)
+	if g.IsGameOver() {
+		return false
+	}
+	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' done. Used %s. Any key for next",
+		fn, (g.MasterClock.Now()-startTime).Round(time.Millisecond)), cwin.AlignLeft)
 	g.WinSys.Update()
-	g.WinSys.SyncExpectKey(nil)
+	g.WinSys.SyncExpectKey(func(k cterm.Key, r rune) bool {
+		if k == cterm.KeyEsc || r == 'q' {
+			gameOver = true
+		}
+		return true
+	})
+	return !gameOver
 }
 
 func readFile(relPath string) string {

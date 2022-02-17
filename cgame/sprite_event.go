@@ -4,60 +4,49 @@ import (
 	"fmt"
 )
 
-type SpriteEventType int
+type spriteEventType int
 
 const (
-	SpriteEventCreate SpriteEventType = iota
-	SpriteEventDelete
-	SpriteEventDeleteAll
-	SpriteEventSetPosRelative
+	spriteEventCreate spriteEventType = iota
+	spriteEventDelete
+	spriteEventDeleteAll
+	spriteEventFunc
 	spriteEventCount
 )
 
-func (t SpriteEventType) String() string {
+func (t spriteEventType) String() string {
 	switch t {
-	case SpriteEventCreate:
-		return "SpriteEventCreate"
-	case SpriteEventDelete:
-		return "SpriteEventDelete"
-	case SpriteEventDeleteAll:
-		return "SpriteEventDeleteAll"
-	case SpriteEventSetPosRelative:
-		return "SpriteEventSetPosRelative"
+	case spriteEventCreate:
+		return "spriteEventCreate"
+	case spriteEventDelete:
+		return "spriteEventDelete"
+	case spriteEventDeleteAll:
+		return "spriteEventDeleteAll"
+	case spriteEventFunc:
+		return "spriteEventFunc"
 	default:
-		panic(fmt.Sprintf("Unknown SpriteEvent value: %d", int(t)))
+		panic(fmt.Sprintf("unknown spriteEventType value: %d", int(t)))
 	}
 }
 
-type SpriteEvent struct {
-	eventType SpriteEventType
-	s         Sprite
-	body      interface{}
+type spriteEvent struct {
+	typ  spriteEventType
+	s    Sprite
+	body interface{}
 }
 
-func NewSpriteEventCreate(s Sprite, animators ...Animator) *SpriteEvent {
-	return &SpriteEvent{
-		eventType: SpriteEventCreate,
-		s:         s,
-		body:      animators,
-	}
+func newSpriteEventCreate(s Sprite) *spriteEvent {
+	return &spriteEvent{typ: spriteEventCreate, s: s}
 }
 
-func NewSpriteEventDelete(s Sprite) *SpriteEvent {
-	return &SpriteEvent{
-		eventType: SpriteEventDelete,
-		s:         s,
-	}
+func newSpriteEventDelete(s Sprite) *spriteEvent {
+	return &spriteEvent{typ: spriteEventDelete, s: s}
 }
 
-func NewSpriteEventDeleteAll() *SpriteEvent {
-	return &SpriteEvent{eventType: SpriteEventDeleteAll}
+func newSpriteEventDeleteAll() *spriteEvent {
+	return &spriteEvent{typ: spriteEventDeleteAll}
 }
 
-func NewSpriteEventSetPosRelative(s Sprite, dx, dy int) *SpriteEvent {
-	return &SpriteEvent{
-		eventType: SpriteEventSetPosRelative,
-		s:         s,
-		body:      PairInt{A: dx, B: dy},
-	}
+func newSpriteEventFunc(f func()) *spriteEvent {
+	return &spriteEvent{typ: spriteEventFunc, body: f}
 }

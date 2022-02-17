@@ -1,12 +1,12 @@
 package cgame
 
-type AnimatorState int
-
-const (
-	AnimatorRunning AnimatorState = iota
-	AnimatorCompleted
-)
-
 type Animator interface {
-	Animate(Sprite) AnimatorState
+	Animate()
+}
+
+type AnimatorCfgCommon struct {
+	InBoundsCheckType        InBoundsCheckType      // partially visible check by default
+	CollisionDetectionType   CollisionDetectionType // on by default
+	KeepAliveWhenFinished    bool
+	AfterUpdate, AfterFinish func()
 }

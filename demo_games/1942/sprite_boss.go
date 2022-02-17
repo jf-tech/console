@@ -2,7 +2,6 @@ package main
 
 import (
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
@@ -12,11 +11,9 @@ import (
 )
 
 var (
-	bossName          = "boss"
-	bossExplosionName = "boss_explosion"
-	bossFrame         = cgame.FrameFromString(strings.Trim(`
-[========================================]
-
+	bossName           = "boss"
+	bossExplosionName  = "boss_explosion"
+	bossFrameWithoutHP = cgame.FrameFromString(`
                |||      |||
                | |  __  | |
 |-|_____-----/   |_|  |_|   \-----_____|-|
@@ -32,7 +29,7 @@ var (
                    \  /
                    \  /
                     \/
-`, "\n"), cwin.ChAttr{Fg: cterm.ColorWhite})
+`, cwin.ChAttr{Fg: cterm.ColorWhite})
 	bossHPAttr     = cwin.ChAttr{Fg: cterm.ColorRed}
 	bossBulletName = "boss_bullet"
 
@@ -48,42 +45,48 @@ type spriteBoss struct {
 	hpLeft int
 }
 
-func (b *spriteBoss) Collided(other cgame.Sprite) {
-	if other.Name() == alphaBulletName || other.Name() == alphaName {
-		b.hpLeft--
-		b.drawHP()
-		if b.hpLeft <= 0 {
-			b.Mgr().AddEvent(cgame.NewSpriteEventDelete(b))
-			cgame.CreateExplosion(b, cgame.ExplosionCfg{
-				MaxDuration: bossExplosionDuration,
-				SpriteName:  bossExplosionName,
-			})
-		}
+func (b *spriteBoss) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
+	b.hpLeft--
+	b.Update(cgame.UpdateArg{
+		F: createBossFrameWithHP(b.hpLeft),
+		// must off, or we turn into infinite recursion, because whatever hits the boss (alpha
+		// or alpha bullet) is still there, thus the frame update would still generate a collision
+		// event which would call this, so on and so forth.
+		CD: cgame.CollisionDetectionOff,
+	})
+	if b.hpLeft <= 0 {
+		cgame.CreateExplosion(b.SpriteBase, cgame.ExplosionCfg{
+			MaxDuration: bossExplosionDuration,
+			SpriteName:  bossExplosionName,
+		})
 	}
+	return cgame.CollisionResponseJustDoIt
+
 }
 
-func (b *spriteBoss) drawHP() {
-	r := b.Win().Rect()
+func createBossFrameWithHP(hpLeft int) cgame.Frame {
+	r := cgame.FrameRect(bossFrameWithoutHP)
+	f := cgame.CopyFrame(bossFrameWithoutHP)
+	for i := 0; i < len(f); i++ {
+		f[i].Y += 2
+	}
+	f = append(f, cgame.Cell{X: 0, Y: 0, Chx: cwin.Chx{Ch: '[', Attr: bossHPAttr}})
+	f = append(f, cgame.Cell{X: r.W - 1, Y: 0, Chx: cwin.Chx{Ch: ']', Attr: bossHPAttr}})
 	hpStartX := 1
 	hpEndX := r.W - 2
 	hpFullLength := hpEndX - hpStartX + 1
-	hpLen := int(float64(b.hpLeft) / float64(bossHP) * float64(hpFullLength))
-	if b.hpLeft > 0 {
+	hpLen := int(float64(hpLeft) / float64(bossHP) * float64(hpFullLength))
+	if hpLeft > 0 {
 		hpLen = maths.MaxInt(1, hpLen)
 	}
-	b.Win().PutClient(0, 0, cwin.Chx{Ch: '[', Attr: bossHPAttr})
-	for x := hpStartX; x <= hpEndX; x++ {
-		if x <= hpLen {
-			b.Win().PutClient(x, 0, cwin.Chx{Ch: '=', Attr: bossHPAttr})
-		} else {
-			b.Win().PutClient(x, 0, cwin.TransparentChx())
-		}
+	for i := 0; i < hpLen; i++ {
+		f = append(f, cgame.Cell{X: hpStartX + i, Y: 0, Chx: cwin.Chx{Ch: '=', Attr: bossHPAttr}})
 	}
-	b.Win().PutClient(r.W-1, 0, cwin.Chx{Ch: ']', Attr: bossHPAttr})
+	return f
 }
 
 func (b *spriteBoss) fireWeapon() {
-	curR := b.Win().Rect()
+	curR := b.Rect()
 	// left gun
 	if cgame.CheckProbability(bossBulletFiringProb) {
 		b.fireBulletSquare(curR.X+leftGunX, curR.Y+leftGunY)
@@ -110,20 +113,23 @@ func (b *spriteBoss) fireBulletSquare(x, y int) {
 }
 
 func createBoss(m *myGame) {
+	f := createBossFrameWithHP(bossHP)
 	s := &spriteBoss{
-		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, bossName, bossFrame,
-			rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(bossFrame).W),
-			-cgame.FrameRect(bossFrame).H+1),
+		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, bossName, f,
+			rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(f).W),
+			-cgame.FrameRect(f).H+1),
 		m:      m,
 		hpLeft: bossHP}
-	s.drawHP()
-	a := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{
+	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
 		Waypoints: &bossWaypoints{s: s},
-		AfterMove: func(s cgame.Sprite) {
-			s.(*spriteBoss).fireWeapon()
+		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
+			AfterUpdate: func() {
+				s.fireWeapon()
+			},
 		},
 	})
-	m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, a))
+	s.AddAnimator(a)
+	m.g.SpriteMgr.AsyncCreateSprite(s)
 }
 
 type bossWaypoints struct {
@@ -131,32 +137,29 @@ type bossWaypoints struct {
 }
 
 func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
-	curR := bw.s.Win().Rect()
-	parentClientR := bw.s.Win().Parent().ClientRect().ToOrigin()
+	curR := bw.s.Rect()
+	parentClientR := bw.s.ParentRect()
 	if overlapped, ro := curR.Overlap(parentClientR); !overlapped || curR != ro {
 		dist := -curR.Y
 		// this is when the boss is still fully or partially out of the arena
 		return cgame.Waypoint{
-			Type: cgame.WaypointRelative,
-			X:    0,
-			Y:    dist,
-			T:    time.Duration(cgame.CharPerSec(abs(dist))/bossSpeed) * time.Second,
+			DX: 0,
+			DY: dist,
+			T:  time.Duration(cgame.CharPerSec(abs(dist))/bossSpeed) * time.Second,
 		}, true
 	}
 	for {
 		dist := rand.Int() % (bossMaxDistToGoBeforeDirChange - bossMinDistToGoBeforeDirChange + 1)
 		dist += bossMinDistToGoBeforeDirChange
 		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
-		w := bw.s.Win()
-		newR := w.Rect()
-		newR.X += cgame.DirOffSetXY[dirIdx].A * dist
-		newR.Y += cgame.DirOffSetXY[dirIdx].B * dist
-		if overlapped, ro := newR.Overlap(w.Parent().ClientRect().ToOrigin()); overlapped && ro == newR {
+		newR := bw.s.Rect()
+		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
+		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
+		if overlapped, ro := newR.Overlap(parentClientR); overlapped && ro == newR {
 			return cgame.Waypoint{
-				Type: cgame.WaypointAbs,
-				X:    newR.X,
-				Y:    newR.Y,
-				T:    time.Duration(cgame.CharPerSec(dist)/bossSpeed) * time.Second,
+				DX: newR.X - bw.s.Rect().X,
+				DY: newR.Y - bw.s.Rect().Y,
+				T:  time.Duration(cgame.CharPerSec(dist)/bossSpeed) * time.Second,
 			}, true
 		}
 	}

@@ -101,16 +101,6 @@ func (sm *SoundManager) PlayMP3(mp3FilePath string, vol float64, loop int) (Soun
 	return sm.play(mp3FilePath, decoded, format, vol, loop)
 }
 
-func (sm *SoundManager) Stop(id SoundID) {
-	if c, ok := sm.ctrls.Load(id); ok {
-		sm.ctrls.Delete(id)
-		speaker.Lock()
-		c.(*beep.Ctrl).Paused = true
-		c.(*beep.Ctrl).Streamer = nil
-		speaker.Unlock()
-	}
-}
-
 func (sm *SoundManager) play(filepath string,
 	s beep.StreamSeekCloser, format beep.Format, vol float64, loop int) (SoundID, error) {
 	ctrl := &beep.Ctrl{Streamer: beep.Loop(loop, s)}

@@ -13,26 +13,24 @@ type ExplosionCfg struct {
 	SpriteName  string
 }
 
-func CreateExplosion(s Sprite, c ExplosionCfg) {
-	s.Mgr().AddEvent(NewSpriteEventDelete(s))
-	r := s.Win().Rect()
+func CreateExplosion(s *SpriteBase, c ExplosionCfg) {
+	r := s.win.Rect()
 	name := s.Name() + "_explosion"
 	if len(c.SpriteName) > 0 {
 		name = c.SpriteName
 	}
-	s = NewSpriteBase(s.Mgr().g, s.Win().Parent(), name, FrameFromWin(s.Win()), r.X, r.Y)
-	s.Mgr().AddEvent(NewSpriteEventCreate(s, NewAnimatorFrame(AnimatorFrameCfg{
+	newS := NewSpriteBase(s.Mgr().g, s.win.Parent(), name, FrameFromWin(s.win), r.X, r.Y)
+	newS.AddAnimator(NewAnimatorFrame(newS, AnimatorFrameCfg{
 		Frames: &explosionFrameProvider{
-			s:          s,
+			s:          newS,
 			frameCount: int((c.MaxDuration / time.Second) * time.Duration(explosionFPS)),
 		},
-		AfterFinish: func(s Sprite) {
-			s.Mgr().AddEvent(NewSpriteEventDelete(s))
-			if c.AfterFinish != nil {
-				c.AfterFinish()
-			}
+		AnimatorCfgCommon: AnimatorCfgCommon{
+			AfterFinish: c.AfterFinish,
 		},
-	})))
+	}))
+	newS.Mgr().AsyncCreateSprite(newS)
+	s.Mgr().AsyncDeleteSprite(s)
 }
 
 var (
@@ -45,7 +43,7 @@ var (
 )
 
 type explosionFrameProvider struct {
-	s          Sprite
+	s          *SpriteBase
 	frameCount int
 }
 
@@ -53,7 +51,7 @@ func (e *explosionFrameProvider) Next() (Frame, time.Duration, bool) {
 	if e.frameCount <= 0 {
 		return nil, -1, false
 	}
-	f := FrameFromWin(e.s.Win())
+	f := FrameFromWin(e.s.win)
 	if len(f) <= 0 {
 		return nil, -1, false
 	}

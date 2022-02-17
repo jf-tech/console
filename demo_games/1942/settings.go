@@ -17,7 +17,7 @@ var (
 	easyModeKeys       = cwin.Keys('e')
 	invincibleModeKeys = cwin.Keys('i')
 
-	sfxBackgroundVol = float64(-2)
+	sfxBackgroundVol = float64(-4)
 	sfxClipVol       = float64(-1)
 
 	sfxAllFiles = []string{}
@@ -28,7 +28,7 @@ var (
 	sfxBackgroundFile     = sfxFile("resources/background.mp3")
 	sfxGameStartFile      = sfxFile("resources/game-start.mp3")
 	sfxPewFile            = sfxFile("resources/pew.mp3")
-	sfxWoodsBeenHitFile   = sfxFile("resources/voodoo-one-woods-been-hit.mp3")
+	sfxOuchFile           = sfxFile("resources/ouch.mp3")
 	sfxBossIsHereFile     = sfxFile("resources/boss-is-here.mp3")
 	sfxGameOverFile       = sfxFile("resources/game-over.mp3")
 	sfxWeaponUpgradedFile = sfxFile("resources/weapon-upgraded.mp3")
@@ -95,4 +95,6 @@ var (
 	gpShotgun2Life     = time.Minute
 	gpShotgun2Prob     = cgame.NewPeriodicProbabilityChecker("2%", time.Second)
 	gpShotgun2ProbEasy = cgame.NewPeriodicProbabilityChecker("10%", time.Second)
+
+	exchangeGiftPackWeapon = "giftpack_weapon"
 )

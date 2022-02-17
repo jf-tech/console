@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
@@ -80,7 +82,7 @@ final battle!
 Good luck, solider!
 
 Press Enter to start the game; ESC or 'q' to quit.
-('e' to start in Easy Mode, if you bother reading this :)
+('e' to start in Easy Mode, if you're patient enough to read :)
 `)
 	if cwin.FindKey(gameOverKeys, e) {
 		return codeQuit
@@ -91,11 +93,11 @@ Press Enter to start the game; ESC or 'q' to quit.
 
 	m.g.SoundMgr.PlayMP3(sfxGameStartFile, sfxClipVol, 1)
 
-	stageExchange := &interStageExchange{}
+	registerCollidable(m.g.SpriteMgr)
+
 	for i := 0; i < totalStages && !m.g.IsGameOver(); i++ {
-		stage := newStage(m, i, stageExchange)
+		stage := newStage(m, i)
 		stage.Run()
-		stageExchange = stage.exchange
 	}
 
 	if m.g.IsGameOver() {
@@ -196,6 +198,12 @@ func (m *myGame) winSetup() {
 }
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			cterm.Close()
+			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
+		}
+	}()
 	code := codeReplay
 	for code == codeReplay {
 		code = (&myGame{}).main()

@@ -5,19 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
 )
 
-type interStageExchange struct {
-	gpWeapon *giftPack
-}
-
 type stage struct {
 	m        *myGame
 	stageIdx int
-	exchange *interStageExchange
 
 	stageStartTime time.Duration
 	stageSkipped   bool
@@ -33,26 +27,25 @@ func (s *stage) Run() {
 				return true
 			}
 			alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
+			alpha.ToTop()
 			if ev.Type == cterm.EventKey {
-				if !s.m.g.IsPaused() {
-					// due to console aspect ration, make left/right move a bit faster.
-					// also let retreat (down) a bit faster than up to make the game exp
-					// better.
-					if ev.Key == cterm.KeyArrowUp {
-						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, -1))
-					} else if ev.Key == cterm.KeyArrowDown {
-						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 0, 2))
-					} else if ev.Key == cterm.KeyArrowLeft {
-						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, -3, 0))
-					} else if ev.Key == cterm.KeyArrowRight {
-						s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventSetPosRelative(alpha, 3, 0))
-					} else if ev.Ch == ' ' {
-						alpha.fireWeapon()
-					} else if cwin.FindKey(skipStageKeys, ev) {
-						s.stageSkipped = true
-					} else if cwin.FindKey(invincibleModeKeys, ev) {
-						s.m.invincible = !s.m.invincible
-					}
+				// due to console aspect ration, make left/right move a bit faster.
+				// also let retreat (down) a bit faster than up to make the game exp
+				// better.
+				if ev.Key == cterm.KeyArrowUp {
+					alpha.move(0, -1)
+				} else if ev.Key == cterm.KeyArrowDown {
+					alpha.move(0, 2)
+				} else if ev.Key == cterm.KeyArrowLeft {
+					alpha.move(-3, 0)
+				} else if ev.Key == cterm.KeyArrowRight {
+					alpha.move(3, 0)
+				} else if ev.Ch == ' ' {
+					alpha.fireWeapon()
+				} else if cwin.FindKey(skipStageKeys, ev) {
+					s.stageSkipped = true
+				} else if cwin.FindKey(invincibleModeKeys, ev) {
+					s.m.invincible = !s.m.invincible
 				}
 			}
 			s.genSprites()
@@ -94,9 +87,6 @@ func (s *stage) runStagePassedBanner() {
 }
 
 func (s *stage) genSprites() {
-	if s.m.g.IsPaused() {
-		return
-	}
 	if s.checkStageWindingDown() {
 		if s.stageIdx == totalStages-1 && !s.bossCreated {
 			s.genBoss()
@@ -183,8 +173,8 @@ func (s *stage) checkStageDone() bool {
 			return false
 		}
 	}
-	// we're truly down. remove all the non enemy sprites
-	s.m.g.SpriteMgr.AddEvent(cgame.NewSpriteEventDeleteAll())
+	// we're truly done. remove all the non enemy sprites
+	s.m.g.SpriteMgr.AsyncDeleteAll()
 	return true
 }
 
@@ -225,7 +215,7 @@ func (s *stage) displayStats(alpha *spriteAlpha) {
 	s.m.winHeader.SetText(headerSB.String())
 
 	s.m.winStats.SetText(fmt.Sprintf(`
-Master clock: %s %s
+Master clock: %s
 Stage index: %d
 %sArena Rect: %s
 Alpha Rect: %s
@@ -234,12 +224,6 @@ Total "pixels" rendered: %s
 Memory usage: %s
 %s`,
 		time.Duration(s.m.g.MasterClock.Now()/(time.Second))*(time.Second),
-		func() string {
-			if s.m.g.IsPaused() {
-				return "(paused)"
-			}
-			return ""
-		}(),
 		s.stageIdx+1,
 		func() string {
 			var ss []string
@@ -248,7 +232,7 @@ Memory usage: %s
 			}
 			if s.m.invincible {
 				ss = append(ss, "Invincible Mode: On")
-				ss = append(ss, fmt.Sprintf("Hits on Alpha: %d", alpha.hit))
+				ss = append(ss, fmt.Sprintf("Hits on Alpha: %d", alpha.hits))
 			}
 			if len(ss) <= 0 {
 				return ""
@@ -258,7 +242,7 @@ Memory usage: %s
 		s.m.winArena.Rect(),
 		func() string {
 			if as, ok := s.m.g.SpriteMgr.TryFindByName(alphaName); ok {
-				return as.Win().Rect().String()
+				return as.Rect().String()
 			}
 			return "N/A"
 		}(),
@@ -268,6 +252,6 @@ Memory usage: %s
 		s.m.g.SpriteMgr.DbgStats()))
 }
 
-func newStage(m *myGame, idx int, e *interStageExchange) *stage {
-	return &stage{m: m, stageIdx: idx, exchange: e}
+func newStage(m *myGame, idx int) *stage {
+	return &stage{m: m, stageIdx: idx}
 }

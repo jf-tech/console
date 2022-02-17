@@ -35,13 +35,6 @@ func main() {
 	doDemo(g, demoWin)
 }
 
-type exchange struct {
-	w, h    int
-	s       cgame.Sprite
-	curDir  rune
-	curDist int
-}
-
 // In this demo, we'll combine two animators together:
 // - frame animator to show a shifting sine wave
 // - waypoint animator to move the sprite around
@@ -51,57 +44,56 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	h := r.H * 3 / 4
 
 	// data exchange among doDemo, AnimatorWaypoint and AnimatorFrame.
-	e := &exchange{w: w, h: h}
+	g.Exchange.IntData["w"] = w
+	g.Exchange.IntData["h"] = h
 
 	// create the sine wave provider and use its first frame as the base frame of the sprite.
-	fp := &sineWaveFrameProvider{e: e}
+	fp := &sineWaveFrameProvider{g: g}
+	g.Exchange.StringData["curDir"] = "."
 	f0, _, _ := fp.Next()
 
 	// sprite
 	s := cgame.NewSpriteBase(g, demoWin, "demo_frame", f0, (r.W-w)/2, (r.H-h)/2)
-	e.s = s
+	g.Exchange.GenericData["sprite"] = s
 
 	// AnimatorWaypoint
-	aw := cgame.NewAnimatorWaypoint(cgame.AnimatorWaypointCfg{Waypoints: &waypointProvider{e: e}})
+	aw := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
+		Waypoints: &waypointProvider{g: g, s: s}})
 
 	// AnimatorFrame
-	af := cgame.NewAnimatorFrame(cgame.AnimatorFrameCfg{Frames: fp})
+	af := cgame.NewAnimatorFrame(s, cgame.AnimatorFrameCfg{Frames: fp})
 
 	// Add sprite and two animators to the system. Note we add af after aw, so that aw
 	// decides direction and dist the sprite will travel and af will use the dir symbol
 	// as the frame background :)
-	g.SpriteMgr.AddEvent(cgame.NewSpriteEventCreate(s, aw, af))
+	s.AddAnimator(aw, af)
+	g.SpriteMgr.AsyncCreateSprite(s)
 
-	g.Run(nil, nil, func(ev cterm.Event) bool {
+	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) bool {
 		demoWin.SetTitle(
 			func() string {
 				return fmt.Sprintf(
-					"Demo - space to pause/resume, any other key to exit. Dir: %c. Dist: %2d Time: %s",
-					e.curDir, e.curDist,
-					g.MasterClock.Now()/time.Millisecond*time.Millisecond)
+					"Demo - space to pause/resume, any other key to exit. Dir: %s. Dist: %2d Time: %s",
+					g.Exchange.StringData["curDir"], g.Exchange.IntData["curDist"],
+					g.MasterClock.Now().Round(time.Millisecond))
 			}(),
 			cwin.AlignLeft)
 		if ev.Type != cterm.EventKey {
 			return false
 		}
-		if ev.Ch != ' ' {
-			return true
-		}
-		if g.IsPaused() {
-			g.Resume()
-		} else {
-			g.Pause()
-		}
-		return false
+		return true
 	})
 }
 
 type sineWaveFrameProvider struct {
-	e     *exchange
-	shift int
+	g      *cgame.Game
+	xshift int
 }
 
 func (sfp *sineWaveFrameProvider) Next() (cgame.Frame, time.Duration, bool) {
+	w := sfp.g.Exchange.IntData["w"]
+	h := sfp.g.Exchange.IntData["h"]
+	curDir := []rune(sfp.g.Exchange.StringData["curDir"])[0]
 	toRX := func(x, w int) float64 {
 		return float64(x) / float64(w) * 2 * math.Pi
 	}
@@ -109,32 +101,33 @@ func (sfp *sineWaveFrameProvider) Next() (cgame.Frame, time.Duration, bool) {
 		return int((1 - ry) / 2 * float64(h-1))
 	}
 	var f cgame.Frame
-	for y := 0; y < sfp.e.h; y++ {
-		for x := 0; x < sfp.e.w; x++ {
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
 			f = append(f, cgame.Cell{
 				X: x,
 				Y: y,
 				Chx: cwin.Chx{
 					Ch: func() rune {
 						if (x+y)%2 == 0 {
-							return sfp.e.curDir
+							return curDir
 						}
 						return ' '
 					}(),
 					Attr: cwin.ChAttr{Fg: cterm.ColorWhite, Bg: cterm.ColorDarkGray}}})
 		}
 	}
-	for x := 0; x < sfp.e.w; x++ {
-		y := fromRY(math.Sin(toRX(x+sfp.shift, sfp.e.w)), sfp.e.h)
-		f[y*sfp.e.w+x].Chx =
+	for x := 0; x < w; x++ {
+		y := fromRY(math.Sin(toRX(x+sfp.xshift, w)), h)
+		f[y*w+x].Chx =
 			cwin.Chx{Ch: '#', Attr: cwin.ChAttr{Fg: cterm.ColorYellow, Bg: cterm.ColorLightBlue}}
 	}
-	sfp.shift = (sfp.shift - 1 + sfp.e.w) % sfp.e.w
+	sfp.xshift = (sfp.xshift - 1 + w) % w
 	return f, 50 * time.Millisecond, true
 }
 
 type waypointProvider struct {
-	e *exchange
+	g *cgame.Game
+	s *cgame.SpriteBase
 }
 
 const (
@@ -147,18 +140,16 @@ func (wp *waypointProvider) Next() (cgame.Waypoint, bool) {
 		dist := rand.Int() % (maxDistBeforeDirChange - minDistBeforeDirChange + 1)
 		dist += minDistBeforeDirChange
 		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
-		w := wp.e.s.Win()
-		newR := w.Rect()
-		newR.X += cgame.DirOffSetXY[dirIdx].A * dist
-		newR.Y += cgame.DirOffSetXY[dirIdx].B * dist
-		if overlapped, ro := newR.Overlap(w.Parent().ClientRect().ToOrigin()); overlapped && ro == newR {
-			wp.e.curDir = cgame.DirSymbols[dirIdx]
-			wp.e.curDist = dist
+		newR := wp.s.Rect()
+		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
+		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
+		if overlapped, ro := newR.Overlap(wp.s.ParentRect()); overlapped && ro == newR {
+			wp.g.Exchange.StringData["curDir"] = string(cgame.DirSymbols[dirIdx])
+			wp.g.Exchange.IntData["curDist"] = dist
 			return cgame.Waypoint{
-				Type: cgame.WaypointAbs,
-				X:    newR.X,
-				Y:    newR.Y,
-				T:    time.Duration(dist) * 200 * time.Millisecond, // eachk "pixel" move takes 200ms.
+				DX: newR.X - wp.s.Rect().X,
+				DY: newR.Y - wp.s.Rect().Y,
+				T:  time.Duration(dist) * 200 * time.Millisecond, // eachk "pixel" move takes 200ms.
 			}, true
 		}
 	}

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
@@ -11,7 +9,7 @@ import (
 var (
 	stageIntroBannerName = "stage_intro_banner"
 	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Electronic&text=Stage%201
-	stageIntroBannerFrameTxt = strings.Trim(`
+	stageIntroBannerFrameTxt = `
  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄
 ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
 ▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀
@@ -23,9 +21,9 @@ var (
  ▄▄▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄
 ▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
  ▀▀▀▀▀▀▀▀▀▀▀       ▀       ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀
-`, "\n")
+`
 	stageIntroBannerNumFrameTxt = []string{
-		strings.Trim(`
+		`
          ▄▄▄▄
        ▄█░░░░▌
       ▐░░▌▐░░▌
@@ -37,8 +35,8 @@ var (
       ▄▄▄▄█░░█▄▄▄
      ▐░░░░░░░░░░░▌
       ▀▀▀▀▀▀▀▀▀▀▀
-`, "\n"),
-		strings.Trim(`
+`,
+		`
       ▄▄▄▄▄▄▄▄▄▄▄
      ▐░░░░░░░░░░░▌
       ▀▀▀▀▀▀▀▀▀█░▌
@@ -50,8 +48,8 @@ var (
      ▐░█▄▄▄▄▄▄▄▄▄
      ▐░░░░░░░░░░░▌
       ▀▀▀▀▀▀▀▀▀▀▀
-`, "\n"),
-		strings.Trim(`
+`,
+		`
       ▄▄▄▄▄▄▄▄▄▄▄
      ▐░░░░░░░░░░░▌
       ▀▀▀▀▀▀▀▀▀█░▌
@@ -63,9 +61,9 @@ var (
       ▄▄▄▄▄▄▄▄▄█░▌
      ▐░░░░░░░░░░░▌
       ▀▀▀▀▀▀▀▀▀▀▀
-`, "\n"),
+`,
 	}
-	stageIntroBannerFinalStageImgTxt = strings.Trim(`
+	stageIntroBannerFinalStageImgTxt = `
  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄        ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄
 ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░▌      ▐░▌▐░░░░░░░░░░░▌▐░▌
 ▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀█░█▀▀▀▀ ▐░▌░▌     ▐░▌▐░█▀▀▀▀▀▀▀█░▌▐░▌
@@ -89,7 +87,7 @@ var (
  ▄▄▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄
 ▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
  ▀▀▀▀▀▀▀▀▀▀▀       ▀       ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀
-`, "\n")
+`
 	stageIntroBannerAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlue}
 )
 
@@ -116,7 +114,7 @@ func createStageIntroBanner(m *myGame, stageIdx int, afterFinish func()) {
 var (
 	stagePassedBannerName = "stage_passed_banner"
 	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Electronic&text=Passed
-	stagePassedBannerFrame = cgame.FrameFromStringEx(strings.Trim(`
+	stagePassedBannerFrame = cgame.FrameFromStringEx(`
  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄
 ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌
 ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌
@@ -128,7 +126,7 @@ var (
 ▐░▌          ▐░▌       ▐░▌ ▄▄▄▄▄▄▄▄▄█░▌ ▄▄▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌
 ▐░▌          ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌
  ▀            ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀
-`, "\n"), stageIntroBannerAttr, false)
+`, stageIntroBannerAttr, false)
 )
 
 func createStagePassedBanner(m *myGame, afterFinish func()) {

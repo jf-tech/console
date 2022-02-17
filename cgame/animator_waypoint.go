@@ -2,94 +2,96 @@ package cgame
 
 import (
 	"time"
+
+	"github.com/jf-tech/console/cwin"
 )
 
 type AnimatorWaypointCfg struct {
-	Waypoints               WaypointProvider
-	KeepAliveWhenOutOfBound bool
-	KeepAliveWhenFinished   bool
-	AfterMove, AfterFinish  func(Sprite)
+	Waypoints WaypointProvider
+	// instead of a "continuous" move, after the specified T of a waypoint, the move will be
+	// completed in one go. In most cases, we like the smooth movement; but in some case, like
+	// for example in tetris, we do want the tetris piece to drop in a discrete manner
+	SingleMovePerWaypoint bool
+	AnimatorCfgCommon
 }
 
 type AnimatorWaypoint struct {
 	cfg AnimatorWaypointCfg
+	s   *SpriteBase
 
 	clock *Clock
 
-	curWP                    Waypoint
-	curWPStartX, curWPStartY int
-	curWPDestX, curWPDestY   int
-	curWPStartedTime         time.Duration
+	wp             Waypoint
+	dxDone, dyDone int
+	wpStartedTime  time.Duration
 }
 
-func (aw *AnimatorWaypoint) Animate(s Sprite) AnimatorState {
-	aw.checkToInit(s)
-	elapsed := aw.clock.Now() - aw.curWPStartedTime
+func (aw *AnimatorWaypoint) Animate() {
+	aw.checkToInit()
+
+	finish := func() {
+		aw.s.DeleteAnimator(aw)
+		if aw.cfg.AfterFinish != nil {
+			aw.cfg.AfterFinish()
+		}
+		if !aw.cfg.KeepAliveWhenFinished {
+			aw.s.Mgr().AsyncDeleteSprite(aw.s)
+		}
+	}
+
+	elapsed := aw.clock.Now() - aw.wpStartedTime
 	ratio := float64(1)
-	if elapsed < aw.curWP.T {
-		ratio = float64(elapsed) / float64(aw.curWP.T)
+	if elapsed < aw.wp.T {
+		if aw.cfg.SingleMovePerWaypoint {
+			return
+		}
+		ratio = float64(elapsed) / float64(aw.wp.T)
 	}
-	// move proportionally to the elapsed time over aw.curWP.T
-	newX := aw.curWPStartX + int(float64(aw.curWPDestX-aw.curWPStartX)*ratio)
-	newY := aw.curWPStartY + int(float64(aw.curWPDestY-aw.curWPStartY)*ratio)
-	if s.Win().Rect().X != newX || s.Win().Rect().Y != newY {
-		// only make this actual move if the newX/Y is different than current position.
-		s.Win().SetPosAbs(newX, newY)
-		if aw.cfg.AfterMove != nil {
-			aw.cfg.AfterMove(s)
+	// move proportionally to the elapsed time over current waypoint duration aw.wp.T
+	dx, dy := int(float64(aw.wp.DX)*ratio), int(float64(aw.wp.DY)*ratio)
+	if aw.dxDone != dx || aw.dyDone != dy {
+		// If collision is detected or in-bounds check fails, and PreUpdateNotify decides to abandon
+		// then the this animator is finished.
+		if !aw.s.Update(UpdateArg{
+			DXY: &cwin.Point{X: dx - aw.dxDone, Y: dy - aw.dyDone},
+			IBC: aw.cfg.InBoundsCheckType,
+			CD:  aw.cfg.CollisionDetectionType}) {
+			finish()
+			return
+		}
+		aw.dxDone, aw.dyDone = dx, dy
+		if aw.cfg.AfterUpdate != nil {
+			aw.cfg.AfterUpdate()
 		}
 	}
-	// always checking in case the sprite was created out of bound before the animator even
-	// started, but before the actual move occurs
-	if !s.Win().VisibleInParentClientRect() {
-		if !aw.cfg.KeepAliveWhenOutOfBound {
-			s.Mgr().AddEvent(NewSpriteEventDelete(s))
-			if aw.cfg.AfterFinish != nil {
-				aw.cfg.AfterFinish(s)
-			}
-			return AnimatorCompleted
-		}
+	if elapsed < aw.wp.T {
+		return
 	}
-	if elapsed < aw.curWP.T {
-		return AnimatorRunning
+	if aw.setupNextWaypoint() {
+		return
 	}
-	if aw.setupNextWaypoint(s) {
-		return AnimatorRunning
-	}
-	if !aw.cfg.KeepAliveWhenFinished {
-		s.Mgr().AddEvent(NewSpriteEventDelete(s))
-	}
-	if aw.cfg.AfterFinish != nil {
-		aw.cfg.AfterFinish(s)
-	}
-	return AnimatorCompleted
+	finish()
 }
 
-func (aw *AnimatorWaypoint) setupNextWaypoint(s Sprite) (more bool) {
-	if aw.curWP, more = aw.cfg.Waypoints.Next(); !more {
+func (aw *AnimatorWaypoint) setupNextWaypoint() (more bool) {
+	if aw.wp, more = aw.cfg.Waypoints.Next(); !more {
 		return false
 	}
-	curR := s.Win().Rect()
-	aw.curWPStartX, aw.curWPStartY = curR.X, curR.Y
-	aw.curWPDestX, aw.curWPDestY = aw.curWP.X, aw.curWP.Y
-	if aw.curWP.Type == WaypointRelative {
-		aw.curWPDestX += curR.X
-		aw.curWPDestY += curR.Y
-	}
-	aw.curWPStartedTime = aw.clock.Now()
+	aw.dxDone, aw.dyDone = 0, 0
+	aw.wpStartedTime = aw.clock.Now()
 	return true
 }
 
-func (aw *AnimatorWaypoint) checkToInit(s Sprite) {
+func (aw *AnimatorWaypoint) checkToInit() {
 	if aw.clock != nil {
 		return
 	}
-	aw.clock = s.Game().MasterClock
-	if !aw.setupNextWaypoint(s) {
+	aw.clock = aw.s.Game().MasterClock
+	if !aw.setupNextWaypoint() {
 		panic("Waypoints cannot be empty")
 	}
 }
 
-func NewAnimatorWaypoint(c AnimatorWaypointCfg) *AnimatorWaypoint {
-	return &AnimatorWaypoint{cfg: c}
+func NewAnimatorWaypoint(s *SpriteBase, c AnimatorWaypointCfg) *AnimatorWaypoint {
+	return &AnimatorWaypoint{cfg: c, s: s}
 }

@@ -39,7 +39,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(cterm.Event) bool {
 		demoWin.SetTitle(
 			fmt.Sprintf("Demo - Sound. Space to pause/resume; ESC or 'q' to quit. Time: %s",
-				g.MasterClock.Now()/(100*time.Millisecond)*(100*time.Millisecond)),
+				g.MasterClock.Now().Round(time.Millisecond)),
 			cwin.AlignLeft)
 		return false
 	})
