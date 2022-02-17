@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
 type Game struct {
 	WinSys      *cwin.Sys
-	MasterClock *Clock
+	MasterClock *cutil.Clock
 	SpriteMgr   *SpriteManager
 	SoundMgr    *SoundManager
 	Exchange    *Exchange
@@ -30,7 +31,7 @@ func Init(provider cterm.Provider, seed ...int64) (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
-	g := &Game{WinSys: winSys, MasterClock: newClock()}
+	g := &Game{WinSys: winSys, MasterClock: cutil.NewClock()}
 	g.SpriteMgr = newSpriteManager(g)
 	g.SoundMgr = newSoundManager()
 	g.SoundMgr.Init()

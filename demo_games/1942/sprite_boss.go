@@ -6,6 +6,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 	"github.com/jf-tech/go-corelib/maths"
 )
@@ -88,11 +89,11 @@ func createBossFrameWithHP(hpLeft int) cgame.Frame {
 func (b *spriteBoss) fireWeapon() {
 	curR := b.Rect()
 	// left gun
-	if cgame.CheckProbability(bossBulletFiringProb) {
+	if cutil.CheckProbability(bossBulletFiringProb) {
 		b.fireBulletSquare(curR.X+leftGunX, curR.Y+leftGunY)
 	}
 	// right gun
-	if cgame.CheckProbability(bossBulletFiringProb) {
+	if cutil.CheckProbability(bossBulletFiringProb) {
 		b.fireBulletSquare(curR.X+rightGunX, curR.Y+rightGunY)
 	}
 }

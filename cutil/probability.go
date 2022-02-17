@@ -1,4 +1,4 @@
-package cgame
+package cutil
 
 import (
 	"fmt"

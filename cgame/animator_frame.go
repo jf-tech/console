@@ -2,6 +2,8 @@ package cgame
 
 import (
 	"time"
+
+	"github.com/jf-tech/console/cutil"
 )
 
 type AnimatorFrameCfg struct {
@@ -13,7 +15,7 @@ type AnimatorFrame struct {
 	cfg AnimatorFrameCfg
 	s   *SpriteBase
 
-	clock *Clock
+	clock *cutil.Clock
 
 	curFrameDuration    time.Duration
 	curFrameStartedTime time.Duration

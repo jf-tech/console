@@ -6,6 +6,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -30,7 +31,7 @@ func (d *spriteDelta) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionR
 }
 
 func createDelta(m *myGame) {
-	if cgame.CheckProbability(deltaVerticalProb) {
+	if cutil.CheckProbability(deltaVerticalProb) {
 		createVerticalDelta(m)
 		return
 	}
@@ -62,7 +63,7 @@ func createHorizontalDelta(m *myGame) {
 	y := rand.Int() % (m.winArena.ClientRect().H - cgame.FrameRect(deltaFrame).H)
 	s := &spriteDelta{cgame.NewSpriteBase(m.g, m.winArena, deltaName, deltaFrame, x, y)}
 	dist := 1000 // large enough to go out of window (and auto destroy)
-	if cgame.CheckProbability("50%") {
+	if cutil.CheckProbability("50%") {
 		x = m.winArena.ClientRect().W - 1
 		dist = -dist
 	}

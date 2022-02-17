@@ -9,6 +9,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -187,7 +188,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 	createParticle(r.W/2+2, r.H/2, 0, 0, cterm.ColorLightBlue, 0)
 	createParticle(r.W/2+3, r.H/2, 0, 0, cterm.ColorWhite, 0)
 
-	dc := cgame.NewStopwatch(g.MasterClock)
+	dc := cutil.NewStopwatch(g.MasterClock)
 
 	showDebugInfo := func() {
 		var sb strings.Builder

@@ -6,6 +6,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -43,7 +44,7 @@ func createBeta(m *myGame, stageIdx int) {
 			}}),
 		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
 			AfterUpdate: func() {
-				if !cgame.CheckProbability(betaFiringProbPerStage[stageIdx]) {
+				if !cutil.CheckProbability(betaFiringProbPerStage[stageIdx]) {
 					return
 				}
 				x := s.Rect().X + s.Rect().W/2

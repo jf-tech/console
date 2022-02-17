@@ -1,4 +1,4 @@
-package cgame
+package cutil
 
 import (
 	"time"
@@ -11,7 +11,7 @@ type Clock struct {
 	paused               bool
 }
 
-func newClock() *Clock {
+func NewClock() *Clock {
 	return &Clock{originTime: time.Now()}
 }
 
@@ -42,6 +42,13 @@ func (c *Clock) IsPaused() bool {
 }
 
 type Stopwatch struct {
+	// One wonders why Stopwatch, why not directly use Clock as Clock can be paused/resumed
+	// and its Now() tells the cumulated duration. The reason is in lots of the situations
+	// we want a stopwatch can be paused/resumed in conjunction with its underlying Clock's
+	// state - i.e. the underlying Clock can be paused/resumed (like many cases in games). When
+	// the underlying Clock is paused, we dont' want the Stopwatch to continue to count. In other
+	// words, we'd like the Stopwatch to live in the Clock world where the Stopwatch is oblivious
+	// of what the Clock is doing.
 	clock     *Clock
 	total     time.Duration
 	startedOn time.Duration

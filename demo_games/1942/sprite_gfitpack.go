@@ -7,6 +7,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -54,7 +55,7 @@ type giftPack struct {
 	name  string
 	sym   giftPackSymbol
 	life  time.Duration
-	clock *cgame.Clock
+	clock *cutil.Clock
 	start time.Duration
 }
 
@@ -76,7 +77,7 @@ var (
 	gpShotgun2SymAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlack}
 )
 
-func newGiftPackShotgun(clock *cgame.Clock) *giftPack {
+func newGiftPackShotgun(clock *cutil.Clock) *giftPack {
 	return &giftPack{
 		name:  gpShotgunName,
 		sym:   gpShotgunSym,
@@ -86,7 +87,7 @@ func newGiftPackShotgun(clock *cgame.Clock) *giftPack {
 	}
 }
 
-func newGiftPackShotgun2(clock *cgame.Clock) *giftPack {
+func newGiftPackShotgun2(clock *cutil.Clock) *giftPack {
 	return &giftPack{
 		name:  gpShotgun2Name,
 		sym:   gpShotgun2Sym,
