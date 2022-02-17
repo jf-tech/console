@@ -40,3 +40,47 @@ func (c *Clock) Resume() {
 func (c *Clock) IsPaused() bool {
 	return c.paused
 }
+
+type Stopwatch struct {
+	clock     *Clock
+	total     time.Duration
+	startedOn time.Duration
+}
+
+func (s *Stopwatch) Start() {
+	if s.started() {
+		panic("cannot Start() a started counter")
+	}
+	s.startedOn = s.clock.Now()
+}
+
+func (s *Stopwatch) Stop() {
+	if !s.started() {
+		panic("cannot Stop() a stopped counter")
+	}
+	s.total += s.clock.Now() - s.startedOn
+	s.startedOn = -1
+}
+
+func (s *Stopwatch) Reset() {
+	if s.started() {
+		panic("cannot Reset() a started counter")
+	}
+	s.total = 0
+	s.startedOn = -1
+}
+
+func (s *Stopwatch) Total() time.Duration {
+	if s.started() {
+		panic("cannot get Total() on a started counter")
+	}
+	return s.total
+}
+
+func (s *Stopwatch) started() bool {
+	return s.startedOn >= 0
+}
+
+func NewStopwatch(clock *Clock) *Stopwatch {
+	return &Stopwatch{clock: clock, startedOn: -1}
+}
