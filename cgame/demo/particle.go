@@ -179,10 +179,15 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 		ids = append(ids, s.UID())
 		return true
 	}
-	createParticle(r.W/2-30, r.H/2, 1, 0, cterm.ColorLightYellow, 40)
-	createParticle(r.W/2+30, r.H/2, -1, 0, cterm.ColorLightCyan, 20)
 
-	dc := cgame.NewDurationCounter(g.MasterClock)
+	// classic Newton's cradle
+	createParticle(r.W/2-30, r.H/2, 1, 0, cterm.ColorLightYellow, 40)
+	createParticle(r.W/2, r.H/2, 0, 0, cterm.ColorLightCyan, 0)
+	createParticle(r.W/2+1, r.H/2, 0, 0, cterm.ColorLightGreen, 0)
+	createParticle(r.W/2+2, r.H/2, 0, 0, cterm.ColorLightBlue, 0)
+	createParticle(r.W/2+3, r.H/2, 0, 0, cterm.ColorWhite, 0)
+
+	dc := cgame.NewStopwatch(g.MasterClock)
 
 	showDebugInfo := func() {
 		var sb strings.Builder
