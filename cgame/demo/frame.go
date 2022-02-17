@@ -143,7 +143,7 @@ func (wp *waypointProvider) Next() (cgame.Waypoint, bool) {
 		newR := wp.s.Rect()
 		newR.X += cwin.DirOffSetXY[dir].X * dist
 		newR.Y += cwin.DirOffSetXY[dir].Y * dist
-		if overlapped, ro := newR.Overlap(wp.s.ParentRect()); overlapped && ro == newR {
+		if ro, _ := newR.Overlap(wp.s.ParentRect()); ro == newR {
 			wp.g.Exchange.StringData["curDir"] = string(cwin.DirRunes[dir])
 			wp.g.Exchange.IntData["curDist"] = dist
 			return cgame.Waypoint{

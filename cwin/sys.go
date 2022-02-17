@@ -199,7 +199,7 @@ func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w *Win, sysRect Rect
 	}
 	// First update the 'w' window content into sysWin's off-screen buffer
 	var overlapped bool
-	overlapped, sysRect = sysRect.Overlap(
+	sysRect, overlapped = sysRect.Overlap(
 		Rect{parentSysX + w.cfg.R.X, parentSysY + w.cfg.R.Y, w.cfg.R.W, w.cfg.R.H})
 	if !overlapped {
 		return
@@ -221,7 +221,7 @@ func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w *Win, sysRect Rect
 		parentSysY + w.cfg.R.Y + w.clientR.Y,
 		w.clientR.W,
 		w.clientR.H}
-	overlapped, sysRect = sysRect.Overlap(clientSysRect)
+	sysRect, overlapped = sysRect.Overlap(clientSysRect)
 	if !overlapped {
 		return
 	}

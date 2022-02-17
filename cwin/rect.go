@@ -14,16 +14,16 @@ func (r Rect) Contain(x, y int) bool {
 	return x >= r.X && x < r.X+r.W && y >= r.Y && y < r.Y+r.H
 }
 
-func (r Rect) Overlap(other Rect) (bool, Rect) {
+func (r Rect) Overlap(other Rect) (Rect, bool) {
 	var overlapped Rect
 	overlapped.X = maths.MaxInt(r.X, other.X)
 	overlapped.W = maths.MinInt(r.X+r.W, other.X+other.W) - overlapped.X
 	if overlapped.W <= 0 {
-		return false, overlapped
+		return overlapped, false
 	}
 	overlapped.Y = maths.MaxInt(r.Y, other.Y)
 	overlapped.H = maths.MinInt(r.Y+r.H, other.Y+other.H) - overlapped.Y
-	return overlapped.H > 0, overlapped
+	return overlapped, overlapped.H > 0
 }
 
 func (r Rect) MoveDelta(dx, dy int) Rect {
