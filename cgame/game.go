@@ -70,6 +70,9 @@ func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc cwin.M
 		resp := cwin.MsgLoopContinue
 		if optionalRunFunc != nil {
 			resp = optionalRunFunc(ev)
+			if g.IsGameOver() {
+				return cwin.MsgLoopStop
+			}
 		}
 		g.SpriteMgr.Process()
 		return resp
