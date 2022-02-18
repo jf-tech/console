@@ -68,28 +68,16 @@ type WinCfg struct {
 	NoHPaddingText  bool // most cases, have a one-space padding on each side of text block looks nice
 }
 
-func hidden_s(hidden bool) string {
-	if hidden {
-		return "H" // hidden
-	}
-	return "V" // visible
-}
-
 type Win struct {
+	sys *Sys
 	cfg WinCfg
 
-	hidden  bool
+	buf []Chx
+
 	clientR Rect
-	buf     []Chx
+	hidden  bool
 
 	parent, next, prev, child1, childn *Win
-}
-
-func winName(w *Win) string {
-	if w == nil {
-		return "<nil>"
-	}
-	return w.cfg.Name
 }
 
 func (w *Win) String() string {
@@ -155,6 +143,10 @@ func (w *Win) ToTop() {
 	if parent.child1 == nil {
 		parent.child1 = w
 	}
+}
+
+func (w *Win) SetFocus() {
+	w.sys.SetFocus(w)
 }
 
 func (w *Win) bufIdx(x, y int) int {
@@ -330,8 +322,8 @@ func (w *Win) DumpTree(indent int) string {
 	return s
 }
 
-func NewWin(parent *Win, c WinCfg) *Win {
-	cw := &Win{cfg: c, parent: parent}
+func newWin(sys *Sys, parent *Win, c WinCfg) *Win {
+	cw := &Win{sys: sys, cfg: c, parent: parent}
 	cw.clientR = Rect{0, 0, cw.cfg.R.W, cw.cfg.R.H}
 	if !cw.cfg.NoBorder {
 		cw.clientR.X++
@@ -346,4 +338,18 @@ func NewWin(parent *Win, c WinCfg) *Win {
 		cw.SetTitle(cw.cfg.Name, AlignLeft)
 	}
 	return cw
+}
+
+func winName(w *Win) string {
+	if w == nil {
+		return "<nil>"
+	}
+	return w.cfg.Name
+}
+
+func hidden_s(hidden bool) string {
+	if hidden {
+		return "H" // hidden
+	}
+	return "V" // visible
 }

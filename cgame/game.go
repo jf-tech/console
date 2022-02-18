@@ -46,13 +46,13 @@ func (g *Game) Close() {
 	g.WinSys.Close()
 }
 
-func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc cwin.MsgLoopFunc) {
-	g.WinSys.Run(func(ev cterm.Event) cwin.MsgLoopResponseType {
+func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc cwin.EventLoopFunc) {
+	g.WinSys.Run(func(ev cterm.Event) cwin.EventLoopResponseType {
 		g.loopCount++
 		if ev.Type == cterm.EventKey {
 			if cwin.FindKey(gameOverKeys, ev) {
 				g.GameOver()
-				return cwin.MsgLoopStop
+				return cwin.EventLoopStop
 			}
 			if cwin.FindKey(pauseKeys, ev) {
 				if g.IsPaused() {
@@ -60,18 +60,18 @@ func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc cwin.M
 				} else {
 					g.Pause()
 				}
-				return cwin.MsgLoopContinue
+				return cwin.EventLoopContinue
 			}
 		}
 		// Reach here because of either EventNone, or  EvenKey but not game over or pause key...
 		if g.IsPaused() {
-			return cwin.MsgLoopContinue
+			return cwin.EventLoopContinue
 		}
-		resp := cwin.MsgLoopContinue
+		resp := cwin.EventLoopContinue
 		if optionalRunFunc != nil {
 			resp = optionalRunFunc(ev)
 			if g.IsGameOver() {
-				return cwin.MsgLoopStop
+				return cwin.EventLoopStop
 			}
 		}
 		g.SpriteMgr.Process()

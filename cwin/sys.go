@@ -9,13 +9,14 @@ import (
 )
 
 type Sys struct {
-	sysWin            *Win
-	scrBuf, offScrBuf []Chx
+	sysWin  *Win
+	inFocus *Win
 
 	stopEvent chan struct{}
 	evChan    chan cterm.Event
 
-	totalChxRendered int64
+	scrBuf, offScrBuf []Chx
+	totalChxRendered  int64
 }
 
 func Init(provider cterm.Provider) (*Sys, error) {
@@ -24,26 +25,25 @@ func Init(provider cterm.Provider) (*Sys, error) {
 		return nil, err
 	}
 	w, h := cterm.Size()
-	s := &Sys{sysWin: NewWin(nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})}
 	n := w * h
-	s.scrBuf = make([]Chx, n)
-	s.offScrBuf = make([]Chx, n)
-	s.startEventListening()
-	return s, nil
+	sys := &Sys{}
+	sys.sysWin = newWin(sys, nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})
+	sys.inFocus = sys.sysWin
+	sys.scrBuf = make([]Chx, n)
+	sys.offScrBuf = make([]Chx, n)
+	sys.startEventListening()
+	return sys, nil
 }
 
-func (s *Sys) Run(f MsgLoopFunc) {
+func (s *Sys) Run(f EventLoopFunc) {
 loop:
 	for {
 		resp := f(s.TryGetEvent())
 		switch resp {
-		case MsgLoopStop:
-			s.Refresh()
+		case EventLoopStop:
 			break loop
-		case MsgLoopContinue:
+		case EventLoopContinue:
 			s.Update()
-		case MsgLoopContinueWithFullRefresh:
-			s.Refresh()
 		default:
 			panic(fmt.Sprintf("unknown response: %d", int(resp)))
 		}
@@ -58,7 +58,7 @@ func (s *Sys) CreateWin(parent *Win, cfg WinCfg) *Win {
 	if parent == nil {
 		parent = s.sysWin
 	}
-	w := NewWin(parent, cfg)
+	w := newWin(s, parent, cfg)
 	if parent.childn == nil {
 		parent.child1 = w
 		parent.childn = w
@@ -91,6 +91,15 @@ func (s *Sys) RemoveWin(w *Win) {
 			parent.childn = prev
 		}
 	}
+}
+
+func (s *Sys) SetFocus(w *Win) {
+	if s.inFocus == w {
+		return
+	}
+	// TODO send lost focus event to s.inFocus
+	s.inFocus = w
+	// TODO send focus acquired event to the new focused window.
 }
 
 // This is a non-blocking call

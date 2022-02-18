@@ -21,9 +21,9 @@ type stage struct {
 func (s *stage) Run() {
 	s.init()
 	s.runStageIntroBanner()
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.MsgLoopResponseType {
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventLoopResponseType {
 		if s.checkStageDone() {
-			return cwin.MsgLoopStop
+			return cwin.EventLoopStop
 		}
 		alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
 		alpha.ToTop()
@@ -49,7 +49,7 @@ func (s *stage) Run() {
 		}
 		s.genSprites()
 		s.displayStats(alpha)
-		return cwin.MsgLoopContinue
+		return cwin.EventLoopContinue
 	})
 	if !s.m.g.IsGameOver() && s.stageIdx != totalStages-1 {
 		s.runStagePassedBanner()
@@ -74,8 +74,8 @@ func (s *stage) runStageIntroBanner() {
 		createAlpha(s.m, s)
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.MsgLoopResponseType {
-		return cwin.TrueForMsgLoopStop(bannerDone)
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventLoopResponseType {
+		return cwin.TrueForEventLoopStop(bannerDone)
 	})
 }
 
@@ -84,8 +84,8 @@ func (s *stage) runStagePassedBanner() {
 	createStagePassedBanner(s.m, func() {
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.MsgLoopResponseType {
-		return cwin.TrueForMsgLoopStop(bannerDone)
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventLoopResponseType {
+		return cwin.TrueForEventLoopStop(bannerDone)
 	})
 }
 
