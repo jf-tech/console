@@ -37,7 +37,7 @@ func (lb *ListBox) SetItems(items []string) {
 }
 
 func (lb *ListBox) String() string {
-	return fmt.Sprintf("listbox['%s'|%d|%s]", lb.Cfg().Name, lb.UID(), lb.Rect())
+	return fmt.Sprintf("listbox['%s'|0x%X|%s]", lb.Cfg().Name, lb, lb.Rect())
 }
 
 func (lb *ListBox) SetSelected(selected int) {
@@ -105,12 +105,8 @@ func newListBox(sys *Sys, parent Win, cfg ListBoxCfg) *ListBox {
 	return lb
 }
 
-func (s *Sys) CreateListBox(parent Win, cfg ListBoxCfg) *ListBox {
-	if parent == nil {
-		parent = s.sysWin
-	}
-	lb := newListBox(s, parent, cfg)
-	s.RegWin(lb)
-	parent.addNewChild(lb)
-	return lb
+func CreateListBox(sys *Sys, parent Win, cfg ListBoxCfg) *ListBox {
+	return sys.CreateWinEx(parent, func() Win {
+		return newListBox(sys, parent, cfg)
+	}).(*ListBox)
 }

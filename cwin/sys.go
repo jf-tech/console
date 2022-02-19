@@ -9,7 +9,7 @@ import (
 )
 
 type Sys struct {
-	winReg map[int64]Win
+	winReg map[*WinBase]Win
 
 	sysWin  Win
 	inFocus Win
@@ -28,7 +28,7 @@ func Init(provider cterm.Provider) (*Sys, error) {
 	}
 	w, h := cterm.Size()
 	n := w * h
-	sys := &Sys{winReg: map[int64]Win{}}
+	sys := &Sys{winReg: map[*WinBase]Win{}}
 	sysWin := NewWinBase(sys, nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})
 	sys.RegWin(sysWin)
 	sys.sysWin = sysWin
@@ -36,6 +36,64 @@ func Init(provider cterm.Provider) (*Sys, error) {
 	sys.offScrBuf = make([]Chx, n)
 	sys.startEventListening()
 	return sys, nil
+}
+
+func (s *Sys) CreateWinEx(parent Win, createWin func() Win) Win {
+	pb := s.sysWin.Base()
+	if parent != nil {
+		pb = parent.Base()
+	}
+	w := createWin()
+	s.RegWin(w)
+	pb.addChild(w.Base())
+	return w
+}
+
+func (s *Sys) CreateWin(parent Win, cfg WinCfg) Win {
+	return s.CreateWinEx(parent, func() Win {
+		return NewWinBase(s, parent, cfg)
+	})
+}
+
+func (s *Sys) RegWin(w Win) {
+	s.winReg[w.Base()] = w
+}
+
+func (s *Sys) SysWin() Win {
+	return s.sysWin
+}
+
+func (s *Sys) TryFindWin(w Win) (Win, bool) {
+	w, ok := s.winReg[w.Base()]
+	return w, ok
+}
+
+func (s *Sys) FindWin(w Win) Win {
+	if w, ok := s.TryFindWin(w); ok {
+		return w
+	}
+	panic(fmt.Sprintf("unable to find %s", w))
+}
+
+func (s *Sys) RemoveWin(w Win) {
+	// the sysWin is non-removable
+	if s.sysWin.Same(w) {
+		return
+	}
+	wb := w.Base()
+	wb.parent.removeChild(wb)
+	if s.inFocus != nil && s.inFocus.Same(w) {
+		s.inFocus = nil
+	}
+	delete(s.winReg, wb)
+}
+
+func (s *Sys) SetFocus(w Win) {
+	if s.inFocus != nil && s.inFocus.Same(w) {
+		return
+	}
+	w.SendToTop(true)
+	s.inFocus = s.FindWin(w)
 }
 
 func (s *Sys) Run(fallbackHandler EventHandler) {
@@ -50,62 +108,6 @@ func (s *Sys) Run(fallbackHandler EventHandler) {
 			}
 			return resp
 		})
-}
-
-func (s *Sys) RegWin(w Win) {
-	s.winReg[w.UID()] = w
-}
-
-func (s *Sys) SysWin() Win {
-	return s.sysWin
-}
-
-func (s *Sys) TryFindWin(uid int64) (Win, bool) {
-	w, ok := s.winReg[uid]
-	return w, ok
-}
-
-func (s *Sys) FindWin(uid int64) Win {
-	if w, ok := s.TryFindWin(uid); ok {
-		return w
-	}
-	panic(fmt.Sprintf("unable to find Win with UID=%d", uid))
-}
-
-func (s *Sys) RemoveWin(w Win) {
-	// the sysWin is non-removable
-	if w.UID() == s.sysWin.UID() {
-		return
-	}
-	parent := w.Parent()
-	prev := w.Prev()
-	next := w.Next()
-	if prev != nil {
-		prev.setNext(next)
-	}
-	if next != nil {
-		next.setPrev(prev)
-	}
-	if parent != nil {
-		if parent.ChildFirst().UID() == w.UID() {
-			parent.setChildFirst(next)
-		}
-		if parent.ChildLast().UID() == w.UID() {
-			parent.setChildLast(prev)
-		}
-	}
-	if s.inFocus != nil && s.inFocus.UID() == w.UID() {
-		s.inFocus = nil
-	}
-	delete(s.winReg, w.UID())
-}
-
-func (s *Sys) SetFocus(w Win) {
-	if s.inFocus != nil && s.inFocus.UID() == w.UID() {
-		return
-	}
-	w.SendToTop(true)
-	s.inFocus = s.FindWin(w.UID())
 }
 
 // This is a non-blocking call
@@ -233,7 +235,7 @@ func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w Win, sysRect Rect)
 			if chx == chxTransparent {
 				continue
 			}
-			sysOffScrBufIdx := s.sysWin.(*WinBase).bufIdx(sysRect.X+x, sysRect.Y+y)
+			sysOffScrBufIdx := s.sysWin.Base().bufIdx(sysRect.X+x, sysRect.Y+y)
 			s.offScrBuf[sysOffScrBufIdx] = chx
 		}
 	}
@@ -257,7 +259,7 @@ func (s *Sys) doUpdate(differential bool) {
 		0, 0, s.sysWin, Rect{0, 0, s.sysWin.Cfg().R.W, s.sysWin.Cfg().R.H})
 	for y := 0; y < s.sysWin.Cfg().R.H; y++ {
 		for x := 0; x < s.sysWin.Cfg().R.W; x++ {
-			idx := s.sysWin.(*WinBase).bufIdx(x, y)
+			idx := s.sysWin.Base().bufIdx(x, y)
 			if !differential || s.scrBuf[idx] != s.offScrBuf[idx] {
 				s.scrBuf[idx] = s.offScrBuf[idx]
 				cterm.SetCell(x, y,

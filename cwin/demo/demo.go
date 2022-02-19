@@ -39,7 +39,7 @@ func main() {
 	demoTitlePrefix := fmt.Sprintf("Demo [%s] (%dx%d)", provider, sysR.W, sysR.H)
 
 	listboxR := cwin.Rect{X: demoR.X + demoR.W, Y: demoR.Y, W: listboxW, H: listboxH}
-	listbox := sys.CreateListBox(nil, cwin.ListBoxCfg{
+	listbox := cwin.CreateListBox(sys, nil, cwin.ListBoxCfg{
 		WinCfg: cwin.WinCfg{R: listboxR, Name: "ListBox"},
 		Items: func() []string {
 			var items []string
