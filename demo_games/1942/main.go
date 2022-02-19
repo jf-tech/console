@@ -153,17 +153,17 @@ func (m *myGame) winSetup() {
 			H: winHeaderH},
 		Name:       "header",
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorBlue},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R:          cwin.Rect{X: 1, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorRed},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R:          cwin.Rect{X: winHeaderW, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorRed},
 	})
 	m.winArena = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R: cwin.Rect{
@@ -189,8 +189,8 @@ func (m *myGame) winSetup() {
 			W: m.winStats.Rect().W,
 			H: winGameClientR.H - m.winStats.Rect().H},
 		Name:       "Keyboard",
-		BorderAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
+		BorderAttr: cwin.Attr{Bg: cterm.ColorBlue},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorBlue},
 	})
 	winInstructions.SetText(textInstructions)
 }

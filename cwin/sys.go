@@ -162,8 +162,8 @@ func (s *Sys) CenterBanner(parent Win, title, format string, a ...interface{}) W
 			W: width,
 			H: height},
 		Name:       title,
-		BorderAttr: ChAttr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
-		ClientAttr: ChAttr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
+		BorderAttr: Attr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
+		ClientAttr: Attr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
 	})
 	w.SetTitleAligned(AlignCenter, title)
 	w.SetText(msg)

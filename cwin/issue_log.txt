@@ -1,4 +1,11 @@
 [2022/02/19 cwin]
+- every Win should all use WinBase
+- Win interface should NOT have those Parent/ChildFirst/ChildLast/NextPrev getter/setter
+- Win interface adds a new method return *WinBase
+- Sys creates a generic CreateWin method that takes a func to return a Win, the CreateWin
+  does registration, setup parent/child.
+
+[2022/02/19 cwin]
 - [✅] Now make the RunEventLoop a first class concept so all things (cwin.Sys, cgame.Game, and smaller
 things like MessageBox) are all running with the event loop.
 - [✅] ?? cwin.Sys and cwin.Win uses *Win everywhere. The problem is now we have ListBox which just

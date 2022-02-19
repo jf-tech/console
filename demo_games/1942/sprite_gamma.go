@@ -15,7 +15,7 @@ var (
 	gammaFrame = cgame.FrameFromString(`
 /^#^\
 \vvv/
-`, cwin.ChAttr{Fg: cterm.ColorLightBlue})
+`, cwin.Attr{Fg: cterm.ColorLightBlue})
 
 	gammaBulletName = "gamma_bullet"
 )

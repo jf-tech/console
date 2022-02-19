@@ -67,8 +67,8 @@ func main() {
 		Name: "Foreground Colors",
 	})
 	for x, color := 0, cterm.ColorBlack; color <= cterm.ColorLightGray; x, color = x+2, color+1 {
-		fgColorWin.PutClient(x, 0, cwin.Chx{Ch: '█', Attr: cwin.ChAttr{Fg: color}})
-		fgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: '█', Attr: cwin.ChAttr{Fg: color}})
+		fgColorWin.PutClient(x, 0, cwin.Chx{Ch: '█', Attr: cwin.Attr{Fg: color}})
+		fgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: '█', Attr: cwin.Attr{Fg: color}})
 	}
 	bgColorWin := sys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
@@ -80,8 +80,8 @@ func main() {
 		Name: "Background Colors",
 	})
 	for x, color := 0, cterm.ColorBlack; color <= cterm.ColorLightGray; x, color = x+2, color+1 {
-		bgColorWin.PutClient(x, 0, cwin.Chx{Ch: ' ', Attr: cwin.ChAttr{Bg: color}})
-		bgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: ' ', Attr: cwin.ChAttr{Bg: color}})
+		bgColorWin.PutClient(x, 0, cwin.Chx{Ch: ' ', Attr: cwin.Attr{Bg: color}})
+		bgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: ' ', Attr: cwin.Attr{Bg: color}})
 	}
 	sys.Update()
 	sys.Run(func(ev cterm.Event) cwin.EventResponse {

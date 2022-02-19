@@ -16,7 +16,7 @@ type ListBoxOnSelect func(idx int, selected string)
 type ListBoxCfg struct {
 	WinCfg
 	Items        []string
-	SelectedAttr ChAttr
+	SelectedAttr Attr
 	Align        Align
 	OnSelect     ListBoxOnSelect
 }
@@ -86,7 +86,7 @@ func (lb *ListBox) moveDown() {
 
 func newListBox(sys *Sys, parent Win, cfg ListBoxCfg) *ListBox {
 	if cfg.SelectedAttr == TransparentChx().Attr {
-		cfg.SelectedAttr = ChAttr{Bg: cterm.ColorBlue}
+		cfg.SelectedAttr = Attr{Bg: cterm.ColorBlue}
 	}
 	lb := &ListBox{WinBase: NewWinBase(sys, parent, cfg.WinCfg), cfg: cfg}
 	lb.SetItems(cfg.Items)

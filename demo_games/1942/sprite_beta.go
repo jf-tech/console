@@ -15,7 +15,7 @@ var (
 	betaFrame = cgame.FrameFromString(`
 \┃┃/
  \/
-`, cwin.ChAttr{Fg: cterm.ColorLightCyan})
+`, cwin.Attr{Fg: cterm.ColorLightCyan})
 
 	betaBulletName = "beta_bullet"
 )

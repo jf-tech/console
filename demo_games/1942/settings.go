@@ -42,8 +42,8 @@ var (
 	stagePassedBannerInOutDuration = stageIntroBannerInOutDuration
 	stagePassedBannerStayDuration  = 2 * time.Second
 
-	alphaBulletAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow}
-	enemyBulletAttr = cwin.ChAttr{Fg: cterm.ColorLightCyan}
+	alphaBulletAttr = cwin.Attr{Fg: cterm.ColorLightYellow}
+	enemyBulletAttr = cwin.Attr{Fg: cterm.ColorLightCyan}
 
 	bgStarSpeed   = cgame.CharPerSec(25)
 	bgStarGenProb = cutil.NewPeriodicProbabilityChecker("50%", 100*time.Millisecond)

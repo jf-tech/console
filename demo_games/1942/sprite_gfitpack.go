@@ -32,7 +32,7 @@ func (g *spriteGiftPack) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.Collisi
 	return cgame.CollisionResponseJustDoIt
 }
 
-func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.ChAttr) {
+func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.Attr) {
 	frame := cgame.FrameFromString(strings.ReplaceAll(
 		giftPackFrameTxt, string(giftPackSymbolPlaceholder[:]), string(sym[:])), symAttr)
 	s := &spriteGiftPack{
@@ -70,11 +70,11 @@ func (gp *giftPack) remainingLife() time.Duration {
 var (
 	gpShotgunName    = "Shotgun"
 	gpShotgunSym     = giftPackSymbol{'-', 'S', '-'}
-	gpShotgunSymAttr = cwin.ChAttr{Fg: cterm.ColorWhite, Bg: cterm.ColorBlack}
+	gpShotgunSymAttr = cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorBlack}
 
 	gpShotgun2Name    = "Shotgun++"
 	gpShotgun2Sym     = giftPackSymbol{'S', '+', '+'}
-	gpShotgun2SymAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlack}
+	gpShotgun2SymAttr = cwin.Attr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlack}
 )
 
 func newGiftPackShotgun(clock *cutil.Clock) *giftPack {

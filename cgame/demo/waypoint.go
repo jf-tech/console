@@ -41,7 +41,7 @@ func doDemo(g *cgame.Game, demoWin cwin.Win) {
 	// create a single sprite frame
 	frame := cgame.FrameFromString(
 		strings.Trim(readFile("resources/airplane.txt"), "\n"),
-		cwin.ChAttr{Fg: cterm.ColorLightYellow})
+		cwin.Attr{Fg: cterm.ColorLightYellow})
 
 	// create a sprite
 	startX, startY := -cgame.FrameRect(frame).W, (demoWin.ClientRect().H-cgame.FrameRect(frame).H)/2

@@ -83,7 +83,7 @@ func (m *myGame) main() int {
 	for i := 0; i < nextN; i++ {
 		m.nexts = append(m.nexts,
 			m.newSpritePiece(
-				pieceName, pieceID(rand.Int()%int(pieceCount)), 0, cwin.ChAttr{Bg: pieceColor},
+				pieceName, pieceID(rand.Int()%int(pieceCount)), 0, cwin.Attr{Bg: pieceColor},
 				m.winNexts[i], cwin.Point{X: 0, Y: 0}))
 	}
 	m.readyNextPieceForPlay()
@@ -245,7 +245,7 @@ func (m *myGame) gameSetup() {
 			H: winInstrH,
 		},
 		Name:       "Keyboard",
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorBlue},
 	})
 	winInstr.SetText(strings.Trim(fmt.Sprintf(`
 %c / %c  : move
@@ -306,7 +306,7 @@ d88P  Y88b               888
 Y88b  d88P Y88..88P       "
  "Y8888P88  "Y88P"       888
 `,
-	}, cwin.ChAttr{Fg: cterm.ColorLightYellow})
+	}, cwin.Attr{Fg: cterm.ColorLightYellow})
 	framesR.X = (m.winArena.ClientRect().W - framesR.W) / 2
 	framesR.Y = (m.winArena.ClientRect().H - framesR.H) / 2
 	s := cgame.NewSpriteBaseR(m.g, m.winArena, "count_down", frames[0], framesR)
@@ -321,7 +321,7 @@ Y88b  d88P Y88..88P       "
 }
 
 func (m *myGame) newSpritePiece(spriteName string, pieceID pieceID, rotationIdx int,
-	color cwin.ChAttr, parentW cwin.Win, lxy cwin.Point) *spritePiece {
+	color cwin.Attr, parentW cwin.Win, lxy cwin.Point) *spritePiece {
 	f := cgame.SetAttrInFrame(mkFrame(pieceLibrary[pieceID][rotationIdx]), color)
 	s := &spritePiece{
 		SpriteBase:  cgame.NewSpriteBase(m.g, parentW, spriteName, f, LX2X(lxy.X), LY2Y(lxy.Y)),
@@ -504,7 +504,7 @@ type spritePiece struct {
 	m           *myGame
 	pieceID     pieceID
 	rotationIdx int
-	color       cwin.ChAttr
+	color       cwin.Attr
 }
 
 func (s *spritePiece) checkOrUpdatePosition(dlx, dly int) bool {
@@ -560,7 +560,7 @@ func (s *spritePiece) setupShadow() {
 		return
 	}
 	s.checkOrUpdatePosition(0, -dly)
-	shadow := s.m.newSpritePiece(shadowName, s.pieceID, s.rotationIdx, cwin.ChAttr{Fg: shadowColor},
+	shadow := s.m.newSpritePiece(shadowName, s.pieceID, s.rotationIdx, cwin.Attr{Fg: shadowColor},
 		s.m.winArena, cwin.Point{X: X2LX(s.Rect().X), Y: Y2LY(s.Rect().Y) + dly})
 	if !cgame.DetectCollision(s.Rect(), s.Frame(), shadow.Rect(), shadow.Frame()) {
 		s.Mgr().AsyncCreateSprite(shadow)
@@ -657,7 +657,7 @@ func (m *myGame) settlePiece(s *spritePiece) {
 		settled := &spriteSettled{
 			SpriteBase: cgame.NewSpriteBase(
 				m.g, m.winArena, settledName,
-				cgame.SetAttrInFrame(mkBlockFrameCell(0, 0), cwin.ChAttr{Bg: settledColor}),
+				cgame.SetAttrInFrame(mkBlockFrameCell(0, 0), cwin.Attr{Bg: settledColor}),
 				LX2X(lx), LY2Y(ly)),
 			m: m,
 		}
@@ -758,7 +758,7 @@ func (m *myGame) readyNextPieceForPlay() {
 	id := m.nexts[0].pieceID
 	r := cgame.FrameRect(mkFrame(pieceLibrary[id][0]))
 	m.s = m.newSpritePiece(
-		pieceName, id, 0, cwin.ChAttr{Bg: pieceColor}, m.winArena,
+		pieceName, id, 0, cwin.Attr{Bg: pieceColor}, m.winArena,
 		cwin.Point{X: X2LX((m.winArena.ClientRect().W - r.W) / 2), Y: 0})
 	if !m.s.checkOrUpdatePosition(0, 0) {
 		m.g.GameOver()
@@ -775,7 +775,7 @@ func (m *myGame) readyNextPieceForPlay() {
 			id = m.nexts[i+1].pieceID
 		}
 		m.nexts[i] = m.newSpritePiece(
-			pieceName, id, 0, cwin.ChAttr{Bg: pieceColor}, m.winNexts[i], cwin.Point{X: 0, Y: 0})
+			pieceName, id, 0, cwin.Attr{Bg: pieceColor}, m.winNexts[i], cwin.Point{X: 0, Y: 0})
 	}
 }
 

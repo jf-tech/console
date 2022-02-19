@@ -112,13 +112,13 @@ func (sfp *sineWaveFrameProvider) Next() (cgame.Frame, time.Duration, bool) {
 						}
 						return ' '
 					}(),
-					Attr: cwin.ChAttr{Fg: cterm.ColorWhite, Bg: cterm.ColorDarkGray}}})
+					Attr: cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorDarkGray}}})
 		}
 	}
 	for x := 0; x < w; x++ {
 		y := fromRY(math.Sin(toRX(x+sfp.xshift, w)), h)
 		f[y*w+x].Chx =
-			cwin.Chx{Ch: '#', Attr: cwin.ChAttr{Fg: cterm.ColorYellow, Bg: cterm.ColorLightBlue}}
+			cwin.Chx{Ch: '#', Attr: cwin.Attr{Fg: cterm.ColorYellow, Bg: cterm.ColorLightBlue}}
 	}
 	sfp.xshift = (sfp.xshift - 1 + w) % w
 	return f, 50 * time.Millisecond, true

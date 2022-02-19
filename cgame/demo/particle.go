@@ -50,7 +50,7 @@ type spriteParticle struct {
 var (
 	particleImg         = "◯"
 	particleName        = "particle"
-	particleFrameNoAttr = cgame.FrameFromString(particleImg, cwin.ChAttr{})
+	particleFrameNoAttr = cgame.FrameFromString(particleImg, cwin.Attr{})
 )
 
 // implements cgame.WaypointProvider
@@ -150,7 +150,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 	hitBounds := int64(0)
 	var ids []int64
 	createParticle := func(x, y, dx, dy int, color cterm.Attribute, speed cgame.CharPerSec) bool {
-		attr := cwin.ChAttr{Fg: color}
+		attr := cwin.Attr{Fg: color}
 		s := &spriteParticle{
 			SpriteBase: cgame.NewSpriteBase(g, demoWin, particleName,
 				cgame.SetAttrInFrame(cgame.CopyFrame(particleFrameNoAttr), attr), x, y),

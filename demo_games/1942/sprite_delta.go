@@ -16,7 +16,7 @@ var (
   /^\
 << X >>
   \v/
-`, cwin.ChAttr{Fg: cterm.ColorLightGreen})
+`, cwin.Attr{Fg: cterm.ColorLightGreen})
 )
 
 type spriteDelta struct {

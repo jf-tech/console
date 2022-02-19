@@ -14,7 +14,7 @@ var (
 	alphaFrame = cgame.FrameFromString(`
   ┃
 -█-█-
-`, cwin.ChAttr{Fg: cterm.ColorLightYellow})
+`, cwin.Attr{Fg: cterm.ColorLightYellow})
 	alphaBulletName = "alpha_bullet"
 )
 

@@ -88,7 +88,7 @@ var (
 ▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
  ▀▀▀▀▀▀▀▀▀▀▀       ▀       ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀
 `
-	stageIntroBannerAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlue}
+	stageIntroBannerAttr = cwin.Attr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlue}
 )
 
 func createStageIntroBanner(m *myGame, stageIdx int, afterFinish func()) {

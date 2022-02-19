@@ -37,13 +37,13 @@ var (
 	DoubleLineBorderRunes = BorderRunes{'╔', '╗', '╝', '╚', '║', '═'}
 )
 
-type ChAttr struct {
+type Attr struct {
 	Fg, Bg cterm.Attribute // cterm.ColorRed | ColorGreen | ...
 }
 
 type Chx struct {
 	Ch   rune
-	Attr ChAttr
+	Attr Attr
 }
 
 var chxTransparent = Chx{}
@@ -63,8 +63,8 @@ type WinCfg struct {
 	Name            string // also used as title (unless NoTitle or NoBorder is true)
 	NoBorder        bool
 	BorderRunes     *BorderRunes // if NoBorder && BorderRunes==nil, default to 1-line border
-	BorderAttr      ChAttr
-	ClientAttr      ChAttr
+	BorderAttr      Attr
+	ClientAttr      Attr
 	NoTitle         bool // in case user sets Name (for debug purpose) and border, but doesn't want Title
 	NoHPaddingTitle bool // most cases, have a one-space padding on each side of title looks nice
 	NoHPaddingText  bool // most cases, have a one-space padding on each side of text block looks nice
@@ -382,7 +382,7 @@ func (wb *WinBase) fill(r Rect, chx Chx) {
 	}
 }
 
-func (wb *WinBase) setTextLine(cy int, line string, align Align, attr ChAttr) {
+func (wb *WinBase) setTextLine(cy int, line string, align Align, attr Attr) {
 	wb.FillClient(Rect{X: 0, Y: cy, W: wb.clientR.W, H: 1}, Chx{Ch: RuneSpace, Attr: attr})
 	padding := 1
 	if wb.cfg.NoHPaddingText {

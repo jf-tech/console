@@ -53,7 +53,7 @@ func doExplosion(g *cgame.Game, demoWin cwin.Win, filepath string) bool {
 	fn := path.Base(filepath)
 	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s': any key to start", fn))
 	f := cgame.FrameFromString(
-		strings.Trim(readFile(filepath), "\n"), cwin.ChAttr{Fg: cterm.ColorLightCyan})
+		strings.Trim(readFile(filepath), "\n"), cwin.Attr{Fg: cterm.ColorLightCyan})
 	s := cgame.NewSpriteBase(g, demoWin, "s", f,
 		(demoWin.ClientRect().W-cgame.FrameRect(f).W)/2,
 		(demoWin.ClientRect().H-cgame.FrameRect(f).H)/2)

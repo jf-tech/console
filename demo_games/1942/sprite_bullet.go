@@ -20,7 +20,7 @@ func (b *spriteBullet) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.Collision
 	return cgame.CollisionResponseJustDoIt
 }
 
-func createBullet(m *myGame, name string, attr cwin.ChAttr,
+func createBullet(m *myGame, name string, attr cwin.Attr,
 	dx, dy int, speed cgame.CharPerSec, x, y int) {
 
 	s := &spriteBullet{cgame.NewSpriteBase(

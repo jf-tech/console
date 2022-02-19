@@ -30,8 +30,8 @@ var (
                    \  /
                    \  /
                     \/
-`, cwin.ChAttr{Fg: cterm.ColorWhite})
-	bossHPAttr     = cwin.ChAttr{Fg: cterm.ColorRed}
+`, cwin.Attr{Fg: cterm.ColorWhite})
+	bossHPAttr     = cwin.Attr{Fg: cterm.ColorRed}
 	bossBulletName = "boss_bullet"
 
 	leftGunX  = 1
