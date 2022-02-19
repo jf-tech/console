@@ -58,12 +58,13 @@ type WinCfg struct {
 	// position from its direct parent window. W/H for its size.
 	R Rect
 	// All the following are optional.
-	Name            string // used as win title (unless SetTitle called after creation) and in debug dump
+	EventHandler    EventHandler
+	Name            string // also used as title (unless NoTitle or NoBorder is true)
 	NoBorder        bool
 	BorderRunes     *BorderRunes // if NoBorder && BorderRunes==nil, default to 1-line border
 	BorderAttr      ChAttr
 	ClientAttr      ChAttr
-	NoTitle         bool // in case user sets Name (for debug purpose) and border, but doesn't want actual Title
+	NoTitle         bool // in case user sets Name (for debug purpose) and border, but doesn't want Title
 	NoHPaddingTitle bool // most cases, have a one-space padding on each side of title looks nice
 	NoHPaddingText  bool // most cases, have a one-space padding on each side of text block looks nice
 }
@@ -111,7 +112,7 @@ func (w *Win) removeFromParent() {
 	w.next = nil
 }
 
-func (w *Win) ToBottom() {
+func (w *Win) ToBottom(recursive bool) {
 	parent := w.parent
 	if parent == nil {
 		return
@@ -126,9 +127,12 @@ func (w *Win) ToBottom() {
 	if parent.childn == nil {
 		parent.childn = w
 	}
+	if recursive {
+		parent.ToBottom(recursive)
+	}
 }
 
-func (w *Win) ToTop() {
+func (w *Win) ToTop(recursive bool) {
 	parent := w.parent
 	if parent == nil {
 		return
@@ -143,10 +147,13 @@ func (w *Win) ToTop() {
 	if parent.child1 == nil {
 		parent.child1 = w
 	}
+	if recursive {
+		parent.ToTop(recursive)
+	}
 }
 
-func (w *Win) SetFocus() {
-	w.sys.SetFocus(w)
+func (w *Win) SetEventHandler(evHandler EventHandler) {
+	w.cfg.EventHandler = evHandler
 }
 
 func (w *Win) bufIdx(x, y int) int {

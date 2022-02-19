@@ -21,7 +21,7 @@ type stage struct {
 func (s *stage) Run() {
 	s.init()
 	s.runStageIntroBanner()
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventLoopResponseType {
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
 		if s.checkStageDone() {
 			return cwin.EventLoopStop
 		}
@@ -49,7 +49,7 @@ func (s *stage) Run() {
 		}
 		s.genSprites()
 		s.displayStats(alpha)
-		return cwin.EventLoopContinue
+		return cwin.EventHandled
 	})
 	if !s.m.g.IsGameOver() && s.stageIdx != totalStages-1 {
 		s.runStagePassedBanner()
@@ -74,8 +74,8 @@ func (s *stage) runStageIntroBanner() {
 		createAlpha(s.m, s)
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventLoopResponseType {
-		return cwin.TrueForEventLoopStop(bannerDone)
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
+		return cwin.TrueForEventSystemStop(bannerDone)
 	})
 }
 
@@ -84,8 +84,8 @@ func (s *stage) runStagePassedBanner() {
 	createStagePassedBanner(s.m, func() {
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventLoopResponseType {
-		return cwin.TrueForEventLoopStop(bannerDone)
+	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
+		return cwin.TrueForEventSystemStop(bannerDone)
 	})
 }
 

@@ -1,23 +1,50 @@
 package cwin
 
-import "github.com/jf-tech/console/cterm"
+import (
+	"github.com/jf-tech/console/cterm"
+)
 
-type EventLoopResponseType int
+type EventResponse int
 
 const (
-	EventLoopContinue = EventLoopResponseType(iota)
+	EventHandled = EventResponse(iota)
+	EventNotHandled
 	EventLoopStop
 )
 
-type EventLoopFunc func(ev cterm.Event) EventLoopResponseType
+type EventHandler func(ev cterm.Event) EventResponse
 
-func TrueForEventLoopStop(b bool) EventLoopResponseType {
+func RunEventLoop(s *Sys, evHandler EventHandler) {
+	if evHandler == nil {
+		panic("evHandler cannot be nil")
+	}
+loop:
+	for {
+		resp := EventNotHandled
+		ev := s.TryGetEvent()
+		resp = evHandler(ev)
+		s.Update()
+		if resp == EventLoopStop {
+			break loop
+		}
+	}
+}
+
+func NopHandledEventHandler(ev cterm.Event) EventResponse {
+	return EventHandled
+}
+
+func NopNotHandledEventHandler(ev cterm.Event) EventResponse {
+	return EventNotHandled
+}
+
+func TrueForEventSystemStop(b bool) EventResponse {
 	if b {
 		return EventLoopStop
 	}
-	return EventLoopContinue
+	return EventHandled
 }
 
-func FalseForEventLoopStop(b bool) EventLoopResponseType {
-	return TrueForEventLoopStop(!b)
+func FalseForEventSystemStop(b bool) EventResponse {
+	return TrueForEventSystemStop(!b)
 }

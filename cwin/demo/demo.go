@@ -67,7 +67,7 @@ func main() {
 	sys.SyncExpectKey(nil)
 	demoWin.SetTitle(fmt.Sprintf("%s - MessageBox", demoTitlePrefix), cwin.AlignLeft)
 
-	sys.MessageBox(demoWin,
+	ret := sys.MessageBox(demoWin,
 		"MessageBox",
 		`This is a default MessageBox.
 It is a modal dialog box.
@@ -76,4 +76,8 @@ It can be dismissed by pressing Enter/Return, or ESC.
 It returns true if Enter/Return is pressed; false if ESC is pressed.
 
 Current time is: %s`, time.Now().Format(time.RFC3339))
+	demoWin.SetText("MessageBox return value: %t", ret)
+	demoWin.SetTitle(fmt.Sprintf("%s - Press any key to exit.", demoTitlePrefix), cwin.AlignLeft)
+	sys.Update()
+	sys.SyncExpectKey(nil)
 }

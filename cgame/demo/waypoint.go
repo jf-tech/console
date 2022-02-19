@@ -69,7 +69,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	}))
 	g.SpriteMgr.AsyncCreateSprite(s)
 	// run the demo
-	g.Run(cwin.Keys('q', cterm.KeyEsc), nil, nil)
+	g.Run(cwin.Keys('q', cterm.KeyEsc), nil, cwin.NopHandledEventHandler)
 }
 
 func readFile(relPath string) string {

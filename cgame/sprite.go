@@ -83,11 +83,11 @@ func (sb *SpriteBase) DeleteAnimator(as ...Animator) {
 }
 
 func (sb *SpriteBase) ToBottom() {
-	sb.win.ToBottom()
+	sb.win.ToBottom(false)
 }
 
 func (sb *SpriteBase) ToTop() {
-	sb.win.ToTop()
+	sb.win.ToTop(false)
 }
 
 type UpdateArg struct {

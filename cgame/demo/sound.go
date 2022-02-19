@@ -37,11 +37,11 @@ func main() {
 func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	filepath := path.Join(cutil.GetCurFileDir(), "resources/doorbell.mp3")
 	g.SoundMgr.PlayMP3(filepath, -1, -1)
-	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) cwin.EventLoopResponseType {
+	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
 		demoWin.SetTitle(
 			fmt.Sprintf("Demo - Sound. Space to pause/resume; ESC or 'q' to quit. Time: %s",
 				g.MasterClock.Now().Round(time.Millisecond)),
 			cwin.AlignLeft)
-		return cwin.EventLoopContinue
+		return cwin.EventHandled
 	})
 }

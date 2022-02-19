@@ -68,9 +68,9 @@ func (m *myGame) main() int {
 	m.gameSetup()
 
 	m.createCountDown()
-	m.g.Run(cwin.Keys(cterm.KeyEsc, 'q'), nil, func(ev cterm.Event) cwin.EventLoopResponseType {
+	m.g.Run(cwin.Keys(cterm.KeyEsc, 'q'), nil, func(ev cterm.Event) cwin.EventResponse {
 		_, ok := m.g.Exchange.BoolData["countdown_done"]
-		return cwin.TrueForEventLoopStop(ok)
+		return cwin.TrueForEventSystemStop(ok)
 	})
 	if m.g.IsGameOver() {
 		goto game_over
@@ -88,7 +88,7 @@ func (m *myGame) main() int {
 	}
 	m.readyNextPieceForPlay()
 
-	m.g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys('p'), func(ev cterm.Event) cwin.EventLoopResponseType {
+	m.g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys('p'), func(ev cterm.Event) cwin.EventResponse {
 		m.winStats.SetText(m.stats())
 		// It's possible that m.s (current piece) is nil, so we must guard for that:
 		// when a piece is settled, we call SpriteMgr.AsyncCallback to schedule
@@ -96,7 +96,7 @@ func (m *myGame) main() int {
 		// based callback event is processed, a keyboard press comes in, thus we
 		// need this nil guard.
 		if ev.Type != cterm.EventKey || m.s == nil || m.kbSuspended {
-			return cwin.EventLoopContinue
+			return cwin.EventHandled
 		}
 		if ev.Key == cterm.KeyArrowUp {
 			m.s.rotate()
@@ -112,7 +112,7 @@ func (m *myGame) main() int {
 			m.shadowOff = !m.shadowOff
 			m.s.setupShadow()
 		}
-		return cwin.EventLoopContinue
+		return cwin.EventHandled
 	})
 
 game_over:

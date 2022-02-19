@@ -69,7 +69,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	s.AddAnimator(aw, af)
 	g.SpriteMgr.AsyncCreateSprite(s)
 
-	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) cwin.EventLoopResponseType {
+	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
 		demoWin.SetTitle(
 			func() string {
 				return fmt.Sprintf(
@@ -79,7 +79,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 			}(),
 			cwin.AlignLeft)
 		if ev.Type != cterm.EventKey {
-			return cwin.EventLoopContinue
+			return cwin.EventHandled
 		}
 		return cwin.EventLoopStop
 	})

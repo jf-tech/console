@@ -28,26 +28,24 @@ func Init(provider cterm.Provider) (*Sys, error) {
 	n := w * h
 	sys := &Sys{}
 	sys.sysWin = newWin(sys, nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})
-	sys.inFocus = sys.sysWin
 	sys.scrBuf = make([]Chx, n)
 	sys.offScrBuf = make([]Chx, n)
 	sys.startEventListening()
 	return sys, nil
 }
 
-func (s *Sys) Run(f EventLoopFunc) {
-loop:
-	for {
-		resp := f(s.TryGetEvent())
-		switch resp {
-		case EventLoopStop:
-			break loop
-		case EventLoopContinue:
-			s.Update()
-		default:
-			panic(fmt.Sprintf("unknown response: %d", int(resp)))
-		}
-	}
+func (s *Sys) Run(fallbackHandler EventHandler) {
+	RunEventLoop(s,
+		func(ev cterm.Event) EventResponse {
+			resp := EventNotHandled
+			if s.inFocus != nil && s.inFocus.cfg.EventHandler != nil {
+				resp = s.inFocus.cfg.EventHandler(ev)
+			}
+			if resp == EventNotHandled {
+				return fallbackHandler(ev)
+			}
+			return resp
+		})
 }
 
 func (s *Sys) GetSysWin() *Win {
@@ -97,9 +95,10 @@ func (s *Sys) SetFocus(w *Win) {
 	if s.inFocus == w {
 		return
 	}
-	// TODO send lost focus event to s.inFocus
+	// TODO send lost focus event to current s.inFocus
+	w.ToTop(true)
 	s.inFocus = w
-	// TODO send focus acquired event to the new focused window.
+	// TODO send focus acquired event to the newly focused window.
 }
 
 // This is a non-blocking call
@@ -128,12 +127,12 @@ func (s *Sys) GetEvent() cterm.Event {
 // if f == nil, SyncExpectKey waits for any single key and then returns
 // if f != nil, SyncExpectKey repeatedly waits for a key & has it processed by f, if f returns false
 func (s *Sys) SyncExpectKey(f func(cterm.Key, rune) bool) {
-	for {
-		ev := s.GetEvent()
+	RunEventLoop(s, func(ev cterm.Event) EventResponse {
 		if ev.Type == cterm.EventKey && (f == nil || f(ev.Key, ev.Ch)) {
-			break
+			return EventLoopStop
 		}
-	}
+		return EventHandled
+	})
 }
 
 func (s *Sys) CenterBanner(parent *Win, title, format string, a ...interface{}) *Win {
@@ -171,25 +170,17 @@ func (s *Sys) MessageBoxEx(
 	parent *Win, keys []cterm.Event, title, format string, a ...interface{}) cterm.Event {
 
 	w := s.CenterBanner(parent, title, format, a...)
+	s.SetFocus(w)
 	s.Update()
-
-	ret := cterm.Event{Type: cterm.EventKey}
-	s.SyncExpectKey(func(k cterm.Key, ch rune) bool {
-		for _, ev := range keys {
-			if ch != 0 {
-				if ev.Ch == ch {
-					ret.Ch = ch
-					return true
-				}
-				continue
+	var ret cterm.Event
+	RunEventLoop(s,
+		func(ev cterm.Event) EventResponse {
+			if FindKey(keys, ev) {
+				ret = ev
+				return EventLoopStop
 			}
-			if ev.Key == k {
-				ret.Key = k
-				return true
-			}
-		}
-		return false
-	})
+			return EventHandled
+		})
 	s.RemoveWin(w)
 	s.Update()
 	return ret

@@ -1,3 +1,7 @@
+[2022/02/19]
+- [✅] Now make the RunEventLoop a first class concept so all things (cwin.Sys, cgame.Game, and smaller
+things like MessageBox) are all running with the event loop.
+
 [2022/02/18]
 - [✅] move clock.go from cgame to cwin
 - [✅] add Run on Sys, obviously no gameover or pause key, just a func with a return value

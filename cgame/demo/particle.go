@@ -213,7 +213,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 		stopwatch.Reset()
 	}
 
-	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) cwin.EventLoopResponseType {
+	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
 		showDebugInfo()
 		stopwatch.Start()
 		defer stopwatch.Stop()
@@ -230,7 +230,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 						break
 					}
 				}
-				return cwin.EventLoopContinue
+				return cwin.EventHandled
 			}
 			if ev.Key == cterm.KeyArrowDown {
 				if len(ids) > 0 {
@@ -241,10 +241,10 @@ func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
 					copy(ids[idx:], ids[idx+1:])
 					ids = ids[:len(ids)-1]
 				}
-				return cwin.EventLoopContinue
+				return cwin.EventHandled
 			}
 			return cwin.EventLoopStop
 		}
-		return cwin.EventLoopContinue
+		return cwin.EventHandled
 	})
 }
