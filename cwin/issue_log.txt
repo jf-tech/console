@@ -1,3 +1,7 @@
+[2022/02/20 cwin]
+- [✅] consider moving listbox to a separate package underneath win?
+- Maybe have single vs double border for non focused vs focused window?
+
 [2022/02/19 cwin]
 - [✅] every Win should all use WinBase
 - [✅] Win interface should NOT have those Parent/ChildFirst/ChildLast/NextPrev getter/setter

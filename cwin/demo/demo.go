@@ -7,6 +7,7 @@ import (
 
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
+	"github.com/jf-tech/console/cwin/ccomp"
 )
 
 func main() {
@@ -39,7 +40,7 @@ func main() {
 	demoTitlePrefix := fmt.Sprintf("Demo [%s] (%dx%d)", provider, sysR.W, sysR.H)
 
 	listboxR := cwin.Rect{X: demoR.X + demoR.W, Y: demoR.Y, W: listboxW, H: listboxH}
-	listbox := cwin.CreateListBox(sys, nil, cwin.ListBoxCfg{
+	listbox := ccomp.CreateListBox(sys, nil, ccomp.ListBoxCfg{
 		WinCfg: cwin.WinCfg{R: listboxR, Name: "ListBox"},
 		Items: func() []string {
 			var items []string

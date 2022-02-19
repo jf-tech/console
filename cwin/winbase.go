@@ -3,6 +3,7 @@ package cwin
 import (
 	"fmt"
 	"strings"
+	"unsafe"
 
 	"github.com/jf-tech/go-corelib/maths"
 )
@@ -134,12 +135,52 @@ func (wb *WinBase) SetTextAligned(align Align, format string, a ...interface{}) 
 	wb.FillClient(wb.ClientRect().ToOrigin(), Chx{Ch: RuneSpace, Attr: wb.cfg.ClientAttr})
 	lines := strings.Split(fmt.Sprintf(format, a...), "\n")
 	for cy := 0; cy < maths.MinInt(wb.clientR.H, len(lines)); cy++ {
-		wb.setTextLine(cy, lines[cy], align, wb.cfg.ClientAttr)
+		wb.SetLineAligned(cy, align, wb.cfg.ClientAttr, lines[cy])
 	}
 }
 
 func (wb *WinBase) SetText(format string, a ...interface{}) {
 	wb.SetTextAligned(AlignLeft, format, a...)
+}
+
+func (wb *WinBase) SetLineAligned(cy int, align Align, attr Attr, format string, a ...interface{}) {
+	wb.FillClient(Rect{X: 0, Y: cy, W: wb.clientR.W, H: 1}, Chx{Ch: RuneSpace, Attr: attr})
+	padding := 1
+	if wb.cfg.NoHPaddingText {
+		padding = 0
+	}
+	if wb.clientR.W-2*padding <= 0 {
+		return
+	}
+	l := []rune(fmt.Sprintf(format, a...))
+	llen := len(l)
+	if llen <= 0 {
+		return
+	}
+	llenActual := maths.MinInt(llen+2*padding, wb.clientR.W)
+	startCX := 0
+	switch align {
+	case AlignCenter:
+		startCX += (wb.clientR.W - llenActual) / 2
+	case AlignRight:
+		startCX += wb.clientR.W - llenActual
+	}
+	if padding > 0 {
+		wb.PutClient(startCX, cy, Chx{RuneSpace, attr})
+		startCX++
+	}
+	for i := 0; i < llenActual-2*padding; i++ {
+		wb.PutClient(startCX, cy, Chx{l[i], attr})
+		startCX++
+	}
+	if padding > 0 {
+		wb.PutClient(startCX, cy, Chx{RuneSpace, attr})
+		startCX++
+	}
+}
+
+func (wb *WinBase) SetLine(cy int, format string, a ...interface{}) {
+	wb.SetLineAligned(cy, AlignLeft, wb.cfg.ClientAttr, format, a...)
 }
 
 func (wb *WinBase) SendToBottom(recursive bool) {
@@ -207,7 +248,7 @@ func (wb *WinBase) FillClient(cr Rect, chx Chx) {
 }
 
 func (wb *WinBase) String() string {
-	return fmt.Sprintf("WinBase['%s'|0x%X|%s]", wb.cfg.Name, wb, wb.Rect())
+	return fmt.Sprintf("WinBase['%s'|0x%X|%s]", wb.cfg.Name, uintptr(unsafe.Pointer(wb)), wb.Rect())
 }
 
 func (wb *WinBase) addChild(child *WinBase) {
@@ -263,42 +304,6 @@ func (wb *WinBase) fill(r Rect, chx Chx) {
 		for x := 0; x < r.W; x++ {
 			wb.put(r.X+x, r.Y+y, chx)
 		}
-	}
-}
-
-func (wb *WinBase) setTextLine(cy int, line string, align Align, attr Attr) {
-	wb.FillClient(Rect{X: 0, Y: cy, W: wb.clientR.W, H: 1}, Chx{Ch: RuneSpace, Attr: attr})
-	padding := 1
-	if wb.cfg.NoHPaddingText {
-		padding = 0
-	}
-	if wb.clientR.W-2*padding <= 0 {
-		return
-	}
-	l := []rune(line)
-	llen := len(l)
-	if llen <= 0 {
-		return
-	}
-	llenActual := maths.MinInt(llen+2*padding, wb.clientR.W)
-	startCX := 0
-	switch align {
-	case AlignCenter:
-		startCX += (wb.clientR.W - llenActual) / 2
-	case AlignRight:
-		startCX += wb.clientR.W - llenActual
-	}
-	if padding > 0 {
-		wb.PutClient(startCX, cy, Chx{RuneSpace, attr})
-		startCX++
-	}
-	for i := 0; i < llenActual-2*padding; i++ {
-		wb.PutClient(startCX, cy, Chx{l[i], attr})
-		startCX++
-	}
-	if padding > 0 {
-		wb.PutClient(startCX, cy, Chx{RuneSpace, attr})
-		startCX++
 	}
 }
 

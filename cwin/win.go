@@ -84,6 +84,12 @@ type Win interface {
 	// Sets a text, multi-line allowed, to the client region of the window, with default
 	// alignment.
 	SetText(format string, a ...interface{})
+	// Sets a single line text, to the client region of the window, with specific alignment
+	// and color attributes
+	SetLineAligned(cy int, align Align, attr Attr, format string, a ...interface{})
+	// Sets a single line text, to the client region of the window, with default  alignment
+	// and default color attributes
+	SetLine(cy int, format string, a ...interface{})
 
 	// Sets the window to the bottom position among all the child windows of its parent window.
 	SendToBottom(recursive bool)

@@ -41,11 +41,3 @@ func ByteSizeStr(s int64) string {
 	// we're safe as the max int64 value is about 9 ZB.
 	return fmt.Sprintf("%d %s", ss, byteSizeStrs[p])
 }
-
-func CopyStrs(ss []string) []string {
-	var ret []string
-	for _, s := range ss {
-		ret = append(ret, s)
-	}
-	return ret
-}
