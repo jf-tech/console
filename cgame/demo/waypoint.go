@@ -19,7 +19,7 @@ func main() {
 		panic(err)
 	}
 	defer g.Close()
-	sysWinR := g.WinSys.GetSysWin().Rect()
+	sysWinR := g.WinSys.SysWin().Rect()
 	// create a demo window that is 3/4 of the system window (which is the same size
 	// of the current terminal/console) and center it.
 	demoWin := g.WinSys.CreateWin(nil, cwin.WinCfg{
@@ -37,7 +37,7 @@ func main() {
 	doDemo(g, demoWin)
 }
 
-func doDemo(g *cgame.Game, demoWin *cwin.Win) {
+func doDemo(g *cgame.Game, demoWin cwin.Win) {
 	// create a single sprite frame
 	frame := cgame.FrameFromString(
 		strings.Trim(readFile("resources/airplane.txt"), "\n"),
@@ -58,9 +58,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 		}),
 		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
 			AfterUpdate: func() {
-				demoWin.SetTitle(
-					fmt.Sprintf("Demo: Sprite%s", s.Rect()),
-					cwin.AlignLeft)
+				demoWin.SetTitle(fmt.Sprintf("Demo: Sprite%s", s.Rect()))
 			},
 			AfterFinish: func() {
 				g.GameOver()

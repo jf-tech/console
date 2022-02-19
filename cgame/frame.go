@@ -67,7 +67,7 @@ func FrameRect(f Frame) cwin.Rect {
 	return cwin.Rect{X: 0, Y: 0, W: maxX + 1, H: maxY + 1}
 }
 
-func FrameFromWin(w *cwin.Win) Frame {
+func FrameFromWin(w cwin.Win) Frame {
 	var f Frame
 	for y := 0; y < w.ClientRect().H; y++ {
 		for x := 0; x < w.ClientRect().W; x++ {
@@ -80,7 +80,7 @@ func FrameFromWin(w *cwin.Win) Frame {
 	return f
 }
 
-func FrameToWin(f Frame, w *cwin.Win) {
+func FrameToWin(f Frame, w cwin.Win) {
 	w.FillClient(w.ClientRect().ToOrigin(), cwin.TransparentChx())
 	for i := 0; i < len(f); i++ {
 		w.PutClient(f[i].X, f[i].Y, f[i].Chx)

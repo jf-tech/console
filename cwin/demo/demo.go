@@ -17,7 +17,7 @@ func main() {
 	}
 	defer sys.Close()
 
-	sysR := sys.GetSysWin().Rect() // sysWin is borderless, so Rect() is no diff than  ClientRect()
+	sysR := sys.SysWin().Rect()
 	W3_4 := sysR.W * 4 / 5
 	H3_4 := sysR.H * 4 / 5
 
@@ -53,9 +53,9 @@ func main() {
 				"%s - ListBox (%c,%c:change selection) selected: [%d]='%s'. Any other key for next",
 				demoTitlePrefix,
 				cwin.DirRunes[cwin.DirUp], cwin.DirRunes[cwin.DirDown],
-				idx, selected), cwin.AlignLeft)
+				idx, selected))
 		}})
-	sys.SetFocus(listbox.Win)
+	sys.SetFocus(listbox)
 
 	fgColorWin := sys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
@@ -90,7 +90,7 @@ func main() {
 		}
 		return cwin.EventHandled
 	})
-	demoWin.SetTitle(fmt.Sprintf("%s - MessageBox", demoTitlePrefix), cwin.AlignLeft)
+	demoWin.SetTitle(fmt.Sprintf("%s - MessageBox", demoTitlePrefix))
 
 	ret := sys.MessageBox(demoWin,
 		"MessageBox",
@@ -102,7 +102,7 @@ It returns true if Enter/Return is pressed; false if ESC is pressed.
 
 Current time is: %s`, time.Now().Format(time.RFC3339))
 	demoWin.SetText("MessageBox return value: %t", ret)
-	demoWin.SetTitle(fmt.Sprintf("%s - Press any key to exit.", demoTitlePrefix), cwin.AlignLeft)
+	demoWin.SetTitle(fmt.Sprintf("%s - Press any key to exit.", demoTitlePrefix))
 	sys.Update()
 	sys.SyncExpectKey(nil)
 }

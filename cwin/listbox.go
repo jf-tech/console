@@ -1,6 +1,8 @@
 package cwin
 
 import (
+	"fmt"
+
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/go-corelib/maths"
 )
@@ -20,7 +22,7 @@ type ListBoxCfg struct {
 }
 
 type ListBox struct {
-	*Win
+	*WinBase
 	cfg          ListBoxCfg
 	items        []string
 	firstVisible int
@@ -32,6 +34,10 @@ func (lb *ListBox) SetItems(items []string) {
 	lb.firstVisible = 0
 	lb.selected = ListBoxNoneSelected
 	lb.SetSelected(0)
+}
+
+func (lb *ListBox) String() string {
+	return fmt.Sprintf("listbox['%s'|%d|%s]", lb.Cfg().Name, lb.UID(), lb.Rect())
 }
 
 func (lb *ListBox) SetSelected(selected int) {
@@ -78,11 +84,11 @@ func (lb *ListBox) moveDown() {
 	lb.SetSelected(lb.selected + 1)
 }
 
-func newListBox(sys *Sys, parent *Win, cfg ListBoxCfg) *ListBox {
+func newListBox(sys *Sys, parent Win, cfg ListBoxCfg) *ListBox {
 	if cfg.SelectedAttr == TransparentChx().Attr {
 		cfg.SelectedAttr = ChAttr{Bg: cterm.ColorBlue}
 	}
-	lb := &ListBox{Win: newWin(sys, parent, cfg.WinCfg), cfg: cfg}
+	lb := &ListBox{WinBase: NewWinBase(sys, parent, cfg.WinCfg), cfg: cfg}
 	lb.SetItems(cfg.Items)
 	lb.SetEventHandler(func(ev cterm.Event) EventResponse {
 		if ev.Type != cterm.EventKey ||
@@ -99,19 +105,12 @@ func newListBox(sys *Sys, parent *Win, cfg ListBoxCfg) *ListBox {
 	return lb
 }
 
-func (s *Sys) CreateListBox(parent *Win, cfg ListBoxCfg) *ListBox {
+func (s *Sys) CreateListBox(parent Win, cfg ListBoxCfg) *ListBox {
 	if parent == nil {
 		parent = s.sysWin
 	}
 	lb := newListBox(s, parent, cfg)
-	// TODO code dup as in Sys.CreateWin
-	if parent.childn == nil {
-		parent.child1 = lb.Win
-		parent.childn = lb.Win
-	} else {
-		lb.prev = parent.childn
-		parent.childn.next = lb.Win
-		parent.childn = lb.Win
-	}
+	s.RegWin(lb)
+	parent.addNewChild(lb)
 	return lb
 }

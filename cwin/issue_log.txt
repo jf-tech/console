@@ -1,11 +1,11 @@
 [2022/02/19 cwin]
 - [✅] Now make the RunEventLoop a first class concept so all things (cwin.Sys, cgame.Game, and smaller
 things like MessageBox) are all running with the event loop.
-- ?? cwin.Sys and cwin.Win uses *Win everywhere. The problem is now we have ListBox which just
+- [✅] ?? cwin.Sys and cwin.Win uses *Win everywhere. The problem is now we have ListBox which just
   embeds *Win, later will have a similar issue we can get back from *Win back to *ListBox.
   Maybe it's time to consider turning Win into an interface? Too much too big a change? Or never too
-  late?
-- CreateListBox has dup code as in CreateWin
+  late? - done. cwin.Win is an interface now.
+- [✅] CreateListBox has dup code as in CreateWin
 
 [2022/02/18]
 - [✅] move clock.go from cgame to cwin

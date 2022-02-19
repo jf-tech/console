@@ -19,7 +19,7 @@ func main() {
 		panic(err)
 	}
 	defer g.Close()
-	sysWinR := g.WinSys.GetSysWin().Rect()
+	sysWinR := g.WinSys.SysWin().Rect()
 
 	debugWinW := 60
 	debugWinR := cwin.Rect{X: sysWinR.W - debugWinW, Y: 0, W: debugWinW, H: sysWinR.H}
@@ -143,7 +143,7 @@ func genParticleSpeed() cgame.CharPerSec {
 	return cgame.CharPerSec(rand.Int()%36 + 5) // [5,40]
 }
 
-func doDemo(g *cgame.Game, demoWin, debugWin *cwin.Win) {
+func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 	g.SpriteMgr.CollidableRegistry().Register(particleName, particleName)
 	r := demoWin.ClientRect().ToOrigin()
 	collision := int64(0)

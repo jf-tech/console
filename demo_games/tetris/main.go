@@ -43,9 +43,9 @@ func main() {
 
 type myGame struct {
 	g                   *cgame.Game
-	winArena            *cwin.Win
-	winNexts            []*cwin.Win
-	winStats            *cwin.Win
+	winArena            cwin.Win
+	winNexts            []cwin.Win
+	winStats            cwin.Win
 	nexts               []*spritePiece
 	s                   *spritePiece
 	shadow              *spritePiece
@@ -166,7 +166,7 @@ func Y2LY(y int) int {
 }
 
 func (m *myGame) gameSetup() {
-	winSysClientR := m.g.WinSys.GetSysWin().ClientRect()
+	winSysClientR := m.g.WinSys.SysWin().ClientRect()
 	h := int((winSysClientR.H-2)/yscale)*yscale + 2 // make sure we have no fractional rows
 	winGame := m.g.WinSys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
@@ -321,7 +321,7 @@ Y88b  d88P Y88..88P       "
 }
 
 func (m *myGame) newSpritePiece(spriteName string, pieceID pieceID, rotationIdx int,
-	color cwin.ChAttr, parentW *cwin.Win, lxy cwin.Point) *spritePiece {
+	color cwin.ChAttr, parentW cwin.Win, lxy cwin.Point) *spritePiece {
 	f := cgame.SetAttrInFrame(mkFrame(pieceLibrary[pieceID][rotationIdx]), color)
 	s := &spritePiece{
 		SpriteBase:  cgame.NewSpriteBase(m.g, parentW, spriteName, f, LX2X(lxy.X), LY2Y(lxy.Y)),

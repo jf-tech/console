@@ -46,9 +46,9 @@ Y88b   d88P                     888       888                        888
 
 type myGame struct {
 	g          *cgame.Game
-	winHeader  *cwin.Win
-	winArena   *cwin.Win
-	winStats   *cwin.Win
+	winHeader  cwin.Win
+	winArena   cwin.Win
+	winStats   cwin.Win
 	easyMode   bool
 	invincible bool
 }
@@ -134,7 +134,7 @@ Press 'p' to pause/unpause the game.`
 )
 
 func (m *myGame) winSetup() {
-	winSysClientR := m.g.WinSys.GetSysWin().ClientRect()
+	winSysClientR := m.g.WinSys.SysWin().ClientRect()
 	winGame := m.g.WinSys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
 			X: (winSysClientR.W - winGameW) / 2,

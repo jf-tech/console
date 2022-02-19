@@ -17,7 +17,7 @@ func main() {
 		panic(err)
 	}
 	defer g.Close()
-	sysWinR := g.WinSys.GetSysWin().Rect()
+	sysWinR := g.WinSys.SysWin().Rect()
 	// create a demo window that is 3/4 of the system window (which is the same size
 	// of the current terminal/console) and center it.
 	demoWin := g.WinSys.CreateWin(nil, cwin.WinCfg{
@@ -38,7 +38,7 @@ func main() {
 // In this demo, we'll combine two animators together:
 // - frame animator to show a shifting sine wave
 // - waypoint animator to move the sprite around
-func doDemo(g *cgame.Game, demoWin *cwin.Win) {
+func doDemo(g *cgame.Game, demoWin cwin.Win) {
 	r := demoWin.ClientRect()
 	w := r.W * 3 / 4
 	h := r.H * 3 / 4
@@ -76,8 +76,7 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 					"Demo - space to pause/resume, any other key to exit. Dir: %s. Dist: %2d Time: %s",
 					g.Exchange.StringData["curDir"], g.Exchange.IntData["curDist"],
 					g.MasterClock.Now().Round(time.Millisecond))
-			}(),
-			cwin.AlignLeft)
+			}())
 		if ev.Type != cterm.EventKey {
 			return cwin.EventHandled
 		}
