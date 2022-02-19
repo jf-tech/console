@@ -91,14 +91,14 @@ func (s *Sys) RemoveWin(w *Win) {
 	}
 }
 
-func (s *Sys) SetFocus(w *Win) {
+func (s *Sys) SetFocus(w *Win) *Win {
 	if s.inFocus == w {
-		return
+		return w
 	}
-	// TODO send lost focus event to current s.inFocus
 	w.ToTop(true)
+	oldFocus := s.inFocus
 	s.inFocus = w
-	// TODO send focus acquired event to the newly focused window.
+	return oldFocus
 }
 
 // This is a non-blocking call

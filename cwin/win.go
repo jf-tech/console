@@ -221,6 +221,13 @@ func (w *Win) SetPosRel(dx, dy int) {
 	w.SetPosAbs(w.cfg.R.X+dx, w.cfg.R.Y+dy)
 }
 
+func (w *Win) borderRunes() *BorderRunes {
+	if w.cfg.BorderRunes != nil {
+		return w.cfg.BorderRunes
+	}
+	return &SingleLineBorderRunes
+}
+
 func (w *Win) putBorder() {
 	if w.cfg.NoBorder {
 		return
@@ -228,10 +235,7 @@ func (w *Win) putBorder() {
 	if w.cfg.R.W < 2 || w.cfg.R.H < 2 {
 		return
 	}
-	borderRunes := w.cfg.BorderRunes
-	if borderRunes == nil {
-		borderRunes = &SingleLineBorderRunes
-	}
+	borderRunes := w.borderRunes()
 	// UL
 	w.put(0, 0, Chx{borderRunes[BorderRuneUL], w.cfg.BorderAttr})
 	// UR
@@ -255,6 +259,10 @@ func (w *Win) SetTitle(title string, align Align) {
 	if w.cfg.NoTitle {
 		return
 	}
+	// this is needed in case we're setting a new title that is shorter than (or even
+	// to none) than the previously one
+	w.fill(Rect{1, 0, w.cfg.R.W - 2, 1}, Chx{w.borderRunes()[BorderRuneH], w.cfg.BorderAttr})
+
 	padding := 1
 	if w.cfg.NoHPaddingTitle {
 		padding = 0
@@ -275,8 +283,6 @@ func (w *Win) SetTitle(title string, align Align) {
 	case AlignRight:
 		startX += w.clientR.W - tlenActual
 	}
-	// this is needed in case we're setting a new title that is shorter than the previously one
-	w.putBorder()
 	if padding > 0 {
 		w.put(startX, 0, Chx{RuneSpace, w.cfg.BorderAttr})
 		startX++
@@ -291,7 +297,8 @@ func (w *Win) SetTitle(title string, align Align) {
 	}
 }
 
-func (w *Win) SetTextAligned(align Align, format string, a ...interface{}) {
+func (w *Win) setTextLine(cy int, line string, align Align, attr ChAttr) {
+	w.FillClient(Rect{X: 0, Y: cy, W: w.clientR.W, H: 1}, Chx{Ch: RuneSpace, Attr: attr})
 	padding := 1
 	if w.cfg.NoHPaddingText {
 		padding = 0
@@ -299,16 +306,40 @@ func (w *Win) SetTextAligned(align Align, format string, a ...interface{}) {
 	if w.clientR.W-2*padding <= 0 {
 		return
 	}
-	w.fill(w.clientR, Chx{Ch: RuneSpace, Attr: w.cfg.ClientAttr})
+	l := []rune(line)
+	llen := len(l)
+	if llen <= 0 {
+		return
+	}
+	llenActual := maths.MinInt(llen+2*padding, w.clientR.W)
+	startCX := 0
+	switch align {
+	case AlignCenter:
+		startCX += (w.clientR.W - llenActual) / 2
+	case AlignRight:
+		startCX += w.clientR.W - llenActual
+	}
+	if padding > 0 {
+		w.PutClient(startCX, cy, Chx{RuneSpace, attr})
+		startCX++
+	}
+	for i := 0; i < llenActual-2*padding; i++ {
+		w.PutClient(startCX, cy, Chx{l[i], attr})
+		startCX++
+	}
+	if padding > 0 {
+		w.PutClient(startCX, cy, Chx{RuneSpace, attr})
+		startCX++
+	}
+}
+
+func (w *Win) SetTextAligned(align Align, format string, a ...interface{}) {
+	w.FillClient(
+		Rect{X: 0, Y: 0, W: w.clientR.W, H: w.clientR.H},
+		Chx{Ch: RuneSpace, Attr: w.cfg.ClientAttr})
 	lines := strings.Split(fmt.Sprintf(format, a...), "\n")
-	for y := 0; y < maths.MinInt(w.clientR.H, len(lines)); y++ {
-		rline := []rune(lines[y])
-		if len(rline) <= 0 {
-			continue
-		}
-		for x := 0; x < maths.MinInt(len(rline), w.clientR.W-2*padding); x++ {
-			w.PutClientCh(padding+x, y, rline[x])
-		}
+	for cy := 0; cy < maths.MinInt(w.clientR.H, len(lines)); cy++ {
+		w.setTextLine(cy, lines[cy], align, w.cfg.ClientAttr)
 	}
 }
 
