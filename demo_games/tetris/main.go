@@ -143,7 +143,7 @@ var (
 	replayGameKeys = cwin.Keys('r')
 
 	directDropDelay      = 10 * time.Millisecond
-	baseNaturalDropDelay = 1500 * time.Millisecond
+	baseNaturalDropDelay = 1000 * time.Millisecond
 	settledFlyDelay      = 100 * time.Millisecond
 )
 
