@@ -7,6 +7,7 @@ import (
 
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
+	"github.com/jf-tech/console/cwin/ccomp"
 )
 
 func main() {
@@ -17,13 +18,17 @@ func main() {
 	}
 	defer sys.Close()
 
-	sysR := sys.GetSysWin().ClientRect()
-	demoR := cwin.Rect{X: 0, Y: 0, W: sysR.W * 3 / 4, H: sysR.H * 3 / 4}
-	demoR.X = (sysR.W - demoR.W) / 2
-	demoR.Y = (sysR.H-demoR.H)/2 - 5
-	demoWin := sys.CreateWin(nil, cwin.WinCfg{
-		R: demoR,
-	})
+	sysR := sys.SysWin().Rect()
+	W3_4 := sysR.W * 4 / 5
+	H3_4 := sysR.H * 4 / 5
+
+	fgColorWinW, fgColorWinH := W3_4, 3
+	bgColorWinW, bgColorWinH := W3_4, 3
+	listboxW, listboxH := 20, H3_4-fgColorWinH-bgColorWinH
+	demoW, demoH := W3_4-listboxW, listboxH
+
+	demoR := cwin.Rect{X: (sysR.W - W3_4) / 2, Y: (sysR.H - H3_4) / 2, W: demoW, H: demoH}
+	demoWin := sys.CreateWin(nil, cwin.WinCfg{R: demoR})
 	var sb strings.Builder
 	for i := 0; i < 60; i++ {
 		for j := 0; j <= i; j++ {
@@ -31,49 +36,74 @@ func main() {
 		}
 		sb.WriteRune('\n')
 	}
-	demoWin.SetText(sb.String())
-
+	demoWin.SetTextAligned(cwin.AlignRight, sb.String())
 	demoTitlePrefix := fmt.Sprintf("Demo [%s] (%dx%d)", provider, sysR.W, sysR.H)
-	demoWin.SetTitle(fmt.Sprintf("%s - press any key for next", demoTitlePrefix), cwin.AlignLeft)
+
+	listboxR := cwin.Rect{X: demoR.X + demoR.W, Y: demoR.Y, W: listboxW, H: listboxH}
+	listbox := ccomp.CreateListBox(sys, nil, ccomp.ListBoxCfg{
+		WinCfg: cwin.WinCfg{R: listboxR, Name: "ListBox"},
+		Items: func() []string {
+			var items []string
+			for i := 0; i < 100; i++ {
+				items = append(items, fmt.Sprintf("Item %d", i))
+			}
+			return items
+		}(),
+		OnSelect: func(idx int, selected string) {
+			demoWin.SetTitle(fmt.Sprintf(
+				"%s - ListBox (%c,%c:change selection) selected: [%d]='%s'. Any other key for next",
+				demoTitlePrefix,
+				cwin.DirRunes[cwin.DirUp], cwin.DirRunes[cwin.DirDown],
+				idx, selected))
+		}})
+	sys.SetFocus(listbox)
 
 	fgColorWin := sys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
 			X: demoR.X,
 			Y: demoR.Y + demoR.H,
-			W: demoR.W,
-			H: 3,
+			W: fgColorWinW,
+			H: fgColorWinH,
 		},
 		Name: "Foreground Colors",
 	})
 	for x, color := 0, cterm.ColorBlack; color <= cterm.ColorLightGray; x, color = x+2, color+1 {
-		fgColorWin.PutClient(x, 0, cwin.Chx{Ch: '█', Attr: cwin.ChAttr{Fg: color}})
-		fgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: '█', Attr: cwin.ChAttr{Fg: color}})
+		fgColorWin.PutClient(x, 0, cwin.Chx{Ch: '█', Attr: cwin.Attr{Fg: color}})
+		fgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: '█', Attr: cwin.Attr{Fg: color}})
 	}
 	bgColorWin := sys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
-			X: fgColorWin.Rect().X,
-			Y: fgColorWin.Rect().Y + fgColorWin.Rect().H,
-			W: fgColorWin.Rect().W,
-			H: 3,
+			X: demoR.X,
+			Y: demoR.Y + demoR.H + fgColorWinH,
+			W: bgColorWinW,
+			H: bgColorWinH,
 		},
 		Name: "Background Colors",
 	})
 	for x, color := 0, cterm.ColorBlack; color <= cterm.ColorLightGray; x, color = x+2, color+1 {
-		bgColorWin.PutClient(x, 0, cwin.Chx{Ch: ' ', Attr: cwin.ChAttr{Bg: color}})
-		bgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: ' ', Attr: cwin.ChAttr{Bg: color}})
+		bgColorWin.PutClient(x, 0, cwin.Chx{Ch: ' ', Attr: cwin.Attr{Bg: color}})
+		bgColorWin.PutClient(x+1, 0, cwin.Chx{Ch: ' ', Attr: cwin.Attr{Bg: color}})
 	}
-
 	sys.Update()
-	sys.SyncExpectKey(nil)
-	demoWin.SetTitle(fmt.Sprintf("%s - MessageBox", demoTitlePrefix), cwin.AlignLeft)
+	sys.Run(func(ev cterm.Event) cwin.EventResponse {
+		if ev.Type == cterm.EventKey {
+			return cwin.EventLoopStop
+		}
+		return cwin.EventHandled
+	})
+	demoWin.SetTitle(fmt.Sprintf("%s - MessageBox", demoTitlePrefix))
 
-	sys.MessageBox(demoWin,
+	ret := sys.MessageBox(demoWin,
 		"MessageBox",
-		`This is a default MessageBox.
+		`This is a MessageBox.
 It is a modal dialog box.
 
 It can be dismissed by pressing Enter/Return, or ESC.
 It returns true if Enter/Return is pressed; false if ESC is pressed.
 
 Current time is: %s`, time.Now().Format(time.RFC3339))
+	demoWin.SetText("MessageBox return value: %t", ret)
+	demoWin.SetTitle(fmt.Sprintf("%s - Press any key to exit.", demoTitlePrefix))
+	sys.Update()
+	sys.SyncExpectKey(nil)
 }

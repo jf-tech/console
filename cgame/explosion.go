@@ -2,6 +2,8 @@ package cgame
 
 import (
 	"time"
+
+	"github.com/jf-tech/console/cutil"
 )
 
 type ExplosionCfg struct {
@@ -36,7 +38,7 @@ func CreateExplosion(s *SpriteBase, c ExplosionCfg) {
 var (
 	explosionRunes               = []rune("\"~'`.")
 	fire                         = '🔥'
-	fireProb                     = "33%"
+	fireProb                     = "50%"
 	explosionFPS                 = 8
 	changeIntoExplosionRunesProb = "50%"
 	explosionRuneFwdProb         = "80%"
@@ -66,16 +68,16 @@ func (e *explosionFrameProvider) Next() (Frame, time.Duration, bool) {
 	for i := 0; i < len(f); i++ {
 		cellRemoval := false
 		if idx := indexRune(explosionRunes, f[i].Chx.Ch); idx >= 0 {
-			if CheckProbability(explosionRuneFwdProb) {
+			if cutil.CheckProbability(explosionRuneFwdProb) {
 				if idx >= len(explosionRunes)-1 {
 					cellRemoval = true
 				} else {
 					f[i].Chx.Ch = explosionRunes[idx+1]
 				}
 			}
-		} else if CheckProbability(changeIntoExplosionRunesProb) {
+		} else if cutil.CheckProbability(changeIntoExplosionRunesProb) {
 			f[i].Chx.Ch = explosionRunes[0]
-		} else if CheckProbability(fireProb) {
+		} else if cutil.CheckProbability(fireProb) {
 			f[i].Chx.Ch = fire
 		}
 		if cellRemoval {

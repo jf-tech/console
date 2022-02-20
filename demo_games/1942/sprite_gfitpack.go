@@ -7,6 +7,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -31,7 +32,7 @@ func (g *spriteGiftPack) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.Collisi
 	return cgame.CollisionResponseJustDoIt
 }
 
-func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.ChAttr) {
+func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.Attr) {
 	frame := cgame.FrameFromString(strings.ReplaceAll(
 		giftPackFrameTxt, string(giftPackSymbolPlaceholder[:]), string(sym[:])), symAttr)
 	s := &spriteGiftPack{
@@ -54,7 +55,7 @@ type giftPack struct {
 	name  string
 	sym   giftPackSymbol
 	life  time.Duration
-	clock *cgame.Clock
+	clock *cutil.Clock
 	start time.Duration
 }
 
@@ -69,14 +70,14 @@ func (gp *giftPack) remainingLife() time.Duration {
 var (
 	gpShotgunName    = "Shotgun"
 	gpShotgunSym     = giftPackSymbol{'-', 'S', '-'}
-	gpShotgunSymAttr = cwin.ChAttr{Fg: cterm.ColorWhite, Bg: cterm.ColorBlack}
+	gpShotgunSymAttr = cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorBlack}
 
 	gpShotgun2Name    = "Shotgun++"
 	gpShotgun2Sym     = giftPackSymbol{'S', '+', '+'}
-	gpShotgun2SymAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlack}
+	gpShotgun2SymAttr = cwin.Attr{Fg: cterm.ColorLightYellow, Bg: cterm.ColorBlack}
 )
 
-func newGiftPackShotgun(clock *cgame.Clock) *giftPack {
+func newGiftPackShotgun(clock *cutil.Clock) *giftPack {
 	return &giftPack{
 		name:  gpShotgunName,
 		sym:   gpShotgunSym,
@@ -86,7 +87,7 @@ func newGiftPackShotgun(clock *cgame.Clock) *giftPack {
 	}
 }
 
-func newGiftPackShotgun2(clock *cgame.Clock) *giftPack {
+func newGiftPackShotgun2(clock *cutil.Clock) *giftPack {
 	return &giftPack{
 		name:  gpShotgun2Name,
 		sym:   gpShotgun2Sym,

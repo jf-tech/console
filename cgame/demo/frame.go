@@ -17,7 +17,7 @@ func main() {
 		panic(err)
 	}
 	defer g.Close()
-	sysWinR := g.WinSys.GetSysWin().Rect()
+	sysWinR := g.WinSys.SysWin().Rect()
 	// create a demo window that is 3/4 of the system window (which is the same size
 	// of the current terminal/console) and center it.
 	demoWin := g.WinSys.CreateWin(nil, cwin.WinCfg{
@@ -38,7 +38,7 @@ func main() {
 // In this demo, we'll combine two animators together:
 // - frame animator to show a shifting sine wave
 // - waypoint animator to move the sprite around
-func doDemo(g *cgame.Game, demoWin *cwin.Win) {
+func doDemo(g *cgame.Game, demoWin cwin.Win) {
 	r := demoWin.ClientRect()
 	w := r.W * 3 / 4
 	h := r.H * 3 / 4
@@ -69,19 +69,18 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	s.AddAnimator(aw, af)
 	g.SpriteMgr.AsyncCreateSprite(s)
 
-	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) bool {
+	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
 		demoWin.SetTitle(
 			func() string {
 				return fmt.Sprintf(
 					"Demo - space to pause/resume, any other key to exit. Dir: %s. Dist: %2d Time: %s",
 					g.Exchange.StringData["curDir"], g.Exchange.IntData["curDist"],
 					g.MasterClock.Now().Round(time.Millisecond))
-			}(),
-			cwin.AlignLeft)
+			}())
 		if ev.Type != cterm.EventKey {
-			return false
+			return cwin.EventHandled
 		}
-		return true
+		return cwin.EventLoopStop
 	})
 }
 
@@ -113,13 +112,13 @@ func (sfp *sineWaveFrameProvider) Next() (cgame.Frame, time.Duration, bool) {
 						}
 						return ' '
 					}(),
-					Attr: cwin.ChAttr{Fg: cterm.ColorWhite, Bg: cterm.ColorDarkGray}}})
+					Attr: cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorDarkGray}}})
 		}
 	}
 	for x := 0; x < w; x++ {
 		y := fromRY(math.Sin(toRX(x+sfp.xshift, w)), h)
 		f[y*w+x].Chx =
-			cwin.Chx{Ch: '#', Attr: cwin.ChAttr{Fg: cterm.ColorYellow, Bg: cterm.ColorLightBlue}}
+			cwin.Chx{Ch: '#', Attr: cwin.Attr{Fg: cterm.ColorYellow, Bg: cterm.ColorLightBlue}}
 	}
 	sfp.xshift = (sfp.xshift - 1 + w) % w
 	return f, 50 * time.Millisecond, true
@@ -139,12 +138,12 @@ func (wp *waypointProvider) Next() (cgame.Waypoint, bool) {
 	for {
 		dist := rand.Int() % (maxDistBeforeDirChange - minDistBeforeDirChange + 1)
 		dist += minDistBeforeDirChange
-		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
+		dir := cwin.Dir(rand.Int() % cwin.DirCount)
 		newR := wp.s.Rect()
-		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
-		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
-		if overlapped, ro := newR.Overlap(wp.s.ParentRect()); overlapped && ro == newR {
-			wp.g.Exchange.StringData["curDir"] = string(cgame.DirSymbols[dirIdx])
+		newR.X += cwin.DirOffSetXY[dir].X * dist
+		newR.Y += cwin.DirOffSetXY[dir].Y * dist
+		if ro, _ := newR.Overlap(wp.s.ParentRect()); ro == newR {
+			wp.g.Exchange.StringData["curDir"] = string(cwin.DirRunes[dir])
 			wp.g.Exchange.IntData["curDist"] = dist
 			return cgame.Waypoint{
 				DX: newR.X - wp.s.Rect().X,

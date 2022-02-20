@@ -96,7 +96,7 @@ func TestRect_Overlap(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			f, r := test.r1.Overlap(test.r2)
+			r, f := test.r1.Overlap(test.r2)
 			assert.Equal(t, test.expected != nil, f)
 			if f {
 				assert.Equal(t, *test.expected, r)

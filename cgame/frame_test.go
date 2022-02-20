@@ -10,11 +10,11 @@ import (
 )
 
 func TestStringToFrame(t *testing.T) {
-	testAttr := cwin.ChAttr{Fg: cterm.ColorBlue, Bg: cterm.ColorWhite}
+	testAttr := cwin.Attr{Fg: cterm.ColorBlue, Bg: cterm.ColorWhite}
 	for _, test := range []struct {
 		name string
 		s    string
-		attr cwin.ChAttr
+		attr cwin.Attr
 		exp  Frame
 	}{
 		{

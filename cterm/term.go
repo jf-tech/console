@@ -45,6 +45,10 @@ func Flush() error {
 	return provider.Flush()
 }
 
+func Sync() error {
+	return provider.Sync()
+}
+
 func Size() (int, int) {
 	return provider.Size()
 }

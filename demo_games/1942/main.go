@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"runtime/debug"
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
@@ -48,9 +46,9 @@ Y88b   d88P                     888       888                        888
 
 type myGame struct {
 	g          *cgame.Game
-	winHeader  *cwin.Win
-	winArena   *cwin.Win
-	winStats   *cwin.Win
+	winHeader  cwin.Win
+	winArena   cwin.Win
+	winStats   cwin.Win
 	easyMode   bool
 	invincible bool
 }
@@ -136,7 +134,7 @@ Press 'p' to pause/unpause the game.`
 )
 
 func (m *myGame) winSetup() {
-	winSysClientR := m.g.WinSys.GetSysWin().ClientRect()
+	winSysClientR := m.g.WinSys.SysWin().ClientRect()
 	winGame := m.g.WinSys.CreateWin(nil, cwin.WinCfg{
 		R: cwin.Rect{
 			X: (winSysClientR.W - winGameW) / 2,
@@ -155,17 +153,17 @@ func (m *myGame) winSetup() {
 			H: winHeaderH},
 		Name:       "header",
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorBlue},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R:          cwin.Rect{X: 1, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorRed},
 	})
 	_ = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R:          cwin.Rect{X: winHeaderW, Y: 1, W: 1, H: winGameClientR.H - winHeaderH},
 		NoBorder:   true,
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorRed},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorRed},
 	})
 	m.winArena = m.g.WinSys.CreateWin(winGame, cwin.WinCfg{
 		R: cwin.Rect{
@@ -191,19 +189,13 @@ func (m *myGame) winSetup() {
 			W: m.winStats.Rect().W,
 			H: winGameClientR.H - m.winStats.Rect().H},
 		Name:       "Keyboard",
-		BorderAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
-		ClientAttr: cwin.ChAttr{Bg: cterm.ColorBlue},
+		BorderAttr: cwin.Attr{Bg: cterm.ColorBlue},
+		ClientAttr: cwin.Attr{Bg: cterm.ColorBlue},
 	})
 	winInstructions.SetText(textInstructions)
 }
 
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			cterm.Close()
-			fmt.Println("stacktrace from panic: \n" + string(debug.Stack()))
-		}
-	}()
 	code := codeReplay
 	for code == codeReplay {
 		code = (&myGame{}).main()

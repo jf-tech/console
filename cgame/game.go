@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
 type Game struct {
 	WinSys      *cwin.Sys
-	MasterClock *Clock
+	MasterClock *cutil.Clock
 	SpriteMgr   *SpriteManager
 	SoundMgr    *SoundManager
 	Exchange    *Exchange
 
-	loopsDone int64
+	loopCount int64
 	gameOver  bool
 }
 
@@ -30,7 +31,7 @@ func Init(provider cterm.Provider, seed ...int64) (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
-	g := &Game{WinSys: winSys, MasterClock: newClock()}
+	g := &Game{WinSys: winSys, MasterClock: cutil.NewClock()}
 	g.SpriteMgr = newSpriteManager(g)
 	g.SoundMgr = newSoundManager()
 	g.SoundMgr.Init()
@@ -45,16 +46,13 @@ func (g *Game) Close() {
 	g.WinSys.Close()
 }
 
-func (g *Game) Run(
-	gameOverKeys, pauseKeys []cterm.Event, optionalRunFunc func(ev cterm.Event) bool) {
-
-	stop := false
-	for !stop && !g.IsGameOver() {
-		var ev cterm.Event
-		if ev = g.WinSys.TryGetEvent(); ev.Type == cterm.EventKey {
+func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, gameEventHandler cwin.EventHandler) {
+	g.WinSys.Run(func(ev cterm.Event) cwin.EventResponse {
+		g.loopCount++
+		if ev.Type == cterm.EventKey {
 			if cwin.FindKey(gameOverKeys, ev) {
 				g.GameOver()
-				return
+				return cwin.EventLoopStop
 			}
 			if cwin.FindKey(pauseKeys, ev) {
 				if g.IsPaused() {
@@ -62,19 +60,22 @@ func (g *Game) Run(
 				} else {
 					g.Pause()
 				}
-				continue
+				return cwin.EventHandled
 			}
 		}
 		if g.IsPaused() {
-			continue
+			return cwin.EventHandled
 		}
-		if optionalRunFunc != nil {
-			stop = optionalRunFunc(ev)
+		resp := cwin.EventHandled
+		if gameEventHandler != nil {
+			resp = gameEventHandler(ev)
+			if g.IsGameOver() {
+				return cwin.EventLoopStop
+			}
 		}
 		g.SpriteMgr.Process()
-		g.WinSys.Update()
-		g.loopsDone++
-	}
+		return resp
+	})
 }
 
 func (g *Game) Pause() {
@@ -99,16 +100,12 @@ func (g *Game) IsGameOver() bool {
 	return g.gameOver
 }
 
-func (g *Game) TotalLoops() int64 {
-	return g.loopsDone
-}
-
 func (g *Game) FPS() float64 {
 	now := g.MasterClock.Now()
 	if now == 0 {
 		return float64(0)
 	}
-	return float64(g.loopsDone) / (float64(now) / float64(time.Second))
+	return float64(g.loopCount) / (float64(now) / float64(time.Second))
 }
 
 func (g *Game) HeapUsageInBytes() int64 {

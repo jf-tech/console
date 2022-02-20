@@ -6,6 +6,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -22,7 +23,7 @@ var (
 
 	sfxAllFiles = []string{}
 	sfxFile     = func(relpath string) string {
-		sfxAllFiles = append(sfxAllFiles, path.Join(cgame.GetCurFileDir(), relpath))
+		sfxAllFiles = append(sfxAllFiles, path.Join(cutil.GetCurFileDir(), relpath))
 		return relpath
 	}
 	sfxBackgroundFile     = sfxFile("resources/background.mp3")
@@ -41,20 +42,20 @@ var (
 	stagePassedBannerInOutDuration = stageIntroBannerInOutDuration
 	stagePassedBannerStayDuration  = 2 * time.Second
 
-	alphaBulletAttr = cwin.ChAttr{Fg: cterm.ColorLightYellow}
-	enemyBulletAttr = cwin.ChAttr{Fg: cterm.ColorLightCyan}
+	alphaBulletAttr = cwin.Attr{Fg: cterm.ColorLightYellow}
+	enemyBulletAttr = cwin.Attr{Fg: cterm.ColorLightCyan}
 
 	bgStarSpeed   = cgame.CharPerSec(25)
-	bgStarGenProb = cgame.NewPeriodicProbabilityChecker("50%", 100*time.Millisecond)
+	bgStarGenProb = cutil.NewPeriodicProbabilityChecker("50%", 100*time.Millisecond)
 
 	alphaBulletSpeed = cgame.CharPerSec(30)
 
 	betaSpeed           = cgame.CharPerSec(4)
 	betaBulletSpeed     = cgame.CharPerSec(10)
-	betaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
-		cgame.NewPeriodicProbabilityChecker("0.6%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.5%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
+	betaGenProbPerStage = []*cutil.PeriodicProbabilityChecker{
+		cutil.NewPeriodicProbabilityChecker("0.6%", 10*time.Millisecond),
+		cutil.NewPeriodicProbabilityChecker("0.5%", 10*time.Millisecond),
+		cutil.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
 	}
 	betaFiringProbPerStage    = []string{"10%", "10%", "10%"}
 	betaFiringPelletsPerStage = []int{2, 3, 3}
@@ -62,10 +63,10 @@ var (
 
 	gammaSpeed           = cgame.CharPerSec(4)
 	gammaBulletSpeed     = cgame.CharPerSec(10)
-	gammaGenProbPerStage = []*cgame.PeriodicProbabilityChecker{
-		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
+	gammaGenProbPerStage = []*cutil.PeriodicProbabilityChecker{
+		cutil.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
+		cutil.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
+		cutil.NewPeriodicProbabilityChecker("0.2%", 10*time.Millisecond),
 	}
 	gammaFiringProbPerStage = []string{"0%", "10%", "10%"}
 	gammaExplosionDuration  = 2 * time.Second
@@ -73,10 +74,10 @@ var (
 	deltaVerticalSpeed     = cgame.CharPerSec(35)
 	deltaHorizontalSpeed   = deltaVerticalSpeed * 2
 	deltaSpeedDiscountEasy = 0.6
-	deltaGenProbPerStage   = []*cgame.PeriodicProbabilityChecker{
-		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
-		cgame.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
+	deltaGenProbPerStage   = []*cutil.PeriodicProbabilityChecker{
+		cutil.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
+		cutil.NewPeriodicProbabilityChecker("0%", 10*time.Millisecond),
+		cutil.NewPeriodicProbabilityChecker("0.4%", 10*time.Millisecond),
 	}
 	deltaVerticalProb      = "50%"
 	deltaExplosionDuration = 1 * time.Second
@@ -91,10 +92,10 @@ var (
 
 	giftPackMoveSpeed  = cgame.CharPerSec(5)
 	gpShotgunLife      = time.Minute
-	gpShotgunProb      = cgame.NewPeriodicProbabilityChecker("8%", time.Second)
+	gpShotgunProb      = cutil.NewPeriodicProbabilityChecker("8%", time.Second)
 	gpShotgun2Life     = time.Minute
-	gpShotgun2Prob     = cgame.NewPeriodicProbabilityChecker("2%", time.Second)
-	gpShotgun2ProbEasy = cgame.NewPeriodicProbabilityChecker("10%", time.Second)
+	gpShotgun2Prob     = cutil.NewPeriodicProbabilityChecker("2%", time.Second)
+	gpShotgun2ProbEasy = cutil.NewPeriodicProbabilityChecker("10%", time.Second)
 
 	exchangeGiftPackWeapon = "giftpack_weapon"
 )

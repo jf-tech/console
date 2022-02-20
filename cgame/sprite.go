@@ -21,7 +21,7 @@ type SpriteBase struct {
 	uid  int64
 	mgr  *SpriteManager
 	g    *Game
-	win  *cwin.Win
+	win  cwin.Win
 	as   []Animator
 }
 
@@ -83,11 +83,11 @@ func (sb *SpriteBase) DeleteAnimator(as ...Animator) {
 }
 
 func (sb *SpriteBase) ToBottom() {
-	sb.win.ToBottom()
+	sb.win.SendToBottom(false)
 }
 
 func (sb *SpriteBase) ToTop() {
-	sb.win.ToTop()
+	sb.win.SendToTop(false)
 }
 
 type UpdateArg struct {
@@ -142,7 +142,7 @@ func (sb *SpriteBase) Update(arg UpdateArg) bool {
 			}
 		}
 	}
-	sb.win.SetPosAbs(r.X, r.Y)
+	sb.win.SetPosRel(r.X-s.Rect().X, r.Y-s.Rect().Y)
 	FrameToWin(f, sb.win)
 	return true
 }
@@ -159,12 +159,12 @@ func (sb *SpriteBase) toSprite() Sprite {
 	return sb
 }
 
-func NewSpriteBase(g *Game, parent *cwin.Win, name string, f Frame, x, y int) *SpriteBase {
+func NewSpriteBase(g *Game, parent cwin.Win, name string, f Frame, x, y int) *SpriteBase {
 	r := FrameRect(f)
 	return NewSpriteBaseR(g, parent, name, f, cwin.Rect{X: x, Y: y, W: r.W, H: r.H})
 }
 
-func NewSpriteBaseR(g *Game, parent *cwin.Win, name string, f Frame, r cwin.Rect) *SpriteBase {
+func NewSpriteBaseR(g *Game, parent cwin.Win, name string, f Frame, r cwin.Rect) *SpriteBase {
 	sb := &SpriteBase{
 		name: name,
 		uid:  cwin.GenUID(),

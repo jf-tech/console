@@ -22,14 +22,14 @@ func CopyFrame(src Frame) Frame {
 	return dst
 }
 
-func SetAttrInFrame(f Frame, attr cwin.ChAttr) Frame {
+func SetAttrInFrame(f Frame, attr cwin.Attr) Frame {
 	for i := 0; i < len(f); i++ {
 		f[i].Chx.Attr = attr
 	}
 	return f
 }
 
-func FrameFromStringEx(s string, attr cwin.ChAttr, spaceEqualsTransparency bool) Frame {
+func FrameFromStringEx(s string, attr cwin.Attr, spaceEqualsTransparency bool) Frame {
 	s = strings.Trim(s, "\n")
 	rect := cwin.TextDimension(s)
 	var f Frame
@@ -54,7 +54,7 @@ func FrameFromStringEx(s string, attr cwin.ChAttr, spaceEqualsTransparency bool)
 	return f
 }
 
-func FrameFromString(s string, attr cwin.ChAttr) Frame {
+func FrameFromString(s string, attr cwin.Attr) Frame {
 	return FrameFromStringEx(s, attr, true)
 }
 
@@ -67,7 +67,7 @@ func FrameRect(f Frame) cwin.Rect {
 	return cwin.Rect{X: 0, Y: 0, W: maxX + 1, H: maxY + 1}
 }
 
-func FrameFromWin(w *cwin.Win) Frame {
+func FrameFromWin(w cwin.Win) Frame {
 	var f Frame
 	for y := 0; y < w.ClientRect().H; y++ {
 		for x := 0; x < w.ClientRect().W; x++ {
@@ -80,7 +80,7 @@ func FrameFromWin(w *cwin.Win) Frame {
 	return f
 }
 
-func FrameToWin(f Frame, w *cwin.Win) {
+func FrameToWin(f Frame, w cwin.Win) {
 	w.FillClient(w.ClientRect().ToOrigin(), cwin.TransparentChx())
 	for i := 0; i < len(f); i++ {
 		w.PutClient(f[i].X, f[i].Y, f[i].Chx)
@@ -89,7 +89,7 @@ func FrameToWin(f Frame, w *cwin.Win) {
 
 type Frames []Frame
 
-func FramesFromString(ss []string, attr cwin.ChAttr) (Frames, cwin.Rect) {
+func FramesFromString(ss []string, attr cwin.Attr) (Frames, cwin.Rect) {
 	// Unlike a single frame func FrameFromString where the frame hosting rect
 	// can be implied from the frame content, multiple frames can have different
 	// sizes with which we need to do some normalization:

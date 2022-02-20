@@ -1,10 +1,6 @@
-package cgame
+package cutil
 
-import (
-	"path"
-	"runtime"
-	"sync"
-)
+import "sync"
 
 type ThreadSafeFIFO struct {
 	sync.Mutex
@@ -34,9 +30,4 @@ func NewThreadSafeFIFO(cap int) *ThreadSafeFIFO {
 	return &ThreadSafeFIFO{
 		elems: make([]interface{}, 0, cap),
 	}
-}
-
-func GetCurFileDir() string {
-	_, filename, _, _ := runtime.Caller(1)
-	return path.Dir(filename)
 }

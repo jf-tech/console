@@ -6,6 +6,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 	"github.com/jf-tech/go-corelib/maths"
 )
@@ -29,8 +30,8 @@ var (
                    \  /
                    \  /
                     \/
-`, cwin.ChAttr{Fg: cterm.ColorWhite})
-	bossHPAttr     = cwin.ChAttr{Fg: cterm.ColorRed}
+`, cwin.Attr{Fg: cterm.ColorWhite})
+	bossHPAttr     = cwin.Attr{Fg: cterm.ColorRed}
 	bossBulletName = "boss_bullet"
 
 	leftGunX  = 1
@@ -88,11 +89,11 @@ func createBossFrameWithHP(hpLeft int) cgame.Frame {
 func (b *spriteBoss) fireWeapon() {
 	curR := b.Rect()
 	// left gun
-	if cgame.CheckProbability(bossBulletFiringProb) {
+	if cutil.CheckProbability(bossBulletFiringProb) {
 		b.fireBulletSquare(curR.X+leftGunX, curR.Y+leftGunY)
 	}
 	// right gun
-	if cgame.CheckProbability(bossBulletFiringProb) {
+	if cutil.CheckProbability(bossBulletFiringProb) {
 		b.fireBulletSquare(curR.X+rightGunX, curR.Y+rightGunY)
 	}
 }
@@ -139,7 +140,7 @@ type bossWaypoints struct {
 func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 	curR := bw.s.Rect()
 	parentClientR := bw.s.ParentRect()
-	if overlapped, ro := curR.Overlap(parentClientR); !overlapped || curR != ro {
+	if ro, overlapped := curR.Overlap(parentClientR); !overlapped || curR != ro {
 		dist := -curR.Y
 		// this is when the boss is still fully or partially out of the arena
 		return cgame.Waypoint{
@@ -151,11 +152,11 @@ func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 	for {
 		dist := rand.Int() % (bossMaxDistToGoBeforeDirChange - bossMinDistToGoBeforeDirChange + 1)
 		dist += bossMinDistToGoBeforeDirChange
-		dirIdx := rand.Int() % len(cgame.DirOffSetXY)
+		dirIdx := cwin.Dir(rand.Int() % cwin.DirCount)
 		newR := bw.s.Rect()
-		newR.X += cgame.DirOffSetXY[dirIdx].X * dist
-		newR.Y += cgame.DirOffSetXY[dirIdx].Y * dist
-		if overlapped, ro := newR.Overlap(parentClientR); overlapped && ro == newR {
+		newR.X += cwin.DirOffSetXY[dirIdx].X * dist
+		newR.Y += cwin.DirOffSetXY[dirIdx].Y * dist
+		if ro, overlapped := newR.Overlap(parentClientR); overlapped && ro == newR {
 			return cgame.Waypoint{
 				DX: newR.X - bw.s.Rect().X,
 				DY: newR.Y - bw.s.Rect().Y,

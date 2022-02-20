@@ -23,6 +23,9 @@ func Keys(keys ...interface{}) []cterm.Event {
 }
 
 func FindKey(keys []cterm.Event, key cterm.Event) bool {
+	if key.Type != cterm.EventKey {
+		return false
+	}
 	for _, ev := range keys {
 		if ev.Type != cterm.EventKey {
 			continue

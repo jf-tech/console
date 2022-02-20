@@ -3,6 +3,7 @@ package cgame
 import (
 	"time"
 
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -19,7 +20,7 @@ type AnimatorWaypoint struct {
 	cfg AnimatorWaypointCfg
 	s   *SpriteBase
 
-	clock *Clock
+	clock *cutil.Clock
 
 	wp             Waypoint
 	dxDone, dyDone int

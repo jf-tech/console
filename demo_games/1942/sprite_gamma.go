@@ -6,6 +6,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -14,7 +15,7 @@ var (
 	gammaFrame = cgame.FrameFromString(`
 /^#^\
 \vvv/
-`, cwin.ChAttr{Fg: cterm.ColorLightBlue})
+`, cwin.Attr{Fg: cterm.ColorLightBlue})
 
 	gammaBulletName = "gamma_bullet"
 )
@@ -43,7 +44,7 @@ func createGamma(m *myGame, stageIdx int) {
 			}}),
 		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
 			AfterUpdate: func() {
-				if !cgame.CheckProbability(gammaFiringProbPerStage[stageIdx]) {
+				if !cutil.CheckProbability(gammaFiringProbPerStage[stageIdx]) {
 					return
 				}
 				centerX := s.Rect().X + s.Rect().W/2

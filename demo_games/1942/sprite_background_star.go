@@ -11,7 +11,7 @@ import (
 
 var (
 	bgStarName  = "background_star"
-	bgStarFrame = cgame.FrameFromString(".", cwin.ChAttr{Fg: cterm.ColorDarkGray})
+	bgStarFrame = cgame.FrameFromString(".", cwin.Attr{Fg: cterm.ColorDarkGray})
 )
 
 func createBackgroundStar(m *myGame) {

@@ -91,7 +91,7 @@ var (
 // careful. For "enclosed" sprite, such as circle, one can fill the interior with characters
 // not just TransparencyChx, that will alleviate the problem.
 func DetectCollision(r1 cwin.Rect, f1 Frame, r2 cwin.Rect, f2 Frame) bool {
-	if overlapped, ro := r1.Overlap(r2); overlapped {
+	if ro, overlapped := r1.Overlap(r2); overlapped {
 		collisionDetectionBuf = collisionDetectionBuf[:0]
 		for i := 0; i < ro.W*ro.H; i++ {
 			collisionDetectionBuf = append(collisionDetectionBuf, false)

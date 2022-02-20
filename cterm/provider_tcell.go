@@ -30,6 +30,11 @@ func (p *providerTCell) Flush() error {
 	return nil
 }
 
+func (p *providerTCell) Sync() error {
+	p.screen.Sync()
+	return nil
+}
+
 func (p *providerTCell) Size() (int, int) {
 	return p.screen.Size()
 }

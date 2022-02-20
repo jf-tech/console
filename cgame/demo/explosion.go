@@ -9,6 +9,7 @@ import (
 
 	"github.com/jf-tech/console/cgame"
 	"github.com/jf-tech/console/cterm"
+	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
@@ -18,7 +19,7 @@ func main() {
 		panic(err)
 	}
 	defer g.Close()
-	sysWinR := g.WinSys.GetSysWin().Rect()
+	sysWinR := g.WinSys.SysWin().Rect()
 	// create a demo window that is 3/4 of the system window (which is the same size
 	// of the current terminal/console) and center it.
 	demoWin := g.WinSys.CreateWin(nil, cwin.WinCfg{
@@ -36,7 +37,7 @@ func main() {
 	doDemo(g, demoWin)
 }
 
-func doDemo(g *cgame.Game, demoWin *cwin.Win) {
+func doDemo(g *cgame.Game, demoWin cwin.Win) {
 	for _, p := range []string{
 		"resources/spacecraft_small_1.txt",
 		"resources/spacecraft_small_2.txt",
@@ -48,12 +49,11 @@ func doDemo(g *cgame.Game, demoWin *cwin.Win) {
 	}
 }
 
-func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
+func doExplosion(g *cgame.Game, demoWin cwin.Win, filepath string) bool {
 	fn := path.Base(filepath)
-	demoWin.SetTitle(
-		fmt.Sprintf("Demo - Explosion '%s': any key to start", fn), cwin.AlignLeft)
+	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s': any key to start", fn))
 	f := cgame.FrameFromString(
-		strings.Trim(readFile(filepath), "\n"), cwin.ChAttr{Fg: cterm.ColorLightCyan})
+		strings.Trim(readFile(filepath), "\n"), cwin.Attr{Fg: cterm.ColorLightCyan})
 	s := cgame.NewSpriteBase(g, demoWin, "s", f,
 		(demoWin.ClientRect().W-cgame.FrameRect(f).W)/2,
 		(demoWin.ClientRect().H-cgame.FrameRect(f).H)/2)
@@ -69,7 +69,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
 	if gameOver {
 		return false
 	}
-	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' in progress...", fn), cwin.AlignLeft)
+	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' in progress...", fn))
 	startTime := g.MasterClock.Now()
 	done := false
 	cgame.CreateExplosion(s, cgame.ExplosionCfg{
@@ -78,14 +78,14 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
 			done = true
 		},
 	})
-	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), nil, func(_ cterm.Event) bool {
-		return done
+	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), nil, func(ev cterm.Event) cwin.EventResponse {
+		return cwin.TrueForEventSystemStop(done)
 	})
 	if g.IsGameOver() {
 		return false
 	}
 	demoWin.SetTitle(fmt.Sprintf("Demo - Explosion '%s' done. Used %s. Any key for next",
-		fn, (g.MasterClock.Now()-startTime).Round(time.Millisecond)), cwin.AlignLeft)
+		fn, (g.MasterClock.Now() - startTime).Round(time.Millisecond)))
 	g.WinSys.Update()
 	g.WinSys.SyncExpectKey(func(k cterm.Key, r rune) bool {
 		if k == cterm.KeyEsc || r == 'q' {
@@ -97,7 +97,7 @@ func doExplosion(g *cgame.Game, demoWin *cwin.Win, filepath string) bool {
 }
 
 func readFile(relPath string) string {
-	b, err := ioutil.ReadFile(path.Join(cgame.GetCurFileDir(), relPath))
+	b, err := ioutil.ReadFile(path.Join(cutil.GetCurFileDir(), relPath))
 	if err != nil {
 		panic(err)
 	}
