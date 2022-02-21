@@ -25,9 +25,15 @@ const (
 
 var inited = false
 
+type clipEntry struct {
+	id       SoundID
+	ctrl     *beep.Ctrl
+	filepath string
+}
+
 type SoundManager struct {
-	ctrls  sync.Map // [SoundID]*beep.Ctrl
-	files  sync.Map // [filepath]SoundID
+	clips  sync.Map // [SoundID]*clipEntry
+	files  sync.Map // [filepath]*clipEntry
 	paused bool
 
 	avoidSameClipConcurrentPlaying bool
@@ -51,7 +57,7 @@ func (sm *SoundManager) Init() error {
 
 func (sm *SoundManager) Close() {
 	speaker.Clear()
-	sm.ctrls = sync.Map{}
+	sm.clips = sync.Map{}
 	sm.files = sync.Map{}
 }
 
@@ -64,11 +70,11 @@ func (sm *SoundManager) PauseAll() {
 		return
 	}
 	speaker.Lock()
-	sm.ctrls.Range(func(_, ctrl interface{}) bool {
-		ctrl.(*beep.Ctrl).Paused = true
+	defer speaker.Unlock()
+	sm.clips.Range(func(_, clip interface{}) bool {
+		clip.(*clipEntry).ctrl.Paused = true
 		return true
 	})
-	speaker.Unlock()
 	sm.paused = true
 }
 
@@ -77,18 +83,29 @@ func (sm *SoundManager) ResumeAll() {
 		return
 	}
 	speaker.Lock()
-	sm.ctrls.Range(func(_, ctrl interface{}) bool {
-		ctrl.(*beep.Ctrl).Paused = false
+	defer speaker.Unlock()
+	sm.clips.Range(func(_, clip interface{}) bool {
+		clip.(*clipEntry).ctrl.Paused = false
 		return true
 	})
-	speaker.Unlock()
 	sm.paused = false
+}
+
+func (sm *SoundManager) Stop(id SoundID) {
+	if clip, found := sm.clips.Load(id); found {
+		speaker.Lock()
+		defer speaker.Unlock()
+		clip.(*clipEntry).ctrl.Paused = true
+		clip.(*clipEntry).ctrl.Streamer = nil
+		sm.clips.Delete(id)
+		sm.files.Delete(id)
+	}
 }
 
 func (sm *SoundManager) PlayMP3(mp3FilePath string, vol float64, loop int) (SoundID, error) {
 	if sm.avoidSameClipConcurrentPlaying {
-		if id, found := sm.files.Load(mp3FilePath); found {
-			return id.(SoundID), nil
+		if clip, found := sm.files.Load(mp3FilePath); found {
+			sm.Stop(clip.(*clipEntry).id)
 		}
 	}
 	b, err := cutil.LoadCachedFile(mp3FilePath)
@@ -111,18 +128,20 @@ func (sm *SoundManager) play(filepath string,
 		Base:     2,
 		Volume:   vol,
 	}
-	id := SoundID(cwin.GenUID())
-	sm.ctrls.Store(id, ctrl)
+	clip := &clipEntry{
+		id:       SoundID(cwin.GenUID()),
+		ctrl:     ctrl,
+		filepath: filepath,
+	}
+	sm.clips.Store(clip.id, clip)
 	if sm.avoidSameClipConcurrentPlaying {
-		sm.files.Store(filepath, id)
+		sm.files.Store(filepath, clip)
 	}
 	speaker.Play(beep.Seq(volumed, beep.Callback(func() {
-		sm.ctrls.Delete(id)
-		if sm.avoidSameClipConcurrentPlaying {
-			sm.files.Delete(filepath)
-		}
+		sm.clips.Delete(clip.id)
+		sm.files.Delete(filepath)
 	})))
-	return id, nil
+	return clip.id, nil
 }
 
 type rsc struct {

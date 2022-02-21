@@ -1,3 +1,6 @@
+[2022/02/22 - cgame]
+- [✅] Once again, switched async to sync mode again in sprite mgr to simplify programming mode.
+
 [2022/02/17 - cgame]
 - async helper and chaining in SpriteMgr.
 - AsyncCreateSprite -> AsyncAddSprite
