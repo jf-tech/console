@@ -26,7 +26,7 @@ type spriteGamma struct {
 
 // cgame.CollisionResponse
 func (g *spriteGamma) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
-	cgame.CreateExplosion(g.SpriteBase, cgame.ExplosionCfg{MaxDuration: gammaExplosionDuration})
+	cgame.CreateExplosion(g, cgame.ExplosionCfg{MaxDuration: gammaExplosionDuration})
 	g.Mgr().FindByName(alphaName).(*spriteAlpha).gammaKills++
 	return cgame.CollisionResponseJustDoIt
 }
@@ -65,5 +65,5 @@ func createGamma(m *myGame, stageIdx int) {
 		},
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }

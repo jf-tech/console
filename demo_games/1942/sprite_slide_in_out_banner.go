@@ -36,5 +36,5 @@ func createSlideInOutBanner(
 		},
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }

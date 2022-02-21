@@ -29,13 +29,13 @@ type spriteAlpha struct {
 }
 
 // cgame.CollisionResponse
-func (a *spriteAlpha) CollisionNotify(_ bool, collidedWith []cgame.Sprite) cgame.CollisionResponseType {
+func (a *spriteAlpha) CollisionNotify(_ bool, collidees []cgame.Sprite) cgame.CollisionResponseType {
 	hits := 0
 	gp := cgame.Sprite(nil)
-	for i := len(collidedWith) - 1; i >= 0; i-- {
-		if collidedWith[i].Name() == giftPackName {
+	for i := len(collidees) - 1; i >= 0; i-- {
+		if collidees[i].Name() == giftPackName {
 			if gp == nil {
-				gp = collidedWith[i]
+				gp = collidees[i]
 			}
 		} else {
 			hits++
@@ -132,11 +132,10 @@ func createAlpha(m *myGame, stage *stage) {
 	if d, ok := m.g.Exchange.GenericData[exchangeGiftPackWeapon]; ok {
 		gp = d.(*giftPack)
 	}
-	alpha := &spriteAlpha{
+	m.g.SpriteMgr.AddSprite(&spriteAlpha{
 		SpriteBase: cgame.NewSpriteBase(m.g, m.winArena, alphaName, alphaFrame,
 			(m.winArena.ClientRect().W-cgame.FrameRect(alphaFrame).W)/2,
 			m.winArena.ClientRect().H-cgame.FrameRect(alphaFrame).H),
 		m:        m,
-		gpWeapon: gp}
-	m.g.SpriteMgr.AsyncCreateSprite(alpha)
+		gpWeapon: gp})
 }

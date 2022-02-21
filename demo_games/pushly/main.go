@@ -248,7 +248,7 @@ func (m *myGame) createAlpha(lx, ly int) {
 			m.g, m.winArena, alphaName, alpahFrameUp, LX2X(lx), LY2Y(ly)),
 		m: m,
 	}
-	m.g.SpriteMgr.AsyncCreateSprite(m.alpha())
+	m.g.SpriteMgr.AddSprite(m.alpha())
 }
 
 func (m *myGame) createBrick(lx, ly int) {
@@ -257,7 +257,7 @@ func (m *myGame) createBrick(lx, ly int) {
 			m.g, m.winArena, brickName, brickFrame, LX2X(lx), LY2Y(ly)),
 		m: m,
 	}
-	m.g.SpriteMgr.AsyncCreateSprite(m.board[ly][lx])
+	m.g.SpriteMgr.AddSprite(m.board[ly][lx])
 }
 
 func (m *myGame) createConcrete(lx, ly int) {
@@ -266,7 +266,7 @@ func (m *myGame) createConcrete(lx, ly int) {
 			m.g, m.winArena, concreteName, concreteFrame, LX2X(lx), LY2Y(ly)),
 		m: m,
 	}
-	m.g.SpriteMgr.AsyncCreateSprite(m.board[ly][lx])
+	m.g.SpriteMgr.AddSprite(m.board[ly][lx])
 }
 
 func (m *myGame) createTarget(lx, ly int) {
@@ -275,7 +275,7 @@ func (m *myGame) createTarget(lx, ly int) {
 			m.g, m.winArena, targetName, targetFrame, LX2X(lx), LY2Y(ly)),
 		m: m,
 	})
-	m.g.SpriteMgr.AsyncCreateSprite(m.targets[len(m.targets)-1])
+	m.g.SpriteMgr.AddSprite(m.targets[len(m.targets)-1])
 }
 
 func (m *myGame) alpha() *sprite {
@@ -290,7 +290,7 @@ func (m *myGame) alpha() *sprite {
 }
 
 func (m *myGame) clearLevel() {
-	m.g.SpriteMgr.AsyncDeleteAll()
+	m.g.SpriteMgr.DeleteAll()
 	for ly := 0; ly < m.lh; ly++ {
 		for lx := 0; lx < m.lw; lx++ {
 			m.board[ly][lx] = nil

@@ -59,13 +59,13 @@ func (s *Sys) SysWin() Win {
 	return s.sysWin
 }
 
-func (s *Sys) TryFindWin(w Win) (Win, bool) {
+func (s *Sys) TryFind(w Win) (Win, bool) {
 	w, ok := s.winReg[w.Base()]
 	return w, ok
 }
 
-func (s *Sys) FindWin(w Win) Win {
-	if w, ok := s.TryFindWin(w); ok {
+func (s *Sys) Find(w Win) Win {
+	if w, ok := s.TryFind(w); ok {
 		return w
 	}
 	panic(fmt.Sprintf("unable to find %s", w))
@@ -73,19 +73,20 @@ func (s *Sys) FindWin(w Win) Win {
 
 func (s *Sys) RemoveWin(w Win) {
 	// the sysWin is non-removable
-	if s.sysWin.Same(w) {
+	if s.sysWin.Base() == w.Base() {
 		return
 	}
 	wb := w.Base()
 	wb.parent.removeChild(wb)
-	if s.focused != nil && s.focused.Same(w) {
+	if s.focused != nil && s.focused.Base() == w.Base() {
+		s.focused.SetFocus(false)
 		s.focused = nil
 	}
 	delete(s.winReg, wb)
 }
 
 func (s *Sys) SetFocus(w Win) {
-	if s.focused != nil && s.focused.Same(w) {
+	if s.focused != nil && s.focused.Base() == w.Base() {
 		return
 	}
 	if s.focused != nil {
@@ -96,7 +97,7 @@ func (s *Sys) SetFocus(w Win) {
 	// We always want to use the "top-level" object that implements Win interface and
 	// it's possible someone calls SetFocus with an embedded *WinBase, thus use the look
 	// up to retrieve the top-level Win implementer.
-	s.focused = s.FindWin(w)
+	s.focused = s.Find(w)
 }
 
 func (s *Sys) Run(fallbackHandler EventHandler) {

@@ -28,7 +28,7 @@ type spriteGiftPack struct {
 }
 
 func (g *spriteGiftPack) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
-	g.Mgr().AsyncDeleteSprite(g)
+	g.Mgr().DeleteSprite(g)
 	return cgame.CollisionResponseJustDoIt
 }
 
@@ -48,7 +48,7 @@ func createGiftPack(m *myGame, sym giftPackSymbol, symAttr cwin.Attr) {
 				T:  time.Duration((float64(dist) / float64(giftPackMoveSpeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }
 
 type giftPack struct {

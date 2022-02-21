@@ -57,15 +57,25 @@ type Win interface {
 
 	Sys() *Sys
 
+	// Base returns the embedded WinBase pointer which can be used for accessing
+	// the library built-in WinBase functionalities, as well as serving as a unique
+	// identifier for the window. When you compare two Win interfaces, do this:
+	// s1.Base() == s2.Base()
 	Base() *WinBase
+	// This returns the actual object that implements Win interface that is registered
+	// with Sys. Because WinBase implements Win interface, sometimes we go into situation
+	// where a WinBase pointer is getting passed around but eventually when deverloper
+	// wants to cast back to their own object (which embeds WinBase) they get type assertion
+	// failure. As long as the object (that implements Win) passed into Sys.CreateWin is
+	// the "top-level" object, This() will always return that registered object. Note if
+	// calling This() on a non Sys managed (i.e. not from Sys.CreateWin) object, it will
+	// panic.
 	This() Win
 	Parent() Win
 	Prev() Win
 	Next() Win
 	ChildFirst() Win
 	ChildLast() Win
-
-	Same(other Win) bool
 
 	// Returns the Rect of the window relative to its parent window's client region.
 	Rect() Rect

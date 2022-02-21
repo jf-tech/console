@@ -37,32 +37,25 @@ func (wb *WinBase) Base() *WinBase {
 }
 
 func (wb *WinBase) This() Win {
-	if w, ok := wb.sys.TryFindWin(wb); ok {
-		return w
-	}
-	panic(fmt.Sprintf("forgot to register %s?", wb.String()))
+	return wb.Sys().Find(wb)
 }
 
 func (wb *WinBase) Parent() Win {
-	return winBaseToWin(wb.parent)
+	return wb.winBaseToWin(wb.parent)
 }
 
 func (wb *WinBase) Prev() Win {
-	return winBaseToWin(wb.prev)
+	return wb.winBaseToWin(wb.prev)
 }
 func (wb *WinBase) Next() Win {
-	return winBaseToWin(wb.next)
+	return wb.winBaseToWin(wb.next)
 }
 func (wb *WinBase) ChildFirst() Win {
-	return winBaseToWin(wb.childFirst)
+	return wb.winBaseToWin(wb.childFirst)
 }
 
 func (wb *WinBase) ChildLast() Win {
-	return winBaseToWin(wb.childLast)
-}
-
-func (wb *WinBase) Same(other Win) bool {
-	return wb == other.Base()
+	return wb.winBaseToWin(wb.childLast)
 }
 
 func (wb *WinBase) Rect() Rect {
@@ -249,6 +242,13 @@ func (wb *WinBase) String() string {
 	return fmt.Sprintf("WinBase['%s'|0x%X|%s]", wb.cfg.Name, uintptr(unsafe.Pointer(wb)), wb.Rect())
 }
 
+func (*WinBase) winBaseToWin(b *WinBase) Win {
+	if b == nil {
+		return nil
+	}
+	return b.This()
+}
+
 func (wb *WinBase) addChild(child *WinBase) {
 	child.prev = wb.childLast
 	child.next = nil
@@ -367,11 +367,4 @@ func NewWinBase(sys *Sys, parent Win, c WinCfg) *WinBase {
 	cw.renderBorderAndTitle()
 	cw.fill(cw.clientR, Chx{RuneSpace, cw.cfg.ClientAttr})
 	return cw
-}
-
-func winBaseToWin(wb *WinBase) Win {
-	if wb != nil {
-		return wb.This()
-	}
-	return nil
 }
