@@ -26,7 +26,7 @@ func (s *stage) Run() {
 			return cwin.EventLoopStop
 		}
 		alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
-		alpha.ToTop()
+		alpha.SendToTop()
 		if ev.Type == cterm.EventKey {
 			// due to console aspect ration, make left/right move a bit faster.
 			// also let retreat (down) a bit faster than up to make the game exp

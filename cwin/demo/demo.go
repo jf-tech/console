@@ -28,7 +28,7 @@ func main() {
 	demoW, demoH := W3_4-listboxW, listboxH
 
 	demoR := cwin.Rect{X: (sysR.W - W3_4) / 2, Y: (sysR.H - H3_4) / 2, W: demoW, H: demoH}
-	demoWin := sys.CreateWin(nil, cwin.WinCfg{R: demoR})
+	demoWin := sys.CreateWin(nil, cwin.WinCfg{R: demoR, TextAlign: cwin.AlignRight})
 	var sb strings.Builder
 	for i := 0; i < 60; i++ {
 		for j := 0; j <= i; j++ {
@@ -36,7 +36,7 @@ func main() {
 		}
 		sb.WriteRune('\n')
 	}
-	demoWin.SetTextAligned(cwin.AlignRight, sb.String())
+	demoWin.SetText(sb.String())
 	demoTitlePrefix := fmt.Sprintf("Demo [%s] (%dx%d)", provider, sysR.W, sysR.H)
 
 	listboxR := cwin.Rect{X: demoR.X + demoR.W, Y: demoR.Y, W: listboxW, H: listboxH}

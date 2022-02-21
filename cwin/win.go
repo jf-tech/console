@@ -36,15 +36,19 @@ type WinCfg struct {
 	// position from its direct parent window. W/H for its size.
 	R Rect
 	// All the following are optional.
-	EventHandler    EventHandler
-	Name            string // also used as title (unless NoTitle or NoBorder is true)
-	NoBorder        bool
-	BorderRunes     *BorderRunes // if NoBorder && BorderRunes==nil, default to 1-line border
-	BorderAttr      Attr
-	ClientAttr      Attr
-	NoTitle         bool // in case user sets Name (for debug purpose) and border, but doesn't want Title
-	NoHPaddingTitle bool // most cases, have a one-space padding on each side of title looks nice
-	NoHPaddingText  bool // most cases, have a one-space padding on each side of text block looks nice
+	EventHandler       EventHandler
+	Name               string // also used as title (unless NoTitle or NoBorder is true)
+	NoBorder           bool
+	BorderRunes        *BorderRunes // if NoBorder && BorderRunes==nil, default to 1-line border
+	InFocusBorderRunes *BorderRunes // Used for border rendering when window is in focus. If nil, default to 2-line border
+	BorderAttr         Attr
+	InFocusBorderAttr  *Attr // Used for border rendering when window is in focus. If nil, default Fg=ColorLightYellow
+	ClientAttr         Attr
+	NoTitle            bool // in case user sets Name (for debug purpose) and border, but doesn't want Title
+	NoPaddingTitle     bool // most cases, have a one-space padding on each side of title looks nice
+	NoPaddingText      bool // most cases, have a one-space padding on each side of text block looks nice
+	TitleAlign         Align
+	TextAlign          Align
 }
 
 // Win represents a window
@@ -74,22 +78,18 @@ type Win interface {
 	SetPosRel(dx, dy int)
 	// Sets the event handler for this window.
 	SetEventHandler(evHandler EventHandler)
-	// Sets the window's title, with specific alignment.
-	SetTitleAligned(align Align, format string, a ...interface{})
-	// Sets the window's title, with default alignment.
+	// Sets the window's title.
 	SetTitle(format string, a ...interface{})
-	// Sets a text, multi-line allowed, to the client region of the window, with specific
-	// alignment.
-	SetTextAligned(align Align, format string, a ...interface{})
-	// Sets a text, multi-line allowed, to the client region of the window, with default
-	// alignment.
+	// Sets a text, multi-line allowed, to the client region of the window
 	SetText(format string, a ...interface{})
-	// Sets a single line text, to the client region of the window, with specific alignment
-	// and color attributes
-	SetLineAligned(cy int, align Align, attr Attr, format string, a ...interface{})
-	// Sets a single line text, to the client region of the window, with default  alignment
-	// and default color attributes
-	SetLine(cy int, format string, a ...interface{})
+	// Sets a single line text, to the client region of the window
+	SetLine(cy int, attr Attr, format string, a ...interface{})
+
+	// Set the window to be in or out of focus. This method should only conduct focus related
+	// changes to this window only. To actually set a window in focus system-wise needs to do
+	// more things like set up message handler, changing z-order, etc, which requires a calling
+	// to Sys.SetFocus.
+	SetFocus(focused bool)
 
 	// Sets the window to the bottom position among all the child windows of its parent window.
 	SendToBottom(recursive bool)

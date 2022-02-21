@@ -17,7 +17,7 @@ var (
 func createBackgroundStar(m *myGame) {
 	s := cgame.NewSpriteBase(m.g, m.winArena, bgStarName, bgStarFrame,
 		rand.Int()%(m.winArena.ClientRect().W-cgame.FrameRect(bgStarFrame).W), 0)
-	s.ToBottom()
+	s.SendToBottom()
 	dist := 1000 // large enough to go out of window (and auto destroy)
 	a := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
