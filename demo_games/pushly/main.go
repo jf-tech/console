@@ -56,8 +56,11 @@ func (m *myGame) main() assets.GameResult {
 	for {
 		m.loadLevel(m.lvl)
 		m.levelChanged = false
+		m.g.WinSys.Update()
 		m.winLevelLB.(*ccomp.ListBox).SetSelected(m.lvl)
 		m.winArenaFrame.SetTitle("%s - Level %d", m.arenaTitlePrefix, m.lvl+1)
+		m.g.WinSys.MessageBox(
+			nil, "Info", "Level %d ready! Press Enter to start...", m.lvl+1)
 		replay := false
 		m.g.Run(assets.GameOverKeys, nil, func(ev cterm.Event) cwin.EventResponse {
 			if ev.Type == cterm.EventKey {
@@ -204,8 +207,6 @@ func (m *myGame) gameSetup() {
 		OnSelect: func(idx int, selected string) {
 			m.lvl = idx
 			m.levelChanged = true
-			m.g.WinSys.MessageBox(
-				nil, "Info", "Switch to level %d. Press Enter to start", m.lvl+1)
 			m.g.WinSys.SetFocus(m.winArenaFrame)
 		},
 	})
