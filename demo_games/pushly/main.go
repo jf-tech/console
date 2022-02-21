@@ -12,6 +12,7 @@ import (
 	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 	"github.com/jf-tech/console/cwin/ccomp"
+	"github.com/jf-tech/go-corelib/ios"
 )
 
 func main() {
@@ -27,7 +28,9 @@ type myGame struct {
 	arenaTitlePrefix string
 	lw, lh           int
 
-	level        int
+	lvlCount int
+
+	lvl          int
 	levelChanged bool
 	board        [][]*sprite // note target sprites not on board.
 	targets      []*sprite
@@ -48,13 +51,13 @@ func (m *myGame) main() assets.GameResult {
 		RegisterBulk(alphaName, []string{brickName, concreteName}).
 		RegisterBulk(brickName, []string{alphaName, brickName, concreteName})
 
-	m.level = 0
+	m.lvl = 0
 	m.levelChanged = true
 	for {
-		m.loadLevel(m.level)
+		m.loadLevel(m.lvl)
 		m.levelChanged = false
-		m.winLevelLB.(*ccomp.ListBox).SetSelected(m.level)
-		m.winArenaFrame.SetTitle("%s - Level %d", m.arenaTitlePrefix, m.level+1)
+		m.winLevelLB.(*ccomp.ListBox).SetSelected(m.lvl)
+		m.winArenaFrame.SetTitle("%s - Level %d", m.arenaTitlePrefix, m.lvl+1)
 		replay := false
 		m.g.Run(assets.GameOverKeys, nil, func(ev cterm.Event) cwin.EventResponse {
 			if ev.Type == cterm.EventKey {
@@ -92,19 +95,17 @@ func (m *myGame) main() assets.GameResult {
 			continue
 		}
 		m.g.WinSys.MessageBox(
-			nil, "Good job!", "Level %d complete! Press Enter for next level...", m.level+1)
-		if m.level == lvlCount-1 {
+			nil, "Good job!", "Level %d complete! Press Enter for next level...", m.lvl+1)
+		if m.lvl == m.lvlCount-1 {
 			break
 		}
-		m.level++
+		m.lvl++
 		m.levelChanged = true
 	}
 	return assets.DisplayGameOverDialog(m.g)
 }
 
 var (
-	lvlCount = 3
-
 	lvlKeySpace    = '.'
 	lvlKeyAlpha    = 'A'
 	lvlKeyBrick    = 'B'
@@ -170,6 +171,7 @@ func (m *myGame) gameSetup() {
 			cwin.Rect{X: lx*(xscale+1) - 1, Y: 0, W: 1, H: winArenaH},
 			cwin.Chx{Ch: '│', Attr: cwin.Attr{Fg: cterm.ColorDarkGray}})
 	}
+	m.lvlCount = m.detectLevelCount()
 	m.winLevelLB = ccomp.CreateListBox(m.g.WinSys, winGame, ccomp.ListBoxCfg{
 		WinCfg: cwin.WinCfg{
 			R: cwin.Rect{
@@ -182,17 +184,17 @@ func (m *myGame) gameSetup() {
 		},
 		Items: func() []string {
 			var lvls []string
-			for i := 0; i < lvlCount; i++ {
+			for i := 0; i < m.lvlCount; i++ {
 				lvls = append(lvls, fmt.Sprintf("Level %d", i+1))
 			}
 			return lvls
 		}(),
 		EnterKeyToSelect: true,
 		OnSelect: func(idx int, selected string) {
-			m.level = idx
+			m.lvl = idx
 			m.levelChanged = true
 			m.g.WinSys.MessageBox(
-				nil, "Info", "Switch to level %d. Press Enter to start", m.level+1)
+				nil, "Info", "Switch to level %d. Press Enter to start", m.lvl+1)
 			m.g.WinSys.SetFocus(m.winArenaFrame)
 		},
 	})
@@ -208,18 +210,17 @@ func (m *myGame) gameSetup() {
 	})
 	winInstr.SetText(fmt.Sprintf(`
   %c
-%c   %c   : to push a brick
-  %c
+%c %c %c   : to push a brick
 
-'s'     : select a new level
-'r'     : replay current level
+ 's'    : select a level
 
-ESC,'q' : quit the game
+ 'r'    : replay current level
+
+ESC,'q' : quit
 
 `,
-		cwin.DirRunes[cwin.DirUp],
-		cwin.DirRunes[cwin.DirLeft], cwin.DirRunes[cwin.DirRight],
-		cwin.DirRunes[cwin.DirDown]))
+		cwin.DirRunes[cwin.DirUp], cwin.DirRunes[cwin.DirLeft],
+		cwin.DirRunes[cwin.DirDown], cwin.DirRunes[cwin.DirRight]))
 
 	m.board = make([][]*sprite, m.lh)
 	for i := 0; i < m.lh; i++ {
@@ -292,7 +293,16 @@ func (m *myGame) clearLevel() {
 	}
 	m.targets = m.targets[:0]
 	m.steps = 0
-	m.level = -1
+	m.lvl = 0
+}
+
+func (m *myGame) detectLevelCount() int {
+	for lvl := 0; ; lvl++ {
+		fn := fmt.Sprintf("resources/level%d.txt", lvl+1)
+		if !ios.FileExists(fn) {
+			return lvl
+		}
+	}
 }
 
 func (m *myGame) loadLevel(lvl int) {
@@ -331,7 +341,7 @@ func (m *myGame) loadLevel(lvl int) {
 	// TODO more sanity check:
 	// - there is 1only1 A
 	// - # of targets == # of bricks
-	m.level = lvl
+	m.lvl = lvl
 }
 
 func (m *myGame) checkLevelClear() bool {
@@ -349,20 +359,20 @@ var (
 	alpahFrameUp = cgame.FrameFromString(`
 M      M
 \\    //
- -('')-
+ -(◔◔)-
 `, alphaAtrr)
 	alpahFrameRight = cgame.FrameFromString(`
- ('')__E
+ (◔◔)__E
   ||‾‾E
  /  \
 `, alphaAtrr)
 	alpahFrameDown = cgame.FrameFromString(`
- -(..)-
+ -(◔◔)-
 //    \\
 W      W
 `, alphaAtrr)
 	alpahFrameLeft = cgame.FrameFromString(`
-E__('')
+E__(◔◔)
  E‾‾||
    /  \
 `, alphaAtrr)
@@ -381,7 +391,7 @@ E__('')
 ⎣      ⎦`, brickAttr, false)
 
 	concreteName  = "concrete"
-	concreteAttr  = cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorCyan}
+	concreteAttr  = cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorDarkGray}
 	concreteFrame = cgame.FrameFromStringEx(`
 ⎡      ⎤
 ⎢      ⎥
