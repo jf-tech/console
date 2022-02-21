@@ -30,7 +30,7 @@ func Init(provider cterm.Provider) (*Sys, error) {
 	n := w * h
 	sys := &Sys{winReg: map[*WinBase]Win{}}
 	sysWin := NewWinBase(sys, nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})
-	sys.RegWin(sysWin)
+	sys.regWin(sysWin)
 	sys.sysWin = sysWin
 	sys.scrBuf = make([]Chx, n)
 	sys.offScrBuf = make([]Chx, n)
@@ -44,7 +44,7 @@ func (s *Sys) CreateWinEx(parent Win, createWin func() Win) Win {
 		pb = parent.Base()
 	}
 	w := createWin()
-	s.RegWin(w)
+	s.regWin(w)
 	pb.addChild(w.Base())
 	return w
 }
@@ -53,10 +53,6 @@ func (s *Sys) CreateWin(parent Win, cfg WinCfg) Win {
 	return s.CreateWinEx(parent, func() Win {
 		return NewWinBase(s, parent, cfg)
 	})
-}
-
-func (s *Sys) RegWin(w Win) {
-	s.winReg[w.Base()] = w
 }
 
 func (s *Sys) SysWin() Win {
@@ -228,6 +224,10 @@ func (s *Sys) TotalChxRendered() int64 {
 func (s *Sys) Close() {
 	s.stopEventListening()
 	cterm.Close()
+}
+
+func (s *Sys) regWin(w Win) {
+	s.winReg[w.Base()] = w
 }
 
 func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w Win, sysRect Rect) {
