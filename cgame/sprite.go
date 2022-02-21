@@ -62,7 +62,9 @@ func (sb *SpriteBase) Animators() []Animator {
 }
 
 func (sb *SpriteBase) Destroy() {
-	sb.g.WinSys.RemoveWin(sb.win)
+	if sb.win != nil {
+		sb.g.WinSys.RemoveWin(sb.win)
+	}
 	sb.win = nil
 }
 

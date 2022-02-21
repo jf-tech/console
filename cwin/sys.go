@@ -226,6 +226,22 @@ func (s *Sys) Close() {
 	cterm.Close()
 }
 
+func (s *Sys) dumpTree(w Win, indent int, sb *strings.Builder) {
+	sb.WriteString(w.String())
+	sb.WriteRune('\n')
+	for c := w.ChildFirst(); c != nil; c = c.Next() {
+		sb.WriteString(strings.Repeat(" ", indent))
+		sb.WriteString("- ")
+		s.dumpTree(c, indent+2, sb)
+	}
+}
+
+func (s *Sys) Dump() string {
+	var sb strings.Builder
+	s.dumpTree(s.sysWin, 0, &sb)
+	return sb.String()
+}
+
 func (s *Sys) regWin(w Win) {
 	s.winReg[w.Base()] = w
 }
