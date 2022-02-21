@@ -17,10 +17,10 @@ type ListBoxOnSelect func(idx int, selected string)
 
 type ListBoxCfg struct {
 	cwin.WinCfg
-	Items        []string
-	SelectedAttr cwin.Attr
-	Align        cwin.Align
-	OnSelect     ListBoxOnSelect
+	Items            []string
+	SelectedAttr     cwin.Attr
+	EnterKeyToSelect bool // if true, only Enter/Return key will cause OnSelect to fire.
+	OnSelect         ListBoxOnSelect
 }
 
 type ListBox struct {
@@ -60,9 +60,9 @@ func (lb *ListBox) SetSelected(selected int) {
 		if cy+lb.firstVisible == lb.selected {
 			attr = lb.cfg.SelectedAttr
 		}
-		lb.SetLineAligned(cy, lb.cfg.Align, attr, lb.items[cy+lb.firstVisible])
+		lb.SetLine(cy, attr, lb.items[cy+lb.firstVisible])
 	}
-	if lb.cfg.OnSelect != nil {
+	if !lb.cfg.EnterKeyToSelect && lb.cfg.OnSelect != nil {
 		lb.cfg.OnSelect(lb.selected, lb.items[lb.selected])
 	}
 }
@@ -96,13 +96,19 @@ func newListBox(sys *cwin.Sys, parent cwin.Win, cfg ListBoxCfg) *ListBox {
 	lb.SetItems(cfg.Items)
 	lb.SetEventHandler(func(ev cterm.Event) cwin.EventResponse {
 		if ev.Type != cterm.EventKey ||
-			!cwin.FindKey(cwin.Keys(cterm.KeyArrowUp, cterm.KeyArrowDown), ev) {
+			!cwin.FindKey(cwin.Keys(cterm.KeyArrowUp, cterm.KeyArrowDown, cterm.KeyEnter), ev) {
 			return cwin.EventNotHandled
 		}
 		if ev.Key == cterm.KeyArrowUp {
 			lb.moveUp()
-		} else {
+		} else if ev.Key == cterm.KeyArrowDown {
 			lb.moveDown()
+		} else {
+			// it's cterm.KeyEnter
+			if !lb.cfg.EnterKeyToSelect || lb.cfg.OnSelect == nil {
+				return cwin.EventNotHandled
+			}
+			lb.cfg.OnSelect(lb.selected, lb.items[lb.selected])
 		}
 		return cwin.EventHandled
 	})

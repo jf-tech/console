@@ -167,9 +167,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 		// by Update with no dx/dy and no new frame, simmply with a bounds check and collision
 		// check. If the update fails, then there is a collision (or the sprite is out of bounds)
 		// circle though)
-		f := s.Frame()
 		if !s.Update(cgame.UpdateArg{
-			F:   f,
 			IBC: cgame.InBoundsCheckFullyVisible,
 			CD:  cgame.CollisionDetectionOn}) {
 			s.Destroy() // do remember to destroy the sprite as its cwin is already created.

@@ -12,7 +12,7 @@ type Sys struct {
 	winReg map[*WinBase]Win
 
 	sysWin  Win
-	inFocus Win
+	focused Win
 
 	stopEvent chan struct{}
 	evChan    chan cterm.Event
@@ -82,26 +82,33 @@ func (s *Sys) RemoveWin(w Win) {
 	}
 	wb := w.Base()
 	wb.parent.removeChild(wb)
-	if s.inFocus != nil && s.inFocus.Same(w) {
-		s.inFocus = nil
+	if s.focused != nil && s.focused.Same(w) {
+		s.focused = nil
 	}
 	delete(s.winReg, wb)
 }
 
 func (s *Sys) SetFocus(w Win) {
-	if s.inFocus != nil && s.inFocus.Same(w) {
+	if s.focused != nil && s.focused.Same(w) {
 		return
 	}
+	if s.focused != nil {
+		s.focused.SetFocus(false)
+	}
 	w.SendToTop(true)
-	s.inFocus = s.FindWin(w)
+	w.SetFocus(true)
+	// We always want to use the "top-level" object that implements Win interface and
+	// it's possible someone calls SetFocus with an embedded *WinBase, thus use the look
+	// up to retrieve the top-level Win implementer.
+	s.focused = s.FindWin(w)
 }
 
 func (s *Sys) Run(fallbackHandler EventHandler) {
 	RunEventLoop(s,
 		func(ev cterm.Event) EventResponse {
 			resp := EventNotHandled
-			if s.inFocus != nil && s.inFocus.Cfg().EventHandler != nil {
-				resp = s.inFocus.Cfg().EventHandler(ev)
+			if s.focused != nil && s.focused.Cfg().EventHandler != nil {
+				resp = s.focused.Cfg().EventHandler(ev)
 			}
 			if resp == EventNotHandled {
 				return fallbackHandler(ev)
@@ -163,11 +170,13 @@ func (s *Sys) CenterBanner(parent Win, title, format string, a ...interface{}) W
 			Y: (parent.ClientRect().H - height) / 2,
 			W: width,
 			H: height},
-		Name:       title,
-		BorderAttr: Attr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
-		ClientAttr: Attr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
+		Name:              title,
+		BorderAttr:        Attr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
+		InFocusBorderAttr: &Attr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
+		ClientAttr:        Attr{Fg: cterm.ColorDefault, Bg: cterm.ColorBlue},
+		TitleAlign:        AlignCenter,
 	})
-	w.SetTitleAligned(AlignCenter, title)
+	w.SetTitle(title)
 	w.SetText(msg)
 	return w
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unsafe"
 
+	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/go-corelib/maths"
 )
 
@@ -13,9 +14,12 @@ type WinBase struct {
 	sys *Sys
 
 	buf []Chx
+
 	// Note this clientR.X/Y are the actual X/Y of the client region relative to
 	// this window's Rect.
 	clientR Rect
+	title   string
+	focused bool
 
 	parent, prev, next, childFirst, childLast *WinBase
 }
@@ -83,70 +87,63 @@ func (wb *WinBase) SetEventHandler(evHandler EventHandler) {
 	wb.cfg.EventHandler = evHandler
 }
 
-func (wb *WinBase) SetTitleAligned(align Align, format string, a ...interface{}) {
+func (wb *WinBase) SetTitle(format string, a ...interface{}) {
 	if wb.cfg.NoBorder {
 		return
 	}
 	if wb.cfg.NoTitle {
 		return
 	}
+	wb.title = fmt.Sprintf(format, a...)
 	// this is needed in case we're setting a new title that is shorter than (or even
 	// to none) than the previously one
-	wb.fill(Rect{1, 0, wb.cfg.R.W - 2, 1}, Chx{wb.borderRunes()[BorderRuneH], wb.cfg.BorderAttr})
+	wb.fill(Rect{1, 0, wb.cfg.R.W - 2, 1}, Chx{wb.borderRunes()[BorderRuneH], wb.borderAttr()})
 	padding := 1
-	if wb.cfg.NoHPaddingTitle {
+	if wb.cfg.NoPaddingTitle {
 		padding = 0
 	}
 	if wb.clientR.W-2*padding <= 0 {
 		return
 	}
-	t := []rune(fmt.Sprintf(format, a...))
+	t := []rune(wb.title)
 	tlen := len(t)
 	if tlen <= 0 {
 		return
 	}
 	tlenActual := maths.MinInt(tlen+2*padding, wb.clientR.W)
 	startX := wb.clientR.X
-	switch align {
+	switch wb.cfg.TitleAlign {
 	case AlignCenter:
 		startX += (wb.clientR.W - tlenActual) / 2
 	case AlignRight:
 		startX += wb.clientR.W - tlenActual
 	}
 	if padding > 0 {
-		wb.put(startX, 0, Chx{RuneSpace, wb.cfg.BorderAttr})
+		wb.put(startX, 0, Chx{RuneSpace, wb.borderAttr()})
 		startX++
 	}
 	for i := 0; i < tlenActual-2*padding; i++ {
-		wb.put(startX, 0, Chx{t[i], wb.cfg.BorderAttr})
+		wb.put(startX, 0, Chx{t[i], wb.borderAttr()})
 		startX++
 	}
 	if padding > 0 {
-		wb.put(startX, 0, Chx{RuneSpace, wb.cfg.BorderAttr})
+		wb.put(startX, 0, Chx{RuneSpace, wb.borderAttr()})
 		startX++
-	}
-}
-
-func (wb *WinBase) SetTitle(format string, a ...interface{}) {
-	wb.SetTitleAligned(AlignLeft, format, a...)
-}
-
-func (wb *WinBase) SetTextAligned(align Align, format string, a ...interface{}) {
-	wb.FillClient(wb.ClientRect().ToOrigin(), Chx{Ch: RuneSpace, Attr: wb.cfg.ClientAttr})
-	lines := strings.Split(fmt.Sprintf(format, a...), "\n")
-	for cy := 0; cy < maths.MinInt(wb.clientR.H, len(lines)); cy++ {
-		wb.SetLineAligned(cy, align, wb.cfg.ClientAttr, lines[cy])
 	}
 }
 
 func (wb *WinBase) SetText(format string, a ...interface{}) {
-	wb.SetTextAligned(AlignLeft, format, a...)
+	wb.FillClient(wb.ClientRect().ToOrigin(), Chx{Ch: RuneSpace, Attr: wb.cfg.ClientAttr})
+	lines := strings.Split(fmt.Sprintf(format, a...), "\n")
+	for cy := 0; cy < maths.MinInt(wb.clientR.H, len(lines)); cy++ {
+		wb.SetLine(cy, wb.cfg.ClientAttr, lines[cy])
+	}
 }
 
-func (wb *WinBase) SetLineAligned(cy int, align Align, attr Attr, format string, a ...interface{}) {
+func (wb *WinBase) SetLine(cy int, attr Attr, format string, a ...interface{}) {
 	wb.FillClient(Rect{X: 0, Y: cy, W: wb.clientR.W, H: 1}, Chx{Ch: RuneSpace, Attr: attr})
 	padding := 1
-	if wb.cfg.NoHPaddingText {
+	if wb.cfg.NoPaddingText {
 		padding = 0
 	}
 	if wb.clientR.W-2*padding <= 0 {
@@ -159,7 +156,7 @@ func (wb *WinBase) SetLineAligned(cy int, align Align, attr Attr, format string,
 	}
 	llenActual := maths.MinInt(llen+2*padding, wb.clientR.W)
 	startCX := 0
-	switch align {
+	switch wb.cfg.TextAlign {
 	case AlignCenter:
 		startCX += (wb.clientR.W - llenActual) / 2
 	case AlignRight:
@@ -179,8 +176,9 @@ func (wb *WinBase) SetLineAligned(cy int, align Align, attr Attr, format string,
 	}
 }
 
-func (wb *WinBase) SetLine(cy int, format string, a ...interface{}) {
-	wb.SetLineAligned(cy, AlignLeft, wb.cfg.ClientAttr, format, a...)
+func (wb *WinBase) SetFocus(focused bool) {
+	wb.focused = focused
+	wb.renderBorderAndTitle()
 }
 
 func (wb *WinBase) SendToBottom(recursive bool) {
@@ -282,10 +280,30 @@ func (wb *WinBase) removeChild(child *WinBase) {
 }
 
 func (wb *WinBase) borderRunes() *BorderRunes {
-	if wb.cfg.BorderRunes != nil {
-		return wb.cfg.BorderRunes
+	if wb.focused {
+		if wb.cfg.InFocusBorderRunes != nil {
+			return wb.cfg.InFocusBorderRunes
+		}
+		if wb.cfg.BorderRunes != nil {
+			return wb.cfg.BorderRunes
+		}
+		return &DoubleLineBorderRunes
+	} else {
+		if wb.cfg.BorderRunes != nil {
+			return wb.cfg.BorderRunes
+		}
+		return &SingleLineBorderRunes
 	}
-	return &SingleLineBorderRunes
+}
+
+func (wb *WinBase) borderAttr() Attr {
+	if wb.focused {
+		if wb.cfg.InFocusBorderAttr != nil {
+			return *wb.cfg.InFocusBorderAttr
+		}
+		return Attr{Fg: cterm.ColorLightYellow}
+	}
+	return wb.cfg.BorderAttr
 }
 
 func (wb *WinBase) bufIdx(x, y int) int {
@@ -307,7 +325,7 @@ func (wb *WinBase) fill(r Rect, chx Chx) {
 	}
 }
 
-func (wb *WinBase) putBorder() {
+func (wb *WinBase) renderBorderAndTitle() {
 	if wb.cfg.NoBorder {
 		return
 	}
@@ -315,24 +333,26 @@ func (wb *WinBase) putBorder() {
 		return
 	}
 	borderRunes := wb.borderRunes()
+	borderAttr := wb.borderAttr()
 	// UL
-	wb.put(0, 0, Chx{borderRunes[BorderRuneUL], wb.cfg.BorderAttr})
+	wb.put(0, 0, Chx{borderRunes[BorderRuneUL], borderAttr})
 	// UR
-	wb.put(wb.cfg.R.W-1, 0, Chx{borderRunes[BorderRuneUR], wb.cfg.BorderAttr})
+	wb.put(wb.cfg.R.W-1, 0, Chx{borderRunes[BorderRuneUR], borderAttr})
 	// LR
-	wb.put(wb.cfg.R.W-1, wb.cfg.R.H-1, Chx{borderRunes[BorderRuneLR], wb.cfg.BorderAttr})
+	wb.put(wb.cfg.R.W-1, wb.cfg.R.H-1, Chx{borderRunes[BorderRuneLR], borderAttr})
 	// LL
-	wb.put(0, wb.cfg.R.H-1, Chx{borderRunes[BorderRuneLL], wb.cfg.BorderAttr})
+	wb.put(0, wb.cfg.R.H-1, Chx{borderRunes[BorderRuneLL], borderAttr})
 	// top/bottom horizontal lines
-	wb.fill(Rect{1, 0, wb.cfg.R.W - 2, 1}, Chx{borderRunes[BorderRuneH], wb.cfg.BorderAttr})
-	wb.fill(Rect{1, wb.cfg.R.H - 1, wb.cfg.R.W - 2, 1}, Chx{borderRunes[BorderRuneH], wb.cfg.BorderAttr})
+	wb.fill(Rect{1, 0, wb.cfg.R.W - 2, 1}, Chx{borderRunes[BorderRuneH], borderAttr})
+	wb.fill(Rect{1, wb.cfg.R.H - 1, wb.cfg.R.W - 2, 1}, Chx{borderRunes[BorderRuneH], borderAttr})
 	// left/right vertical lines
-	wb.fill(Rect{0, 1, 1, wb.cfg.R.H - 2}, Chx{borderRunes[BorderRuneV], wb.cfg.BorderAttr})
-	wb.fill(Rect{wb.cfg.R.W - 1, 1, 1, wb.cfg.R.H - 2}, Chx{borderRunes[BorderRuneV], wb.cfg.BorderAttr})
+	wb.fill(Rect{0, 1, 1, wb.cfg.R.H - 2}, Chx{borderRunes[BorderRuneV], borderAttr})
+	wb.fill(Rect{wb.cfg.R.W - 1, 1, 1, wb.cfg.R.H - 2}, Chx{borderRunes[BorderRuneV], borderAttr})
+	wb.SetTitle(wb.title)
 }
 
 func NewWinBase(sys *Sys, parent Win, c WinCfg) *WinBase {
-	cw := &WinBase{sys: sys, cfg: c}
+	cw := &WinBase{sys: sys, cfg: c, title: c.Name, focused: false}
 	if parent != nil {
 		cw.parent = parent.Base()
 	}
@@ -344,11 +364,8 @@ func NewWinBase(sys *Sys, parent Win, c WinCfg) *WinBase {
 		cw.clientR.H -= 2
 	}
 	cw.buf = make([]Chx, cw.cfg.R.W*cw.cfg.R.H)
-	cw.putBorder()
+	cw.renderBorderAndTitle()
 	cw.fill(cw.clientR, Chx{RuneSpace, cw.cfg.ClientAttr})
-	if len(cw.cfg.Name) > 0 {
-		cw.SetTitle(cw.cfg.Name)
-	}
 	return cw
 }
 

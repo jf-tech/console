@@ -3,42 +3,18 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/jf-tech/console/cgame"
+	"github.com/jf-tech/console/cgame/assets"
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
 )
 
-const (
-	codeQuit int = iota
-	codeReplay
-	codeGameInitFailure
-
-	// https://textkool.com/en/ascii-art-generator?hl=default&vl=default&font=Colossal&text=Game%20Over%20!
-	gameOverTxt = `
-
- .d8888b.                                        .d88888b.                                 888
-d88P  Y88b                                      d88P" "Y88b                                888
-888    888                                      888     888                                888
-888         8888b.  88888b.d88b.   .d88b.       888     888 888  888  .d88b.  888d888      888
-888  88888     "88b 888 "888 "88b d8P  Y8b      888     888 888  888 d8P  Y8b 888P"        888
-888    888 .d888888 888  888  888 88888888      888     888 Y88  88P 88888888 888          Y8P
-Y88b  d88P 888  888 888  888  888 Y8b.          Y88b. .d88P  Y8bd8P  Y8b.     888           "
- "Y8888P88 "Y888888 888  888  888  "Y8888        "Y88888P"    Y88P    "Y8888  888          888
-
-
-                            Press ESC or 'q' to quit, 'r' to replay.`
-)
-
 func main() {
-	code := codeReplay
-	for code == codeReplay {
-		code = (&myGame{}).main()
+	for (&myGame{}).main() == int(assets.GameResultReplay) {
 	}
-	os.Exit(code)
 }
 
 type myGame struct {
@@ -61,7 +37,7 @@ func (m *myGame) main() int {
 	var err error
 	m.g, err = cgame.Init(cterm.TCell)
 	if err != nil {
-		return codeGameInitFailure
+		return int(assets.GameResultSystemFailure)
 	}
 	defer m.g.Close()
 
@@ -116,12 +92,7 @@ func (m *myGame) main() int {
 	})
 
 game_over:
-	ev := m.g.WinSys.MessageBoxEx(
-		nil, append(gameOverKeys, replayGameKeys...), "uh oh...", gameOverTxt)
-	if ev.Ch == 'r' {
-		return codeReplay
-	}
-	return codeQuit
+	return int(assets.DisplayGameOverDialog(m.g))
 }
 
 var (
@@ -138,9 +109,6 @@ var (
 	winNextFrameH  = 1 /*border*/ + winNextH + 1                                /*border*/
 	winInstrH      = 9
 	winGameW       = winArenaFrameW + 1 /*space*/ + winNextFrameW
-
-	gameOverKeys   = cwin.Keys(cterm.KeyEsc, 'q')
-	replayGameKeys = cwin.Keys('r')
 
 	directDropDelay      = 10 * time.Millisecond
 	baseNaturalDropDelay = 1000 * time.Millisecond

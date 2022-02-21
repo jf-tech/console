@@ -82,22 +82,23 @@ func (sb *SpriteBase) DeleteAnimator(as ...Animator) {
 	}
 }
 
-func (sb *SpriteBase) ToBottom() {
+func (sb *SpriteBase) SendToBottom() {
 	sb.win.SendToBottom(false)
 }
 
-func (sb *SpriteBase) ToTop() {
+func (sb *SpriteBase) SendToTop() {
 	sb.win.SendToTop(false)
 }
 
 type UpdateArg struct {
-	DXY *cwin.Point            // update the sprite position by (dx,dy), if non nil.
-	F   Frame                  // If nil, no frame update; If empty (len=0), frame will be wiped clean
-	IBC InBoundsCheckType      // default to no in-bounds check.
-	CD  CollisionDetectionType // default to collision detection
+	DXY      *cwin.Point            // update the sprite position by (dx,dy), if non nil.
+	F        Frame                  // If nil, no frame update; If empty (len=0), frame will be wiped clean
+	IBC      InBoundsCheckType      // default to no in-bounds check.
+	CD       CollisionDetectionType // default to collision detection
+	TestOnly bool                   // if true, do the tests only, no actual update or notifications
 }
 
-// returns true if update is carried out; false if not.
+// returns false if any of the tests (bounds, collision) fails; true otherwise.
 // Important, do not call Update with IBC/CD turned on from your InBoundsCheckResponse.Notify
 // or CollisionResponse.Notify or it might cause infinite recursion.
 func (sb *SpriteBase) Update(arg UpdateArg) bool {
@@ -117,7 +118,7 @@ func (sb *SpriteBase) Update(arg UpdateArg) bool {
 	}
 	if inBoundsCheckResult != InBoundsCheckResultOK {
 		resp := InBoundsCheckResponseAbandon
-		if r, ok := s.(InBoundsCheckResponse); ok {
+		if r, ok := s.(InBoundsCheckResponse); ok && !arg.TestOnly {
 			resp = r.InBoundsCheckNotify(inBoundsCheckResult)
 		}
 		if resp == InBoundsCheckResponseAbandon {
@@ -130,20 +131,22 @@ func (sb *SpriteBase) Update(arg UpdateArg) bool {
 	}
 	if len(collided) > 0 {
 		resp := CollisionResponseAbandon
-		if r, ok := s.(CollisionResponse); ok {
+		if r, ok := s.(CollisionResponse); ok && !arg.TestOnly {
 			resp = r.CollisionNotify(true, collided)
 		}
 		if resp == CollisionResponseAbandon {
 			return false
 		}
 		for _, c := range collided {
-			if r, ok := c.(CollisionResponse); ok {
+			if r, ok := c.(CollisionResponse); ok && !arg.TestOnly {
 				r.CollisionNotify(false, []Sprite{s})
 			}
 		}
 	}
-	sb.win.SetPosRel(r.X-s.Rect().X, r.Y-s.Rect().Y)
-	FrameToWin(f, sb.win)
+	if !arg.TestOnly {
+		sb.win.SetPosRel(r.X-s.Rect().X, r.Y-s.Rect().Y)
+		FrameToWin(f, sb.win)
+	}
 	return true
 }
 

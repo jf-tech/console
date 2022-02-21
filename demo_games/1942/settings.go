@@ -11,9 +11,6 @@ import (
 )
 
 var (
-	gameOverKeys       = cwin.Keys(cterm.KeyEsc, 'q')
-	pauseGameKeys      = cwin.Keys('p')
-	replayGameKeys     = cwin.Keys('r')
 	skipStageKeys      = cwin.Keys('s')
 	easyModeKeys       = cwin.Keys('e')
 	invincibleModeKeys = cwin.Keys('i')
@@ -21,10 +18,8 @@ var (
 	sfxBackgroundVol = float64(-4)
 	sfxClipVol       = float64(-1)
 
-	sfxAllFiles = []string{}
-	sfxFile     = func(relpath string) string {
-		sfxAllFiles = append(sfxAllFiles, path.Join(cutil.GetCurFileDir(), relpath))
-		return relpath
+	sfxFile = func(relpath string) string {
+		return path.Join(cutil.GetCurFileDir(), relpath)
 	}
 	sfxBackgroundFile     = sfxFile("resources/background.mp3")
 	sfxGameStartFile      = sfxFile("resources/game-start.mp3")
