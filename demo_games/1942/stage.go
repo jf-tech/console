@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jf-tech/console/cgame/assets"
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cwin"
 )
@@ -21,11 +22,16 @@ type stage struct {
 func (s *stage) Run() {
 	s.init()
 	s.runStageIntroBanner()
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
+	s.m.g.Run(assets.GameOverKeys, assets.PauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
 		if s.checkStageDone() {
 			return cwin.EventLoopStop
 		}
-		alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
+		var alpha *spriteAlpha
+		if a, ok := s.m.g.SpriteMgr.TryFindByName(alphaName); ok {
+			alpha = a.(*spriteAlpha)
+		} else {
+			return cwin.EventNotHandled
+		}
 		alpha.SendToTop()
 		if ev.Type == cterm.EventKey {
 			// due to console aspect ration, make left/right move a bit faster.
@@ -74,7 +80,7 @@ func (s *stage) runStageIntroBanner() {
 		createAlpha(s.m, s)
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
+	s.m.g.Run(assets.GameOverKeys, assets.PauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
 		return cwin.TrueForEventSystemStop(bannerDone)
 	})
 }
@@ -84,7 +90,7 @@ func (s *stage) runStagePassedBanner() {
 	createStagePassedBanner(s.m, func() {
 		bannerDone = true
 	})
-	s.m.g.Run(gameOverKeys, pauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
+	s.m.g.Run(assets.GameOverKeys, assets.PauseGameKeys, func(ev cterm.Event) cwin.EventResponse {
 		return cwin.TrueForEventSystemStop(bannerDone)
 	})
 }

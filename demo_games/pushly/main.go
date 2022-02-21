@@ -126,6 +126,11 @@ var (
 	winLevelLBH    = winArenaFrameH - winInstrH
 	winGameW       = winArenaFrameW + 1 /*space*/ + winLevelLBW
 	winGameH       = winArenaFrameH
+
+	sfxFile = func(relpath string) string {
+		return path.Join(cutil.GetCurFileDir(), relpath)
+	}
+	sfxClick = sfxFile("resources/click.mp3")
 )
 
 func (m *myGame) gameSetup() {
@@ -444,6 +449,7 @@ func (s *sprite) push(dir cwin.Dir) {
 		s.m.board[newLY][newLX] = nil
 	}
 	if s.Update(cgame.UpdateArg{DXY: &cwin.Point{X: LX2X(dlx), Y: LY2Y(dly)}}) {
+		s.m.g.SoundMgr.PlayMP3(sfxClick, -1, 1)
 		s.SendToTop()
 		s.m.board[newLY][newLX] = s
 		s.m.board[curLY][curLX] = nil

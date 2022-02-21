@@ -45,8 +45,9 @@ Y88b   d88P                     888       888                        888
 
                   Press ESC or 'q' to quit, 'r' to replay.`
 
-	GameOverKeys = cwin.Keys(cterm.KeyEsc, 'q')
-	ReplayKeys   = cwin.Keys('r')
+	GameOverKeys  = cwin.Keys(cterm.KeyEsc, 'q')
+	PauseGameKeys = cwin.Keys('p')
+	ReplayKeys    = cwin.Keys('r')
 )
 
 func DisplayGameOverDialog(g *cgame.Game) GameResult {

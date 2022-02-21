@@ -31,7 +31,7 @@ func (m *myGame) main() assets.GameResult {
 	m.g.SoundMgr.PlayMP3(sfxBackgroundFile, sfxBackgroundVol, -1)
 
 	e := m.g.WinSys.MessageBoxEx(m.winArena,
-		append(cwin.Keys(cterm.KeyEnter), append(gameOverKeys, easyModeKeys...)...),
+		append(cwin.Keys(cterm.KeyEnter), append(assets.GameOverKeys, easyModeKeys...)...),
 		"WWII - 1942", `
 Axis and Allied forces have been deeply engaged in World War II and now the
 fighting is quickly approaching the final stage. Both sides have suffered
@@ -45,7 +45,7 @@ Good luck, solider!
 Press Enter to start the game; ESC or 'q' to quit.
 ('e' to start in Easy Mode, if you're patient enough to read :)
 `)
-	if cwin.FindKey(gameOverKeys, e) {
+	if cwin.FindKey(assets.GameOverKeys, e) {
 		return assets.GameResultQuit
 	}
 	m.easyMode = cwin.FindKey(easyModeKeys, e)
