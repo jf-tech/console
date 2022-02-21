@@ -40,6 +40,7 @@ func main() {
 
 type spriteParticle struct {
 	*cgame.SpriteBase
+	id             int64
 	dx, dy         int
 	speed          cgame.CharPerSec
 	animator       cgame.Animator
@@ -148,12 +149,13 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 	r := demoWin.ClientRect().ToOrigin()
 	collision := int64(0)
 	hitBounds := int64(0)
-	var ids []int64
+	var particles []*spriteParticle
 	createParticle := func(x, y, dx, dy int, color cterm.Attribute, speed cgame.CharPerSec) bool {
 		attr := cwin.Attr{Fg: color}
-		s := &spriteParticle{
+		p := &spriteParticle{
 			SpriteBase: cgame.NewSpriteBase(g, demoWin, particleName,
 				cgame.SetAttrInFrame(cgame.CopyFrame(particleFrameNoAttr), attr), x, y),
+			id:    cwin.GenUID(),
 			dx:    dx,
 			dy:    dy,
 			speed: speed,
@@ -167,15 +169,15 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 		// by Update with no dx/dy and no new frame, simmply with a bounds check and collision
 		// check. If the update fails, then there is a collision (or the sprite is out of bounds)
 		// circle though)
-		if !s.Update(cgame.UpdateArg{
+		if !p.Update(cgame.UpdateArg{
 			IBC: cgame.InBoundsCheckFullyVisible,
 			CD:  cgame.CollisionDetectionOn}) {
-			s.Destroy() // do remember to destroy the sprite as its cwin is already created.
+			p.Destroy() // do remember to destroy the sprite as its cwin is already created.
 			return false
 		}
-		s.resetAnimator()
-		g.SpriteMgr.AsyncCreateSprite(s)
-		ids = append(ids, s.UID())
+		p.resetAnimator()
+		g.SpriteMgr.AddSprite(p)
+		particles = append(particles, p)
 		return true
 	}
 
@@ -196,7 +198,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 		sb.WriteString(fmt.Sprintf("- Mem: %s\n", cwin.ByteSizeStr(g.HeapUsageInBytes())))
 		sb.WriteString(fmt.Sprintf("- Pixels: %s\n", cwin.ByteSizeStr(g.WinSys.TotalChxRendered())))
 		sb.WriteString(fmt.Sprintf("- Loop time: %s\n", stopwatch.Total()))
-		sb.WriteString(fmt.Sprintf("- Particle #: %d\n", len(ids)))
+		sb.WriteString(fmt.Sprintf("- Particle #: %d\n", len(particles)))
 		sb.WriteString(fmt.Sprintf("- Collisions: %d\n", collision))
 		sb.WriteString(fmt.Sprintf("- Boundary Hits: %d\n", hitBounds))
 		sb.WriteString(fmt.Sprint("\n"))
@@ -204,8 +206,8 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 		for _, s := range g.SpriteMgr.Sprites() {
 			sp := s.(*spriteParticle)
 			sb.WriteString(fmt.Sprintf(
-				"- id(%2d): x/y=%3d/%3d, dx/dy=%3d/%3d, speed=%2.1f\n",
-				sp.UID(), sp.Rect().X, sp.Rect().Y, sp.dx, sp.dy, sp.speed))
+				"- [%4d]: x/y=%3d/%3d, dx/dy=%3d/%3d, speed=%2.1f\n",
+				sp.id, sp.Rect().X, sp.Rect().Y, sp.dx, sp.dy, sp.speed))
 		}
 		debugWin.SetText(sb.String())
 		stopwatch.Reset()
@@ -231,13 +233,11 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 				return cwin.EventHandled
 			}
 			if ev.Key == cterm.KeyArrowDown {
-				if len(ids) > 0 {
-					idx := rand.Int() % len(ids)
-					id := ids[idx]
-					s := g.SpriteMgr.FindByUID(id)
-					g.SpriteMgr.AsyncDeleteSprite(s)
-					copy(ids[idx:], ids[idx+1:])
-					ids = ids[:len(ids)-1]
+				if len(particles) > 0 {
+					idx := rand.Int() % len(particles)
+					g.SpriteMgr.DeleteSprite(particles[idx])
+					copy(particles[idx:], particles[idx+1:])
+					particles = particles[:len(particles)-1]
 				}
 				return cwin.EventHandled
 			}

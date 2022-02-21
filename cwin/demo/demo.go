@@ -28,7 +28,7 @@ func main() {
 	demoW, demoH := W3_4-listboxW, listboxH
 
 	demoR := cwin.Rect{X: (sysR.W - W3_4) / 2, Y: (sysR.H - H3_4) / 2, W: demoW, H: demoH}
-	demoWin := sys.CreateWin(nil, cwin.WinCfg{R: demoR, TextAlign: cwin.AlignRight})
+	demoWin := sys.CreateWin(nil, cwin.WinCfg{R: demoR, Name: "demo"})
 	var sb strings.Builder
 	for i := 0; i < 60; i++ {
 		for j := 0; j <= i; j++ {
@@ -102,8 +102,13 @@ It can be dismissed by pressing Enter/Return, or ESC.
 It returns true if Enter/Return is pressed; false if ESC is pressed.
 
 Current time is: %s`, time.Now().Format(time.RFC3339))
-	demoWin.SetText("MessageBox return value: %t", ret)
-	demoWin.SetTitle(fmt.Sprintf("%s - Press any key to exit.", demoTitlePrefix))
+	demoWin.SetText("MessageBox return value: %t\n\nPress any key to dump all window info...", ret)
+	sys.Update()
+	sys.SyncExpectKey(nil)
+
+	demoWin.SetTitle(fmt.Sprintf("%s - Press any key to exit", demoTitlePrefix))
+	demoWin.SetText(sys.Dump())
+
 	sys.Update()
 	sys.SyncExpectKey(nil)
 }

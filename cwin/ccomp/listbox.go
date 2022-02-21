@@ -39,7 +39,7 @@ func (lb *ListBox) SetItems(items []string) {
 }
 
 func (lb *ListBox) String() string {
-	return fmt.Sprintf("listbox['%s'|0x%X|%s]",
+	return fmt.Sprintf("ListBox['%s'|0x%X|%s]",
 		lb.Cfg().Name, uintptr(unsafe.Pointer(lb)), lb.Rect())
 }
 

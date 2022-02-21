@@ -25,7 +25,7 @@ type spriteDelta struct {
 
 // cgame.CollisionResponse
 func (d *spriteDelta) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
-	cgame.CreateExplosion(d.SpriteBase, cgame.ExplosionCfg{MaxDuration: deltaExplosionDuration})
+	cgame.CreateExplosion(d, cgame.ExplosionCfg{MaxDuration: deltaExplosionDuration})
 	d.Mgr().FindByName(alphaName).(*spriteAlpha).deltaKills++
 	return cgame.CollisionResponseJustDoIt
 }
@@ -55,7 +55,7 @@ func createVerticalDelta(m *myGame) {
 				T:  time.Duration((float64(dist) / float64(vspeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }
 
 func createHorizontalDelta(m *myGame) {
@@ -75,5 +75,5 @@ func createHorizontalDelta(m *myGame) {
 				T:  time.Duration((float64(abs(dist)) / float64(deltaHorizontalSpeed)) * float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }

@@ -26,7 +26,7 @@ type spriteBeta struct {
 
 // cgame.CollisionResponse
 func (b *spriteBeta) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
-	cgame.CreateExplosion(b.SpriteBase, cgame.ExplosionCfg{MaxDuration: betaExplosionDuration})
+	cgame.CreateExplosion(b, cgame.ExplosionCfg{MaxDuration: betaExplosionDuration})
 	b.Mgr().FindByName(alphaName).(*spriteAlpha).betaKills++
 	return cgame.CollisionResponseJustDoIt
 }
@@ -63,5 +63,5 @@ func createBeta(m *myGame, stageIdx int) {
 		},
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }

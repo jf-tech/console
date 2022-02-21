@@ -18,7 +18,7 @@ type AnimatorWaypointCfg struct {
 
 type AnimatorWaypoint struct {
 	cfg AnimatorWaypointCfg
-	s   *SpriteBase
+	s   Sprite
 
 	clock *cutil.Clock
 
@@ -31,12 +31,12 @@ func (aw *AnimatorWaypoint) Animate() {
 	aw.checkToInit()
 
 	finish := func() {
-		aw.s.DeleteAnimator(aw)
+		aw.s.Base().DeleteAnimator(aw)
 		if aw.cfg.AfterFinish != nil {
 			aw.cfg.AfterFinish()
 		}
 		if !aw.cfg.KeepAliveWhenFinished {
-			aw.s.Mgr().AsyncDeleteSprite(aw.s)
+			aw.s.Mgr().DeleteSprite(aw.s)
 		}
 	}
 
@@ -53,7 +53,7 @@ func (aw *AnimatorWaypoint) Animate() {
 	if aw.dxDone != dx || aw.dyDone != dy {
 		// If collision is detected or in-bounds check fails, and PreUpdateNotify decides to abandon
 		// then the this animator is finished.
-		if !aw.s.Update(UpdateArg{
+		if !aw.s.Base().Update(UpdateArg{
 			DXY: &cwin.Point{X: dx - aw.dxDone, Y: dy - aw.dyDone},
 			IBC: aw.cfg.InBoundsCheckType,
 			CD:  aw.cfg.CollisionDetectionType}) {
@@ -93,6 +93,6 @@ func (aw *AnimatorWaypoint) checkToInit() {
 	}
 }
 
-func NewAnimatorWaypoint(s *SpriteBase, c AnimatorWaypointCfg) *AnimatorWaypoint {
+func NewAnimatorWaypoint(s Sprite, c AnimatorWaypointCfg) *AnimatorWaypoint {
 	return &AnimatorWaypoint{cfg: c, s: s}
 }

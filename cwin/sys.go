@@ -30,7 +30,7 @@ func Init(provider cterm.Provider) (*Sys, error) {
 	n := w * h
 	sys := &Sys{winReg: map[*WinBase]Win{}}
 	sysWin := NewWinBase(sys, nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})
-	sys.RegWin(sysWin)
+	sys.regWin(sysWin)
 	sys.sysWin = sysWin
 	sys.scrBuf = make([]Chx, n)
 	sys.offScrBuf = make([]Chx, n)
@@ -44,7 +44,7 @@ func (s *Sys) CreateWinEx(parent Win, createWin func() Win) Win {
 		pb = parent.Base()
 	}
 	w := createWin()
-	s.RegWin(w)
+	s.regWin(w)
 	pb.addChild(w.Base())
 	return w
 }
@@ -55,21 +55,17 @@ func (s *Sys) CreateWin(parent Win, cfg WinCfg) Win {
 	})
 }
 
-func (s *Sys) RegWin(w Win) {
-	s.winReg[w.Base()] = w
-}
-
 func (s *Sys) SysWin() Win {
 	return s.sysWin
 }
 
-func (s *Sys) TryFindWin(w Win) (Win, bool) {
+func (s *Sys) TryFind(w Win) (Win, bool) {
 	w, ok := s.winReg[w.Base()]
 	return w, ok
 }
 
-func (s *Sys) FindWin(w Win) Win {
-	if w, ok := s.TryFindWin(w); ok {
+func (s *Sys) Find(w Win) Win {
+	if w, ok := s.TryFind(w); ok {
 		return w
 	}
 	panic(fmt.Sprintf("unable to find %s", w))
@@ -77,19 +73,20 @@ func (s *Sys) FindWin(w Win) Win {
 
 func (s *Sys) RemoveWin(w Win) {
 	// the sysWin is non-removable
-	if s.sysWin.Same(w) {
+	if s.sysWin.Base() == w.Base() {
 		return
 	}
 	wb := w.Base()
 	wb.parent.removeChild(wb)
-	if s.focused != nil && s.focused.Same(w) {
+	if s.focused != nil && s.focused.Base() == w.Base() {
+		s.focused.SetFocus(false)
 		s.focused = nil
 	}
 	delete(s.winReg, wb)
 }
 
 func (s *Sys) SetFocus(w Win) {
-	if s.focused != nil && s.focused.Same(w) {
+	if s.focused != nil && s.focused.Base() == w.Base() {
 		return
 	}
 	if s.focused != nil {
@@ -100,7 +97,7 @@ func (s *Sys) SetFocus(w Win) {
 	// We always want to use the "top-level" object that implements Win interface and
 	// it's possible someone calls SetFocus with an embedded *WinBase, thus use the look
 	// up to retrieve the top-level Win implementer.
-	s.focused = s.FindWin(w)
+	s.focused = s.Find(w)
 }
 
 func (s *Sys) Run(fallbackHandler EventHandler) {
@@ -228,6 +225,26 @@ func (s *Sys) TotalChxRendered() int64 {
 func (s *Sys) Close() {
 	s.stopEventListening()
 	cterm.Close()
+}
+
+func (s *Sys) dumpTree(w Win, indent int, sb *strings.Builder) {
+	sb.WriteString(w.String())
+	sb.WriteRune('\n')
+	for c := w.ChildFirst(); c != nil; c = c.Next() {
+		sb.WriteString(strings.Repeat(" ", indent))
+		sb.WriteString("- ")
+		s.dumpTree(c, indent+2, sb)
+	}
+}
+
+func (s *Sys) Dump() string {
+	var sb strings.Builder
+	s.dumpTree(s.sysWin, 0, &sb)
+	return sb.String()
+}
+
+func (s *Sys) regWin(w Win) {
+	s.winReg[w.Base()] = w
 }
 
 func (s *Sys) doUpdateOffScrBuf(parentSysX, parentSysY int, w Win, sysRect Rect) {

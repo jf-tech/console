@@ -5,14 +5,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
 )
 
 type SpriteManager struct {
 	g                  *Game
-	ss                 []Sprite
-	eventQ             *cutil.ThreadSafeFIFO
+	ss                 map[*SpriteBase]Sprite
 	collidableRegistry *CollidableRegistry
 }
 
@@ -20,8 +18,8 @@ func (sm *SpriteManager) CollidableRegistry() *CollidableRegistry {
 	return sm.collidableRegistry
 }
 
-// Note the names of sprite instances are not required to be unique, this method
-// return the first matching one, if any.
+// FindByName returns the first sprite managed by the SpriteManager that has the same
+// name. If no match is found, panic.
 func (sm *SpriteManager) FindByName(name string) Sprite {
 	if s, ok := sm.TryFindByName(name); ok {
 		return s
@@ -29,81 +27,81 @@ func (sm *SpriteManager) FindByName(name string) Sprite {
 	panic(fmt.Sprintf("Cannot find sprite named '%s'", name))
 }
 
+// TryFindByName returns the first sprite managed by the SpriteManager that has the same
+// name.
 func (sm *SpriteManager) TryFindByName(name string) (Sprite, bool) {
-	for i := 0; i < len(sm.ss); i++ {
-		if sm.ss[i].Name() == name {
-			return sm.ss[i], true
+	for _, s := range sm.ss {
+		if s.Name() == name {
+			return s, true
 		}
 	}
 	return nil, false
 }
 
-func (sm *SpriteManager) FindByUID(uid int64) Sprite {
-	if s, ok := sm.TryFindByUID(uid); ok {
-		return s
+// Find returns the unique sprite managed by the SpriteManager that is identified
+// by its SpriteBase. If no Sprite is found, panic.
+func (sm *SpriteManager) Find(s Sprite) Sprite {
+	if ret, ok := sm.TryFind(s); ok {
+		return ret
 	}
-	panic(fmt.Sprintf("Cannot find sprite with uid %d", uid))
+	panic(fmt.Sprintf("Cannot find sprite %s", s.String()))
 }
 
-func (sm *SpriteManager) TryFindByUID(uid int64) (Sprite, bool) {
-	for i := 0; i < len(sm.ss); i++ {
-		if sm.ss[i].UID() == uid {
-			return sm.ss[i], true
-		}
-	}
-	return nil, false
+// TryFind returns the unique sprite managed by the SpriteManager that is identified
+// by its SpriteBase.
+func (sm *SpriteManager) TryFind(s Sprite) (Sprite, bool) {
+	ret, ok := sm.ss[s.Base()]
+	return ret, ok
 }
 
 func (sm *SpriteManager) Process() {
-	sm.processEvents()
 	sm.processAnimators()
-	sm.processEvents()
 }
 
-func (sm *SpriteManager) AsyncCreateSprite(s Sprite) *SpriteManager {
-	sm.eventQ.Push(newSpriteEventCreate(s))
-	return sm
+func (sm *SpriteManager) AddSprite(s Sprite) {
+	sm.ss[s.Base()] = s
 }
 
-func (sm *SpriteManager) AsyncDeleteSprite(s Sprite) *SpriteManager {
-	sm.eventQ.Push(newSpriteEventDelete(s))
-	return sm
+func (sm *SpriteManager) DeleteSprite(s Sprite) {
+	s.Destroy()
+	delete(sm.ss, s.Base())
 }
 
-func (sm *SpriteManager) AsyncDeleteAll() *SpriteManager {
-	sm.eventQ.Push(newSpriteEventDeleteAll())
-	return sm
+func (sm *SpriteManager) DeleteAll() {
+	for _, s := range sm.ss {
+		s.Destroy()
+	}
+	sm.ss = map[*SpriteBase]Sprite{}
 }
 
-func (sm *SpriteManager) AsyncFunc(f func()) *SpriteManager {
-	sm.eventQ.Push(newSpriteEventFunc(f))
-	return sm
-}
-
-func (sm *SpriteManager) CheckCollision(s Sprite, newR cwin.Rect, newF Frame) []Sprite {
-	var collided []Sprite
-	for i := 0; i < len(sm.ss); i++ {
-		if s.UID() == sm.ss[i].UID() {
+// CheckCollision does the collision detection with the collider against all the managed Sprites
+// using the collider's Rect and Frame. Note that colliderR and colliderF are not necessarily
+// the same as the collider's current position and frame.
+func (sm *SpriteManager) CheckCollision(
+	collider Sprite, colliderR cwin.Rect, colliderF Frame) []Sprite {
+	var collidees []Sprite
+	for _, collidee := range sm.ss {
+		if collider.Base() == collidee.Base() {
 			continue
 		}
-		if !sm.collidableRegistry.canCollide(s.Name(), sm.ss[i].Name()) {
+		if !sm.collidableRegistry.canCollide(collider.Name(), collidee.Name()) {
 			continue
 		}
-		r2 := sm.ss[i].Rect()
-		f2 := sm.ss[i].Frame()
-		if DetectCollision(newR, newF, r2, f2) {
-			collided = append(collided, sm.ss[i])
+		r2 := collidee.Rect()
+		f2 := collidee.Frame()
+		if DetectCollision(colliderR, colliderF, r2, f2) {
+			collidees = append(collidees, collidee)
 		}
 	}
-	return collided
+	return collidees
 }
 
 func (sm *SpriteManager) Sprites() []Sprite {
-	// make a snapshot to return so that caller won't get into potentially
-	// changing slice.
-	var cp []Sprite
-	cp = append(cp, sm.ss...)
-	return cp
+	var ret []Sprite
+	for _, s := range sm.ss {
+		ret = append(ret, s)
+	}
+	return ret
 }
 
 func (sm *SpriteManager) DbgStats() string {
@@ -124,38 +122,6 @@ func (sm *SpriteManager) DbgStats() string {
 	return sb.String()
 }
 
-func (sm *SpriteManager) processEvents() {
-	for {
-		e, ok := sm.eventQ.TryPop()
-		if !ok {
-			break
-		}
-		se := e.(*spriteEvent)
-		switch se.typ {
-		case spriteEventCreate:
-			if sm.spriteIndex(se.s) >= 0 {
-				panic(fmt.Sprintf("Sprite['%s',%d] is being re-added", se.s.Name(), se.s.UID()))
-			}
-			sm.ss = append(sm.ss, se.s)
-		case spriteEventDelete:
-			idx := sm.spriteIndex(se.s)
-			if idx < 0 {
-				return
-			}
-			se.s.Destroy()
-			copy(sm.ss[idx:], sm.ss[idx+1:])
-			sm.ss = sm.ss[:len(sm.ss)-1]
-		case spriteEventDeleteAll:
-			for _, s := range sm.ss {
-				s.Destroy()
-			}
-			sm.ss = sm.ss[:0]
-		case spriteEventFunc:
-			se.body.(func())()
-		}
-	}
-}
-
 func (sm *SpriteManager) processAnimators() {
 	for _, s := range sm.ss {
 		as := s.Animators()
@@ -165,24 +131,10 @@ func (sm *SpriteManager) processAnimators() {
 	}
 }
 
-func (sm *SpriteManager) spriteIndex(s Sprite) int {
-	for i := 0; i < len(sm.ss); i++ {
-		if sm.ss[i].UID() == s.UID() {
-			return i
-		}
-	}
-	return -1
-}
-
-const (
-	defaultSpriteBufCap = 1000
-)
-
 func newSpriteManager(g *Game) *SpriteManager {
 	return &SpriteManager{
 		g:                  g,
-		ss:                 make([]Sprite, 0, defaultSpriteBufCap),
-		eventQ:             cutil.NewThreadSafeFIFO(defaultSpriteBufCap),
+		ss:                 map[*SpriteBase]Sprite{},
 		collidableRegistry: newCollidableRegistry(),
 	}
 }

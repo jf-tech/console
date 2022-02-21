@@ -56,7 +56,7 @@ func (b *spriteBoss) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionRe
 		CD: cgame.CollisionDetectionOff,
 	})
 	if b.hpLeft <= 0 {
-		cgame.CreateExplosion(b.SpriteBase, cgame.ExplosionCfg{
+		cgame.CreateExplosion(b, cgame.ExplosionCfg{
 			MaxDuration: bossExplosionDuration,
 			SpriteName:  bossExplosionName,
 		})
@@ -130,7 +130,7 @@ func createBoss(m *myGame) {
 		},
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }
 
 type bossWaypoints struct {

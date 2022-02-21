@@ -65,7 +65,7 @@ func doDemo(g *cgame.Game, demoWin cwin.Win) {
 			},
 		},
 	}))
-	g.SpriteMgr.AsyncCreateSprite(s)
+	g.SpriteMgr.AddSprite(s)
 	// run the demo
 	g.Run(cwin.Keys('q', cterm.KeyEsc), nil, cwin.NopHandledEventHandler)
 }

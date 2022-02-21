@@ -13,7 +13,7 @@ type AnimatorFrameCfg struct {
 
 type AnimatorFrame struct {
 	cfg AnimatorFrameCfg
-	s   *SpriteBase
+	s   Sprite
 
 	clock *cutil.Clock
 
@@ -30,12 +30,12 @@ func (af *AnimatorFrame) Animate() {
 	if af.setNextFrame() {
 		return
 	}
-	af.s.DeleteAnimator(af)
+	af.s.Base().DeleteAnimator(af)
 	if af.cfg.AfterFinish != nil {
 		af.cfg.AfterFinish()
 	}
 	if !af.cfg.KeepAliveWhenFinished {
-		af.s.Mgr().AsyncDeleteSprite(af.s)
+		af.s.Mgr().DeleteSprite(af.s)
 	}
 }
 
@@ -44,7 +44,7 @@ func (af *AnimatorFrame) setNextFrame() (more bool) {
 	if f, af.curFrameDuration, more = af.cfg.Frames.Next(); !more {
 		return false
 	}
-	if !af.s.Update(UpdateArg{
+	if !af.s.Base().Update(UpdateArg{
 		F:   f,
 		IBC: af.cfg.InBoundsCheckType,
 		CD:  af.cfg.CollisionDetectionType}) {
@@ -67,6 +67,6 @@ func (af *AnimatorFrame) checkToInit() {
 	}
 }
 
-func NewAnimatorFrame(s *SpriteBase, c AnimatorFrameCfg) *AnimatorFrame {
+func NewAnimatorFrame(s Sprite, c AnimatorFrameCfg) *AnimatorFrame {
 	return &AnimatorFrame{cfg: c, s: s}
 }

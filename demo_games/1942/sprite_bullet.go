@@ -16,7 +16,7 @@ type spriteBullet struct {
 }
 
 func (b *spriteBullet) CollisionNotify(_ bool, _ []cgame.Sprite) cgame.CollisionResponseType {
-	b.Mgr().AsyncDeleteSprite(b)
+	b.Mgr().DeleteSprite(b)
 	return cgame.CollisionResponseJustDoIt
 }
 
@@ -36,5 +36,5 @@ func createBullet(m *myGame, name string, attr cwin.Attr,
 			}}),
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }

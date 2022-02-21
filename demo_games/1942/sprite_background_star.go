@@ -28,5 +28,5 @@ func createBackgroundStar(m *myGame) {
 			}}),
 	})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }

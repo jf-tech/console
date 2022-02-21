@@ -26,12 +26,7 @@ func (s *stage) Run() {
 		if s.checkStageDone() {
 			return cwin.EventLoopStop
 		}
-		var alpha *spriteAlpha
-		if a, ok := s.m.g.SpriteMgr.TryFindByName(alphaName); ok {
-			alpha = a.(*spriteAlpha)
-		} else {
-			return cwin.EventNotHandled
-		}
+		alpha := s.m.g.SpriteMgr.FindByName(alphaName).(*spriteAlpha)
 		alpha.SendToTop()
 		if ev.Type == cterm.EventKey {
 			// due to console aspect ration, make left/right move a bit faster.
@@ -183,7 +178,7 @@ func (s *stage) checkStageDone() bool {
 		}
 	}
 	// we're truly done. remove all the non enemy sprites
-	s.m.g.SpriteMgr.AsyncDeleteAll()
+	s.m.g.SpriteMgr.DeleteAll()
 	return true
 }
 

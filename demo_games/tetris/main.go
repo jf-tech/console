@@ -285,7 +285,7 @@ Y88b  d88P Y88..88P       "
 				m.g.Exchange.BoolData["countdown_done"] = true
 			}}})
 	s.AddAnimator(a)
-	m.g.SpriteMgr.AsyncCreateSprite(s)
+	m.g.SpriteMgr.AddSprite(s)
 }
 
 func (m *myGame) newSpritePiece(spriteName string, pieceID pieceID, rotationIdx int,
@@ -501,8 +501,8 @@ func (s *spritePiece) rotate() {
 	}
 	newS.setupShadow()
 	newS.addDropAnimator(s.m.naturalDropDelay)
-	s.Mgr().AsyncDeleteSprite(s)
-	s.Mgr().AsyncCreateSprite(newS)
+	s.Mgr().DeleteSprite(s)
+	newS.Mgr().AddSprite(newS)
 	s.m.s = newS
 }
 
@@ -514,7 +514,7 @@ func (s *spritePiece) move(dlx int) {
 
 func (s *spritePiece) setupShadow() {
 	if s.m.shadow != nil {
-		s.m.g.SpriteMgr.AsyncDeleteSprite(s.m.shadow)
+		s.m.g.SpriteMgr.DeleteSprite(s.m.shadow)
 		s.m.shadow = nil
 	}
 	if s.m.shadowOff {
@@ -531,7 +531,7 @@ func (s *spritePiece) setupShadow() {
 	shadow := s.m.newSpritePiece(shadowName, s.pieceID, s.rotationIdx, cwin.Attr{Fg: shadowColor},
 		s.m.winArena, cwin.Point{X: X2LX(s.Rect().X), Y: Y2LY(s.Rect().Y) + dly})
 	if !cgame.DetectCollision(s.Rect(), s.Frame(), shadow.Rect(), shadow.Frame()) {
-		s.Mgr().AsyncCreateSprite(shadow)
+		s.Mgr().AddSprite(shadow)
 		s.m.shadow = shadow
 	} else {
 		shadow.Destroy()
@@ -629,7 +629,7 @@ func (m *myGame) settlePiece(s *spritePiece) {
 				LX2X(lx), LY2Y(ly)),
 			m: m,
 		}
-		m.g.SpriteMgr.AsyncCreateSprite(settled)
+		m.g.SpriteMgr.AddSprite(settled)
 		m.board[ly][lx] = settled
 	}
 	// No need to destroy s (or m.s, the same thing) because the settlement coming from
@@ -637,11 +637,7 @@ func (m *myGame) settlePiece(s *spritePiece) {
 	// destroy the sprite given we didn't use KeepAliveWhenFinished.
 	// Simply clean up m.s for some sanity.
 	m.s = nil
-	m.g.SpriteMgr.AsyncFunc(func() {
-		// the row elimination must take place asynchronously at the end of the event Q
-		// so that the dropped piece will have finished turning into settled blocks.
-		m.rowElimination()
-	})
+	m.rowElimination()
 }
 
 func (m *myGame) rowFull(ly int) bool {
@@ -734,7 +730,7 @@ func (m *myGame) readyNextPieceForPlay() {
 	}
 	m.s.setupShadow()
 	m.s.addDropAnimator(m.naturalDropDelay)
-	m.g.SpriteMgr.AsyncCreateSprite(m.s)
+	m.g.SpriteMgr.AddSprite(m.s)
 
 	for i := 0; i < len(m.nexts); i++ {
 		m.nexts[i].Destroy()
