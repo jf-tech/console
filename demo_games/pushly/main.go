@@ -94,6 +94,9 @@ func (m *myGame) main() assets.GameResult {
 		if m.levelChanged || replay {
 			continue
 		}
+		if m.lvl < m.lvlCount-1 {
+			m.g.SoundMgr.PlayMP3(sfxLevelClear, 0, 1)
+		}
 		m.g.WinSys.MessageBox(
 			nil, "Good job!", "Level %d complete! Press Enter for next level...", m.lvl+1)
 		if m.lvl == m.lvlCount-1 {
@@ -102,6 +105,7 @@ func (m *myGame) main() assets.GameResult {
 		m.lvl++
 		m.levelChanged = true
 	}
+	m.g.SoundMgr.PlayMP3(sfxGameOver, 0, 1)
 	return assets.DisplayGameOverDialog(m.g)
 }
 
@@ -130,7 +134,9 @@ var (
 	sfxFile = func(relpath string) string {
 		return path.Join(cutil.GetCurFileDir(), relpath)
 	}
-	sfxClick = sfxFile("resources/click.mp3")
+	sfxClick      = sfxFile("resources/click.mp3")
+	sfxLevelClear = sfxFile("resources/level_clear.mp3")
+	sfxGameOver   = sfxFile("resources/gameover.mp3")
 )
 
 func (m *myGame) gameSetup() {
@@ -234,12 +240,6 @@ ESC,'q' : quit
 
 	m.g.WinSys.Update()
 	m.g.Resume()
-}
-
-func (m *myGame) stats() string {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("Steps used: %d\n", m.steps))
-	return sb.String()
 }
 
 func (m *myGame) createAlpha(lx, ly int) {
@@ -449,7 +449,7 @@ func (s *sprite) push(dir cwin.Dir) {
 		s.m.board[newLY][newLX] = nil
 	}
 	if s.Update(cgame.UpdateArg{DXY: &cwin.Point{X: LX2X(dlx), Y: LY2Y(dly)}}) {
-		s.m.g.SoundMgr.PlayMP3(sfxClick, -1, 1)
+		s.m.g.SoundMgr.PlayMP3(sfxClick, 0, 1)
 		s.SendToTop()
 		s.m.board[newLY][newLX] = s
 		s.m.board[curLY][curLX] = nil
