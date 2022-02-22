@@ -56,11 +56,8 @@ func (m *myGame) main() assets.GameResult {
 	for {
 		m.loadLevel(m.lvl)
 		m.levelChanged = false
-		m.g.WinSys.Update()
 		m.winLevelLB.(*ccomp.ListBox).SetSelected(m.lvl)
 		m.winArenaFrame.SetTitle("%s - Level %d", m.arenaTitlePrefix, m.lvl+1)
-		m.g.WinSys.MessageBox(
-			nil, "Info", "Level %d ready! Press Enter to start...", m.lvl+1)
 		replay := false
 		m.g.Run(assets.GameOverKeys, nil, func(ev cterm.Event) cwin.EventResponse {
 			if ev.Type == cterm.EventKey {
@@ -390,7 +387,7 @@ E__(◔◔)
 	}
 
 	brickName  = "brick"
-	brickAttr  = cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorRed}
+	brickAttr  = cwin.Attr{Fg: cterm.ColorWhite, Bg: cterm.ColorLightRed}
 	brickFrame = cgame.FrameFromStringEx(`
 ⎡      ⎤
 ⎢      ⎥
@@ -404,7 +401,7 @@ E__(◔◔)
 ⎣      ⎦`, concreteAttr, false)
 
 	targetName  = "target"
-	targetAttr  = cwin.Attr{Fg: cterm.ColorLightGreen, Bg: cterm.ColorBlue}
+	targetAttr  = cwin.Attr{Fg: cterm.ColorGreen}
 	targetFrame = cgame.FrameFromStringEx(`
 ⎡ \  / ⎤
 ⎢ (><) ⎥

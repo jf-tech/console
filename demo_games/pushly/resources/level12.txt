@@ -1,0 +1,8 @@
+CCCC..CC
+CCA..BCC
+CCCCC..C
+CX..X..C
+CX..C.CC
+....B.CC
+.B..CCCC
+CC..CCCC
