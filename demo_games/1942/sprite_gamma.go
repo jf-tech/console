@@ -8,6 +8,7 @@ import (
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
+	"github.com/jf-tech/go-corelib/maths"
 )
 
 var (
@@ -54,7 +55,7 @@ func createGamma(m *myGame, stageIdx int) {
 						if x == 0 && y == 0 {
 							continue
 						}
-						if m.easyMode && abs(x)+abs(y) == 1 {
+						if m.easyMode && maths.AbsInt(x)+maths.AbsInt(y) == 1 {
 							continue
 						}
 						createBullet(m, gammaBulletName, enemyBulletAttr,

@@ -104,7 +104,7 @@ func (b *spriteBoss) fireBulletSquare(x, y int) {
 			if dx == 0 && dy == 0 {
 				continue
 			}
-			if b.m.easyMode && abs(dx)+abs(dy) == 1 {
+			if b.m.easyMode && maths.AbsInt(dx)+maths.AbsInt(dy) == 1 {
 				continue
 			}
 			createBullet(b.m, bossBulletName, enemyBulletAttr,
@@ -146,7 +146,7 @@ func (bw *bossWaypoints) Next() (cgame.Waypoint, bool) {
 		return cgame.Waypoint{
 			DX: 0,
 			DY: dist,
-			T:  time.Duration(cgame.CharPerSec(abs(dist))/bossSpeed) * time.Second,
+			T:  time.Duration(cgame.CharPerSec(maths.AbsInt(dist))/bossSpeed) * time.Second,
 		}, true
 	}
 	for {

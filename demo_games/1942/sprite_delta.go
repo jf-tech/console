@@ -8,6 +8,7 @@ import (
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/console/cutil"
 	"github.com/jf-tech/console/cwin"
+	"github.com/jf-tech/go-corelib/maths"
 )
 
 var (
@@ -72,7 +73,9 @@ func createHorizontalDelta(m *myGame) {
 			{
 				DX: dist,
 				DY: 0,
-				T:  time.Duration((float64(abs(dist)) / float64(deltaHorizontalSpeed)) * float64(time.Second)),
+				T: time.Duration(
+					(float64(maths.AbsInt(dist)) / float64(deltaHorizontalSpeed)) *
+						float64(time.Second)),
 			}})})
 	s.AddAnimator(a)
 	m.g.SpriteMgr.AddSprite(s)

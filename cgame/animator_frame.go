@@ -31,7 +31,7 @@ func (af *AnimatorFrame) Animate() {
 		return
 	}
 	af.s.Base().DeleteAnimator(af)
-	if af.cfg.AfterFinish != nil {
+	if !af.s.Base().IsDestroyed() && af.cfg.AfterFinish != nil {
 		af.cfg.AfterFinish()
 	}
 	if !af.cfg.KeepAliveWhenFinished {
@@ -51,7 +51,7 @@ func (af *AnimatorFrame) setNextFrame() (more bool) {
 		return false
 	}
 	af.curFrameStartedTime = af.clock.Now()
-	if af.cfg.AfterUpdate != nil {
+	if !af.s.Base().IsDestroyed() && af.cfg.AfterUpdate != nil {
 		af.cfg.AfterUpdate()
 	}
 	return true

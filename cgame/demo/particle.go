@@ -194,7 +194,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprint("Stats:\n"))
 		sb.WriteString(fmt.Sprintf("- Time: %s\n", g.MasterClock.Now().Round(time.Millisecond)))
-		sb.WriteString(fmt.Sprintf("- FPS: %.0f\n", g.FPS()))
+		sb.WriteString(fmt.Sprintf("- FPS: %d\n", g.WinSys.FPS()))
 		sb.WriteString(fmt.Sprintf("- Mem: %s\n", cwin.ByteSizeStr(g.HeapUsageInBytes())))
 		sb.WriteString(fmt.Sprintf("- Pixels: %s\n", cwin.ByteSizeStr(g.WinSys.TotalChxRendered())))
 		sb.WriteString(fmt.Sprintf("- Loop time: %s\n", stopwatch.Total()))
