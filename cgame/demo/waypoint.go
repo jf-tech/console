@@ -49,7 +49,7 @@ func doDemo(g *cgame.Game, demoWin cwin.Win) {
 	// create a simple waypoint animator has only one waypoint that gets
 	// the sprite to go across the demo window.
 	s.AddAnimator(cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimple([]cgame.Waypoint{
 			{
 				DX: cgame.FrameRect(frame).W + demoWin.ClientRect().W,
 				DY: 0,

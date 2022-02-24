@@ -20,7 +20,7 @@ func createBackgroundStar(m *myGame) {
 	s.SendToBottom()
 	dist := 1000 // large enough to go out of window (and auto destroy)
 	a := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimple([]cgame.Waypoint{
 			{
 				DX: 0,
 				DY: 1 * dist,

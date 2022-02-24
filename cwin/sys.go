@@ -80,12 +80,12 @@ func (s *Sys) Find(w Win) Win {
 
 func (s *Sys) RemoveWin(w Win) {
 	// the sysWin is non-removable
-	if s.sysWin.Base() == w.Base() {
+	if s.sysWin.Same(w) {
 		return
 	}
 	wb := w.Base()
 	wb.parent.removeChild(wb)
-	if s.focused != nil && s.focused.Base() == w.Base() {
+	if s.focused != nil && s.focused.Same(w) {
 		s.focused.SetFocus(false)
 		s.focused = nil
 	}
@@ -93,7 +93,7 @@ func (s *Sys) RemoveWin(w Win) {
 }
 
 func (s *Sys) SetFocus(w Win) {
-	if s.focused != nil && s.focused.Base() == w.Base() {
+	if s.focused != nil && s.focused.Same(w) {
 		return
 	}
 	if s.focused != nil {
@@ -104,7 +104,11 @@ func (s *Sys) SetFocus(w Win) {
 	// We always want to use the "top-level" object that implements Win interface and
 	// it's possible someone calls SetFocus with an embedded *WinBase, thus use the look
 	// up to retrieve the top-level Win implementer.
-	s.focused = s.Find(w)
+	s.focused = w.This()
+}
+
+func (s *Sys) GetFocused() Win {
+	return s.focused
 }
 
 func (s *Sys) Run(fallbackHandler EventHandler, f ...EventLoopSleepDurationFunc) {

@@ -12,7 +12,7 @@ func createSlideInOutBanner(
 	y := (m.winArena.ClientRect().H - frameR.H) / 2
 	s := cgame.NewSpriteBase(m.g, m.winArena, "banner", frame, -frameR.W, y)
 	a := cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimple([]cgame.Waypoint{
 			{
 				DX: frameR.W + (m.winArena.ClientRect().W-frameR.W)/2,
 				DY: 0,

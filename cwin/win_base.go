@@ -36,6 +36,10 @@ func (wb *WinBase) Base() *WinBase {
 	return wb
 }
 
+func (wb *WinBase) Same(other Win) bool {
+	return wb == other.Base()
+}
+
 func (wb *WinBase) This() Win {
 	return wb.Sys().Find(wb)
 }

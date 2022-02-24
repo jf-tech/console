@@ -59,9 +59,10 @@ type Win interface {
 
 	// Base returns the embedded WinBase pointer which can be used for accessing
 	// the library built-in WinBase functionalities, as well as serving as a unique
-	// identifier for the window. When you compare two Win interfaces, do this:
-	// s1.Base() == s2.Base()
+	// identifier for the window.
 	Base() *WinBase
+	// Same tells if this Win is the same instance of other Win.
+	Same(other Win) bool
 	// This returns the actual object that implements Win interface that is registered
 	// with Sys. Because WinBase implements Win interface, sometimes we go into situation
 	// where a WinBase pointer is getting passed around but eventually when deverloper

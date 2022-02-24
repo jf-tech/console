@@ -24,7 +24,7 @@ type myGame struct {
 	g                *cgame.Game
 	winArenaFrame    cwin.Win
 	winArena         cwin.Win
-	winLevelLB       cwin.Win
+	winLevelLB       *ccomp.ListBox
 	arenaTitlePrefix string
 	lw, lh           int
 
@@ -32,9 +32,14 @@ type myGame struct {
 
 	lvl          int
 	levelChanged bool
-	board        [][]*sprite // note target sprites not on board.
+	board        [][]*sprite // note target sprites not stored in board.
 	targets      []*sprite
-	steps        int
+	history      []historyEntry
+}
+
+type historyEntry struct {
+	s          *sprite
+	fromL, toL cwin.Point
 }
 
 func (m *myGame) main() assets.GameResult {
@@ -56,8 +61,9 @@ func (m *myGame) main() assets.GameResult {
 	for {
 		m.loadLevel(m.lvl)
 		m.levelChanged = false
-		m.winLevelLB.(*ccomp.ListBox).SetSelected(m.lvl)
+		m.winLevelLB.SetSelected(m.lvl)
 		m.winArenaFrame.SetTitle("%s - Level %d", m.arenaTitlePrefix, m.lvl+1)
+		m.g.WinSys.SetFocus(m.winArenaFrame)
 		replay := false
 		m.g.Run(assets.GameOverKeys, nil, func(ev cterm.Event) cwin.EventResponse {
 			if ev.Type == cterm.EventKey {
@@ -76,7 +82,29 @@ func (m *myGame) main() assets.GameResult {
 					replay = true
 					return cwin.EventLoopStop
 				case 's':
-					m.g.WinSys.SetFocus(m.winLevelLB)
+					if m.g.WinSys.GetFocused() == nil || m.g.WinSys.GetFocused().Same(m.winLevelLB) {
+						m.winLevelLB.SetSelected(m.lvl)
+						m.g.WinSys.SetFocus(m.winArenaFrame)
+					} else {
+						m.winLevelLB.SetSelected(m.lvl)
+						m.g.WinSys.SetFocus(m.winLevelLB)
+					}
+					return cwin.EventHandled
+				case 'z':
+					m.undo()
+					return cwin.EventHandled
+				case 'd':
+					m.g.WinSys.MessageBox(nil, "dbg", "move history:\n%s",
+						func() string {
+							var moves []string
+							for _, e := range m.history {
+								moves = append(moves,
+									fmt.Sprintf("%s: %c", e.s.Name(),
+										cwin.DirRunes[cwin.OffsetXYToDir(
+											e.toL.X-e.fromL.X, e.toL.Y-e.fromL.Y)]))
+							}
+							return strings.Join(moves, "\n")
+						}())
 					return cwin.EventHandled
 				}
 				if m.checkLevelClear() {
@@ -125,7 +153,7 @@ var (
 	winArenaFrameW = 1 /*border*/ + winArenaW + 1 /*border*/
 	winArenaFrameH = 1 /*border*/ + winArenaH + 1 /*border*/
 	winInstrW      = 34
-	winInstrH      = 12
+	winInstrH      = 8
 	winLevelLBW    = winInstrW
 	winLevelLBH    = winArenaFrameH - winInstrH
 	winGameW       = winArenaFrameW + 1 /*space*/ + winLevelLBW
@@ -217,17 +245,14 @@ func (m *myGame) gameSetup() {
 		Name:       "Keyboard",
 		ClientAttr: cwin.Attr{Bg: cterm.ColorBlue},
 	})
-	winInstr.SetText(fmt.Sprintf(`
+	winInstr.SetText(fmt.Sprintf(strings.Trim(`
   %c
 %c %c %c   : to push a brick
-
  's'    : select a level
-
+ 'z'    : undo a move
  'r'    : replay current level
-
 ESC,'q' : quit
-
-`,
+`, "\n"),
 		cwin.DirRunes[cwin.DirUp], cwin.DirRunes[cwin.DirLeft],
 		cwin.DirRunes[cwin.DirDown], cwin.DirRunes[cwin.DirRight]))
 
@@ -295,7 +320,6 @@ func (m *myGame) clearLevel() {
 		}
 	}
 	m.targets = m.targets[:0]
-	m.steps = 0
 	m.lvl = 0
 }
 
@@ -354,6 +378,33 @@ func (m *myGame) checkLevelClear() bool {
 		}
 	}
 	return true
+}
+
+func (m *myGame) undo() {
+	if len(m.history) <= 0 {
+		return
+	}
+	e := m.history[len(m.history)-1]
+	m.history = m.history[:len(m.history)-1]
+	toLX, toLY := e.toL.X, e.toL.Y
+	fromLX, fromLY := e.fromL.X, e.fromL.Y
+	if m.board[fromLY][fromLX] != nil {
+		panic(fmt.Sprintf("board[%d][%d] not empty", fromLY, fromLX))
+	}
+	m.board[fromLY][fromLX] = e.s
+	m.board[toLY][toLX] = nil
+	e.s.Update(cgame.UpdateArg{
+		DXY: &cwin.Point{X: LX2X(fromLX - toLX), Y: LY2Y(fromLY - toLY)},
+		IBC: cgame.InBoundsCheckNone,
+		CD:  cgame.CollisionDetectionOff,
+	})
+	if e.s.Name() == brickName {
+		e.s.brickFrameUpdate()
+	} else {
+		if len(m.history) > 0 && m.history[len(m.history)-1].s.Name() == brickName {
+			m.undo()
+		}
+	}
 }
 
 var (
@@ -445,13 +496,22 @@ func (s *sprite) push(dir cwin.Dir) {
 		pushee.SendToTop()
 		s.m.board[newLY+dly][newLX+dlx] = pushee
 		s.m.board[newLY][newLX] = nil
+		s.m.history = append(s.m.history, historyEntry{
+			s:     pushee,
+			fromL: cwin.Point{X: newLX, Y: newLY},
+			toL:   cwin.Point{X: newLX + dlx, Y: newLY + dly},
+		})
 	}
 	if s.Update(cgame.UpdateArg{DXY: &cwin.Point{X: LX2X(dlx), Y: LY2Y(dly)}}) {
 		s.m.g.SoundMgr.PlayMP3(sfxClick, 0, 1)
 		s.SendToTop()
 		s.m.board[newLY][newLX] = s
 		s.m.board[curLY][curLX] = nil
-		s.m.steps++
+		s.m.history = append(s.m.history, historyEntry{
+			s:     s,
+			fromL: cwin.Point{X: curLX, Y: curLY},
+			toL:   cwin.Point{X: newLX, Y: newLY},
+		})
 	}
 }
 

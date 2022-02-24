@@ -12,29 +12,3 @@ type Waypoint struct {
 type WaypointProvider interface {
 	Next() (Waypoint, bool)
 }
-
-type simpleWaypoints struct {
-	wps  []Waypoint
-	idx  int
-	loop bool
-}
-
-func (sw *simpleWaypoints) Next() (Waypoint, bool) {
-	if sw.idx >= len(sw.wps) {
-		return Waypoint{}, false
-	}
-	wp := sw.wps[sw.idx]
-	sw.idx++
-	if sw.loop {
-		sw.idx = sw.idx % len(sw.wps)
-	}
-	return wp, true
-}
-
-func NewSimpleWaypoints(wps []Waypoint) *simpleWaypoints {
-	return &simpleWaypoints{wps: wps}
-}
-
-func NewSimpleLoopWaypoints(wps []Waypoint) *simpleWaypoints {
-	return &simpleWaypoints{wps: wps, loop: true}
-}

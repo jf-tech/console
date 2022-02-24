@@ -213,7 +213,7 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 		stopwatch.Reset()
 	}
 
-	g.Run(cwin.Keys(cterm.KeyEsc, 'q'), cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
+	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
 		showDebugInfo()
 		stopwatch.Start()
 		defer stopwatch.Stop()
@@ -243,6 +243,6 @@ func doDemo(g *cgame.Game, demoWin, debugWin cwin.Win) {
 			}
 			return cwin.EventLoopStop
 		}
-		return cwin.EventHandled
+		return cwin.EventNotHandled
 	})
 }

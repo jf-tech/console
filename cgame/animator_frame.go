@@ -21,6 +21,10 @@ type AnimatorFrame struct {
 	curFrameStartedTime time.Duration
 }
 
+func (af *AnimatorFrame) Cfg() AnimatorFrameCfg {
+	return af.cfg
+}
+
 func (af *AnimatorFrame) Animate() {
 	af.checkToInit()
 	elapsed := af.clock.Now() - af.curFrameStartedTime

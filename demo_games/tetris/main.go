@@ -556,7 +556,7 @@ func (s *spritePiece) addDropAnimator(dropDelay time.Duration) {
 		s.DeleteAnimator(a)
 	}
 	s.AddAnimator(cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleLoopWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimpleLoop([]cgame.Waypoint{
 			{
 				DX: 0,
 				DY: LY2Y(1),
@@ -593,7 +593,7 @@ type spriteSettled struct {
 
 func (ss *spriteSettled) addFlyOutAnimator(afterFinish func()) {
 	ss.AddAnimator(cgame.NewAnimatorWaypoint(ss.SpriteBase, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimple([]cgame.Waypoint{
 			{
 				DX: LX2X(ss.m.lw),
 				DY: 0,
@@ -608,7 +608,7 @@ func (ss *spriteSettled) addFlyOutAnimator(afterFinish func()) {
 
 func (ss *spriteSettled) addFlyDownAnimator(dly int) {
 	ss.AddAnimator(cgame.NewAnimatorWaypoint(ss.SpriteBase, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimple([]cgame.Waypoint{
 			{
 				DX: 0,
 				DY: dly,
