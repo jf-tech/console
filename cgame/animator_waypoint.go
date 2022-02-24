@@ -27,6 +27,10 @@ type AnimatorWaypoint struct {
 	wpStartedTime  time.Duration
 }
 
+func (aw *AnimatorWaypoint) Cfg() AnimatorWaypointCfg {
+	return aw.cfg
+}
+
 func (aw *AnimatorWaypoint) Animate() {
 	aw.checkToInit()
 

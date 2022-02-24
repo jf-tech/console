@@ -49,7 +49,7 @@ func createVerticalDelta(m *myGame) {
 	}
 	dist := 1000 // large enough to go out of window (and auto destroy)
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimple([]cgame.Waypoint{
 			{
 				DX: 0,
 				DY: 1 * dist,
@@ -69,7 +69,7 @@ func createHorizontalDelta(m *myGame) {
 		dist = -dist
 	}
 	a := cgame.NewAnimatorWaypoint(s.SpriteBase, cgame.AnimatorWaypointCfg{
-		Waypoints: cgame.NewSimpleWaypoints([]cgame.Waypoint{
+		Waypoints: cgame.NewWaypointProviderSimple([]cgame.Waypoint{
 			{
 				DX: dist,
 				DY: 0,

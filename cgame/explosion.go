@@ -21,7 +21,7 @@ func CreateExplosion(s Sprite, c ExplosionCfg) {
 	if len(c.SpriteName) > 0 {
 		name = c.SpriteName
 	}
-	newS := NewSpriteBase(s.Mgr().g, s.Base().win.Parent(), name, s.Frame(), r.X, r.Y)
+	newS := NewSpriteBase(s.Mgr().g, s.Base().win.Parent(), name, CopyFrame(s.Frame()), r.X, r.Y)
 	newS.AddAnimator(NewAnimatorFrame(newS, AnimatorFrameCfg{
 		Frames: &explosionFrameProvider{
 			s:          newS,
