@@ -63,6 +63,7 @@ func (m *myGame) main() assets.GameResult {
 		m.levelChanged = false
 		m.winLevelLB.SetSelected(m.lvl)
 		m.winArenaFrame.SetTitle("%s - Level %d", m.arenaTitlePrefix, m.lvl+1)
+		m.g.WinSys.SetFocus(m.winArenaFrame)
 		replay := false
 		m.g.Run(assets.GameOverKeys, nil, func(ev cterm.Event) cwin.EventResponse {
 			if ev.Type == cterm.EventKey {
@@ -81,7 +82,7 @@ func (m *myGame) main() assets.GameResult {
 					replay = true
 					return cwin.EventLoopStop
 				case 's':
-					if m.g.WinSys.GetFocused().Same(m.winLevelLB) {
+					if m.g.WinSys.GetFocused() == nil || m.g.WinSys.GetFocused().Same(m.winLevelLB) {
 						m.winLevelLB.SetSelected(m.lvl)
 						m.g.WinSys.SetFocus(m.winArenaFrame)
 					} else {
