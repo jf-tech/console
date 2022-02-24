@@ -31,6 +31,8 @@ var gravityVals = []cgame.CharPerSecSec{
 }
 var curGravityIdx = 2
 
+var bounce = true
+
 func main() {
 	g, err := cgame.Init(cterm.TCell)
 	if err != nil {
@@ -64,7 +66,7 @@ func main() {
 	demoWinR := cwin.Rect{X: 0, Y: 0, W: sysWinR.W - statsWinR.W, H: sysWinR.H}
 	demoWin := g.WinSys.CreateWin(nil, cwin.WinCfg{
 		R:    demoWinR,
-		Name: "Demo - ↑↓ to change gravity. Space to pause/resume. Any other key to exit."})
+		Name: "Demo - ↑↓ to change gravity; 'b' to turn bounce on/off; space to pause/resume. Any other key to exit."})
 
 	g.WinSys.Update() // nothing shows onto screen unless Update() is called.
 	g.Resume()        // game (master clock) is always paused right after init.
@@ -74,7 +76,61 @@ func main() {
 
 type spriteParticle struct {
 	*cgame.SpriteBase
-	id int64
+	id       int64
+	demoWinR cwin.Rect
+}
+
+func (s *spriteParticle) createGravityAnimator(vx, vy cgame.CharPerSec) {
+	s.AddAnimator(cgame.NewAnimatorWaypoint(s, cgame.AnimatorWaypointCfg{
+		Waypoints: cgame.NewWaypointProviderAcceleration(cgame.WaypointProviderAccelerationCfg{
+			Clock:      s.Game().MasterClock,
+			InitXSpeed: vx,
+			InitYSpeed: vy,
+			AccX:       0,
+			AccY:       gravityVals[curGravityIdx],
+			DeltaT:     time.Millisecond,
+		}),
+		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
+			// We don't want the particle to be destroy
+			// the monent it flies out of bound - we only want to kill it when its x coord
+			// outside the demoWin X range; for y, we do hope to see those going up will
+			// eventually (and hopefully :) coming down. Thus, we need to turn off the
+			// automatic bounds check.
+			InBoundsCheckType: cgame.InBoundsCheckNone,
+			// Turn off collision check, although strictly speaking this is not necessary
+			// since we didn't register anything in the CollidableRegistry so nothing
+			// will collide with each other anyway.
+			CollisionDetectionType: cgame.CollisionDetectionOff,
+			AfterUpdate: func() {
+				if s.IsDestroyed() {
+					return
+				}
+				if s.demoWinR.Contain(s.Rect().X, s.Rect().Y) {
+					return
+				}
+				wp := s.Animators()[0].(*cgame.AnimatorWaypoint).
+					Cfg().Waypoints.(*cgame.WaypointProviderAcceleration)
+				if wp.Cfg().AccY != 0 &&
+					s.Rect().X >= 0 && s.Rect().X < s.demoWinR.W && s.Rect().Y < s.demoWinR.H {
+					return
+				}
+				vx, vy := wp.CurSpeed()
+				if bounce &&
+					s.Rect().X >= 0 && s.Rect().X < s.demoWinR.W &&
+					s.Rect().Y >= s.demoWinR.H && vy > 0 {
+					s.DeleteAnimator(s.Animators()[0])
+					s.Update(cgame.UpdateArg{
+						DXY: &cwin.Point{Y: s.demoWinR.H - s.Rect().Y - 1},
+						IBC: cgame.InBoundsCheckNone,
+						CD:  cgame.CollisionDetectionOff,
+					})
+					s.createGravityAnimator(vx, -vy)
+					return
+				}
+				s.Mgr().DeleteSprite(s)
+			},
+		},
+	}))
 }
 
 var (
@@ -90,7 +146,12 @@ func genParticleColor() cterm.Attribute {
 }
 
 func genParticleXSpeed() cgame.CharPerSec {
-	return cgame.CharPerSec(rand.Int()%61 - 30) // [-30,30]
+	for {
+		vx := cgame.CharPerSec(rand.Int()%61 - 30) // [-30, -2] and [2, 30]
+		if vx != 0 && vx != -1 && vx != 1 {
+			return vx
+		}
+	}
 }
 
 func genParticleYSpeed() cgame.CharPerSec {
@@ -104,44 +165,10 @@ func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
 		p := &spriteParticle{
 			SpriteBase: cgame.NewSpriteBase(g, demoWin, particleName,
 				cgame.SetAttrInFrame(cgame.CopyFrame(particleFrameNoAttr), attr), x, y),
-			id: cwin.GenUID(),
+			id:       cwin.GenUID(),
+			demoWinR: r,
 		}
-		p.AddAnimator(cgame.NewAnimatorWaypoint(p, cgame.AnimatorWaypointCfg{
-			Waypoints: cgame.NewWaypointProviderAcceleration(cgame.WaypointProviderAccelerationCfg{
-				Clock:      g.MasterClock,
-				InitXSpeed: vx,
-				InitYSpeed: vy,
-				AccX:       0,
-				AccY:       gravityVals[curGravityIdx],
-				DeltaT:     time.Millisecond,
-			}),
-			AnimatorCfgCommon: cgame.AnimatorCfgCommon{
-				// We don't want the particle to be destroy
-				// the monent it flies out of bound - we only want to kill it when its x coord
-				// outside the demoWin X range; for y, we do hope to see those going up will
-				// eventually (and hopefully :) coming down. Thus, we need to turn off the
-				// automatic bounds check.
-				InBoundsCheckType: cgame.InBoundsCheckNone,
-				// Turn off collision check, although strictly speaking this is not necessary
-				// since we didn't register anything in the CollidableRegistry so nothing
-				// will collide with each other anyway.
-				CollisionDetectionType: cgame.CollisionDetectionOff,
-				AfterUpdate: func() {
-					if p.IsDestroyed() {
-						return
-					}
-					if r.Contain(p.Rect().X, p.Rect().Y) {
-						return
-					}
-					if p.Animators()[0].(*cgame.AnimatorWaypoint).
-						Cfg().Waypoints.(*cgame.WaypointProviderAcceleration).Cfg().AccY != 0 &&
-						p.Rect().X >= 0 && p.Rect().X < r.W && p.Rect().Y < r.H {
-						return
-					}
-					g.SpriteMgr.DeleteSprite(p)
-				},
-			},
-		}))
+		p.createGravityAnimator(vx, vy)
 		g.SpriteMgr.AddSprite(p)
 	}
 
@@ -149,9 +176,12 @@ func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
 		var sb strings.Builder
 		sb.WriteString(fmt.Sprint("Stats:\n"))
 		sb.WriteString(fmt.Sprintf("- Time: %s\n", g.MasterClock.Now().Round(time.Millisecond)))
+		sb.WriteString(fmt.Sprintf("- Bounce: %t\n", bounce))
+		sb.WriteString(fmt.Sprintf("- Particles: %d\n", len(g.SpriteMgr.Sprites())))
 		sb.WriteString(fmt.Sprintf("- FPS: %d\n", g.WinSys.FPS()))
 		sb.WriteString(fmt.Sprintf("- Mem: %s\n", cwin.ByteSizeStr(g.HeapUsageInBytes())))
-		sb.WriteString(fmt.Sprintf("- Pixels: %s\n", cwin.ByteSizeStr(g.WinSys.TotalChxRendered())))
+		sb.WriteString(fmt.Sprintf("- Pixels rendered: %s\n",
+			cwin.ByteSizeStr(g.WinSys.TotalChxRendered())))
 		sb.WriteString(fmt.Sprint("\n"))
 		sb.WriteString(fmt.Sprint("Particles:\n"))
 		for _, s := range g.SpriteMgr.Sprites() {
@@ -165,7 +195,7 @@ func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
 		statsWin.SetText(sb.String())
 	}
 
-	prob := cutil.NewPeriodicProbabilityChecker("80%", 100*time.Millisecond)
+	prob := cutil.NewPeriodicProbabilityChecker("10%", 100*time.Millisecond)
 	prob.Reset(g.MasterClock)
 	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
 		showStats()
@@ -175,10 +205,14 @@ func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
 			yspeed := genParticleYSpeed()
 			color := genParticleColor()
 			createParticle(x, y, xspeed, yspeed, color)
-			return cwin.EventHandled
 		}
 		if ev.Type != cterm.EventKey {
 			return cwin.EventNotHandled
+		}
+		if ev.Ch == 'b' {
+			bounce = !bounce
+			g.SpriteMgr.DeleteAll()
+			return cwin.EventHandled
 		}
 		return cwin.EventLoopStop
 	})
