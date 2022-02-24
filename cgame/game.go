@@ -17,8 +17,7 @@ type Game struct {
 	SoundMgr    *SoundManager
 	Exchange    *Exchange
 
-	loopCount int64
-	gameOver  bool
+	gameOver bool
 }
 
 func Init(provider cterm.Provider, seed ...int64) (*Game, error) {
@@ -46,9 +45,12 @@ func (g *Game) Close() {
 	g.WinSys.Close()
 }
 
-func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, gameEventHandler cwin.EventHandler) {
+func (g *Game) Run(
+	gameOverKeys, pauseKeys []cterm.Event,
+	gameEventHandler cwin.EventHandler,
+	f ...cwin.EventLoopSleepDurationFunc) {
+
 	g.WinSys.Run(func(ev cterm.Event) cwin.EventResponse {
-		g.loopCount++
 		if ev.Type == cterm.EventKey {
 			if cwin.FindKey(gameOverKeys, ev) {
 				g.GameOver()
@@ -75,7 +77,7 @@ func (g *Game) Run(gameOverKeys, pauseKeys []cterm.Event, gameEventHandler cwin.
 		}
 		g.SpriteMgr.Process()
 		return resp
-	})
+	}, f...)
 }
 
 func (g *Game) Pause() {
@@ -98,14 +100,6 @@ func (g *Game) GameOver() {
 
 func (g *Game) IsGameOver() bool {
 	return g.gameOver
-}
-
-func (g *Game) FPS() float64 {
-	now := g.MasterClock.Now()
-	if now == 0 {
-		return float64(0)
-	}
-	return float64(g.loopCount) / (float64(now) / float64(time.Second))
 }
 
 func (g *Game) HeapUsageInBytes() int64 {

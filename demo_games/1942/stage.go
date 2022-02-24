@@ -223,7 +223,7 @@ Master clock: %s
 Stage index: %d
 %sArena Rect: %s
 Alpha Rect: %s
-FPS: %.0f
+FPS: %d
 Total "pixels" rendered: %s
 Memory usage: %s
 %s`,
@@ -250,7 +250,7 @@ Memory usage: %s
 			}
 			return "N/A"
 		}(),
-		s.m.g.FPS(),
+		s.m.g.WinSys.FPS(),
 		cwin.ByteSizeStr(s.m.g.WinSys.TotalChxRendered()),
 		cwin.ByteSizeStr(s.m.g.HeapUsageInBytes()),
 		s.m.g.SpriteMgr.DbgStats()))

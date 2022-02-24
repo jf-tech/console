@@ -3,9 +3,11 @@ package cwin
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jf-tech/console/cterm"
 	"github.com/jf-tech/go-corelib/maths"
+	"github.com/jf-tech/go-corelib/times"
 )
 
 type Sys struct {
@@ -19,6 +21,8 @@ type Sys struct {
 
 	scrBuf, offScrBuf []Chx
 	totalChxRendered  int64
+
+	fps *times.TimedSlidingWindowI64
 }
 
 func Init(provider cterm.Provider) (*Sys, error) {
@@ -28,7 +32,10 @@ func Init(provider cterm.Provider) (*Sys, error) {
 	}
 	w, h := cterm.Size()
 	n := w * h
-	sys := &Sys{winReg: map[*WinBase]Win{}}
+	sys := &Sys{
+		winReg: map[*WinBase]Win{},
+		fps:    times.NewTimedSlidingWindowI64(time.Second, time.Millisecond),
+	}
 	sysWin := NewWinBase(sys, nil, WinCfg{R: Rect{0, 0, w, h}, Name: "_root", NoBorder: true})
 	sys.regWin(sysWin)
 	sys.sysWin = sysWin
@@ -100,7 +107,7 @@ func (s *Sys) SetFocus(w Win) {
 	s.focused = s.Find(w)
 }
 
-func (s *Sys) Run(fallbackHandler EventHandler) {
+func (s *Sys) Run(fallbackHandler EventHandler, f ...EventLoopSleepDurationFunc) {
 	RunEventLoop(s,
 		func(ev cterm.Event) EventResponse {
 			resp := EventNotHandled
@@ -111,7 +118,8 @@ func (s *Sys) Run(fallbackHandler EventHandler) {
 				return fallbackHandler(ev)
 			}
 			return resp
-		})
+		},
+		f...)
 }
 
 // This is a non-blocking call
@@ -211,36 +219,32 @@ func (s *Sys) MessageBox(parent Win, title, format string, a ...interface{}) boo
 func (s *Sys) Update() {
 	s.doUpdate(true)
 	cterm.Flush()
+	s.fps.Add(1)
 }
 
 func (s *Sys) Refresh() {
 	s.doUpdate(false)
 	cterm.Sync()
+	s.fps.Add(1)
 }
 
 func (s *Sys) TotalChxRendered() int64 {
 	return s.totalChxRendered
 }
 
-func (s *Sys) Close() {
-	s.stopEventListening()
-	cterm.Close()
-}
-
-func (s *Sys) dumpTree(w Win, indent int, sb *strings.Builder) {
-	sb.WriteString(w.String())
-	sb.WriteRune('\n')
-	for c := w.ChildFirst(); c != nil; c = c.Next() {
-		sb.WriteString(strings.Repeat(" ", indent))
-		sb.WriteString("- ")
-		s.dumpTree(c, indent+2, sb)
-	}
-}
-
 func (s *Sys) Dump() string {
 	var sb strings.Builder
 	s.dumpTree(s.sysWin, 0, &sb)
 	return sb.String()
+}
+
+func (s *Sys) FPS() int64 {
+	return s.fps.Total()
+}
+
+func (s *Sys) Close() {
+	s.stopEventListening()
+	cterm.Close()
 }
 
 func (s *Sys) regWin(w Win) {
@@ -329,4 +333,14 @@ func (s *Sys) stopEventListening() {
 	cterm.Interrupt()
 	close(s.evChan)
 	s.evChan = nil
+}
+
+func (s *Sys) dumpTree(w Win, indent int, sb *strings.Builder) {
+	sb.WriteString(w.String())
+	sb.WriteRune('\n')
+	for c := w.ChildFirst(); c != nil; c = c.Next() {
+		sb.WriteString(strings.Repeat(" ", indent))
+		sb.WriteString("- ")
+		s.dumpTree(c, indent+2, sb)
+	}
 }

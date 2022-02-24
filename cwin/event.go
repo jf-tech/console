@@ -1,6 +1,8 @@
 package cwin
 
 import (
+	"time"
+
 	"github.com/jf-tech/console/cterm"
 )
 
@@ -14,9 +16,15 @@ const (
 
 type EventHandler func(ev cterm.Event) EventResponse
 
-func RunEventLoop(s *Sys, evHandler EventHandler) {
+type EventLoopSleepDurationFunc func() time.Duration
+
+func RunEventLoop(s *Sys, evHandler EventHandler, f ...EventLoopSleepDurationFunc) {
 	if evHandler == nil {
 		panic("evHandler cannot be nil")
+	}
+	durationF := defaultEventLoopSleepDurationFunc
+	if len(f) > 0 {
+		durationF = f[0]
 	}
 loop:
 	for {
@@ -27,6 +35,7 @@ loop:
 		if resp == EventLoopStop {
 			break loop
 		}
+		time.Sleep(durationF())
 	}
 }
 
@@ -47,4 +56,19 @@ func TrueForEventSystemStop(b bool) EventResponse {
 
 func FalseForEventSystemStop(b bool) EventResponse {
 	return TrueForEventSystemStop(!b)
+}
+
+const (
+	defaultEventLoopSleepDuration = time.Millisecond
+)
+
+var (
+	defaultEventLoopSleepTimestamp = time.Time{}
+)
+
+func defaultEventLoopSleepDurationFunc() time.Duration {
+	now := time.Now()
+	duration := defaultEventLoopSleepDuration - now.Sub(defaultEventLoopSleepTimestamp)
+	defaultEventLoopSleepTimestamp = now
+	return duration
 }

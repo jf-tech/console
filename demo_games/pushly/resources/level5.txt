@@ -1,8 +1,8 @@
-CCCCCCCC
-C..CCCCC
-C.BC..CC
-CX...BCC
-C...C.CC
-..CBCXCC
-.CC.CCCC
-A...XCCC
+..CC....
+XXB..C..
+XX..CC..
+CCC..CB.
+CAB..B..
+........
+.CCCCCCC
+........

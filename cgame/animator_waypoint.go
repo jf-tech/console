@@ -32,7 +32,7 @@ func (aw *AnimatorWaypoint) Animate() {
 
 	finish := func() {
 		aw.s.Base().DeleteAnimator(aw)
-		if aw.cfg.AfterFinish != nil {
+		if !aw.s.Base().IsDestroyed() && aw.cfg.AfterFinish != nil {
 			aw.cfg.AfterFinish()
 		}
 		if !aw.cfg.KeepAliveWhenFinished {
@@ -61,7 +61,7 @@ func (aw *AnimatorWaypoint) Animate() {
 			return
 		}
 		aw.dxDone, aw.dyDone = dx, dy
-		if aw.cfg.AfterUpdate != nil {
+		if !aw.s.Base().IsDestroyed() && aw.cfg.AfterUpdate != nil {
 			aw.cfg.AfterUpdate()
 		}
 	}

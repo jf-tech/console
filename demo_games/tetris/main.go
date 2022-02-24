@@ -749,7 +749,7 @@ func (m *myGame) stats() string {
 	sb.WriteString(fmt.Sprintf("Rows completed: %d\n", m.totalRowsEliminated))
 	sb.WriteString("\nDebug:\n")
 	sb.WriteString("-----------------\n")
-	sb.WriteString(fmt.Sprintf("FPS: %.0f\n", m.g.FPS()))
+	sb.WriteString(fmt.Sprintf("FPS: %d\n", m.g.WinSys.FPS()))
 	sb.WriteString(fmt.Sprintf("Mem: %s\n", cwin.ByteSizeStr(m.g.HeapUsageInBytes())))
 	sb.WriteString(m.g.SpriteMgr.DbgStats())
 	return sb.String()
