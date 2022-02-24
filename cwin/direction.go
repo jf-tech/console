@@ -40,6 +40,15 @@ var (
 	}
 )
 
+func OffsetXYToDir(dx, dy int) Dir {
+	for dir, p := range DirOffSetXY {
+		if p.X == dx && p.Y == dy {
+			return dir
+		}
+	}
+	panic("unable to match any direction offset")
+}
+
 var (
 	DirRunes = map[Dir]rune{
 		DirN:  '↑',
