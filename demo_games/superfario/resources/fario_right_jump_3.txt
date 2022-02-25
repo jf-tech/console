@@ -1,12 +1,12 @@
  wwww
- (c ')/
- /┃-┃‾
+ (  ')/
+ /┃ƒ┃‾
 / ===//
  //  ‾‾
 ‾‾
  RRRR
- WW WWR
- RBRBR
+ W  WWR
+ RBBBR
 R BBBBB
  BB  RR
 RR

@@ -195,10 +195,10 @@ func (s *sandbox) doFarioRightJump() {
 	fario.AddAnimator(cgame.NewAnimatorWaypoint(fario, cgame.AnimatorWaypointCfg{
 		Waypoints: cgame.NewWaypointProviderAcceleration(cgame.WaypointProviderAccelerationCfg{
 			Clock:      s.g.MasterClock,
-			InitXSpeed: 5,
-			InitYSpeed: -10,
+			InitXSpeed: 10,
+			InitYSpeed: -20,
 			AccX:       0,
-			AccY:       8,
+			AccY:       20,
 			DeltaT:     time.Millisecond,
 		}),
 		AnimatorCfgCommon: cgame.AnimatorCfgCommon{
