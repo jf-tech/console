@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"strings"
 	"time"
@@ -139,7 +140,7 @@ func (s *spriteParticle) createGravityAnimator(vx, vy cgame.CharPerSec) {
 }
 
 var (
-	particleImg         = "◯"
+	particleImg         = "⬤"
 	particleName        = "particle"
 	particleFrameNoAttr = cgame.FrameFromString(particleImg, cwin.Attr{})
 )
@@ -152,15 +153,15 @@ func genParticleColor() cterm.Attribute {
 
 func genParticleXSpeed() cgame.CharPerSec {
 	for {
-		vx := cgame.CharPerSec(rand.Int()%61 - 30) // [-30, -2] and [2, 30]
-		if vx != 0 && vx != -1 && vx != 1 {
+		vx := cgame.CharPerSec(rand.Int()%101 - 50) // [-50, -5] and [5, 50]
+		if math.Abs(float64(vx)) > 4 {
 			return vx
 		}
 	}
 }
 
 func genParticleYSpeed() cgame.CharPerSec {
-	return cgame.CharPerSec(rand.Int()%53 - 60) // [-60,-8]
+	return cgame.CharPerSec(rand.Int()%73 - 80) // [-80,-8]
 }
 
 func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
@@ -202,7 +203,7 @@ func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
 		statsWin.SetText(sb.String())
 	}
 
-	prob := cutil.NewPeriodicProbabilityChecker("10%", 100*time.Millisecond)
+	prob := cutil.NewPeriodicProbabilityChecker("20%", 100*time.Millisecond)
 	prob.Reset(g.MasterClock)
 	g.Run(nil, cwin.Keys(' '), func(ev cterm.Event) cwin.EventResponse {
 		showStats()
