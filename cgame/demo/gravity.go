@@ -160,7 +160,7 @@ func genParticleXSpeed() cgame.CharPerSec {
 }
 
 func genParticleYSpeed() cgame.CharPerSec {
-	return cgame.CharPerSec(rand.Int()%56 - 60) // [-60,-5]
+	return cgame.CharPerSec(rand.Int()%53 - 60) // [-60,-8]
 }
 
 func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
