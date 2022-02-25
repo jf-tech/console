@@ -77,6 +77,7 @@ func main() {
 type spriteParticle struct {
 	*cgame.SpriteBase
 	id       int64
+	vx, vy   cgame.CharPerSec
 	demoWinR cwin.Rect
 }
 
@@ -114,7 +115,7 @@ func (s *spriteParticle) createGravityAnimator(vx, vy cgame.CharPerSec) {
 					s.Rect().X >= 0 && s.Rect().X < s.demoWinR.W && s.Rect().Y < s.demoWinR.H {
 					return
 				}
-				vx, vy := wp.CurSpeed()
+				_, vy := wp.CurSpeed()
 				if bounce &&
 					s.Rect().X >= 0 && s.Rect().X < s.demoWinR.W &&
 					s.Rect().Y >= s.demoWinR.H && vy > 0 {
@@ -124,7 +125,11 @@ func (s *spriteParticle) createGravityAnimator(vx, vy cgame.CharPerSec) {
 						IBC: cgame.InBoundsCheckNone,
 						CD:  cgame.CollisionDetectionOff,
 					})
-					s.createGravityAnimator(vx, -vy)
+					// vx always stays the same. But reset the vy using the original s.vy, because
+					// over time, there is some inevitably some cumulated error in vy so using the
+					// vy from wp.CurSpeed() might end up with the particle bouncing higher and
+					// higher (or lower & lower).
+					s.createGravityAnimator(s.vx, s.vy)
 					return
 				}
 				s.Mgr().DeleteSprite(s)
@@ -166,6 +171,8 @@ func doDemo(g *cgame.Game, demoWin, statsWin cwin.Win) {
 			SpriteBase: cgame.NewSpriteBase(g, demoWin, particleName,
 				cgame.SetAttrInFrame(cgame.CopyFrame(particleFrameNoAttr), attr), x, y),
 			id:       cwin.GenUID(),
+			vx:       vx,
+			vy:       vy,
 			demoWinR: r,
 		}
 		p.createGravityAnimator(vx, vy)
