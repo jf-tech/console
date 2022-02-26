@@ -33,7 +33,7 @@ var gravityVals = []cgame.CharPerSecSec{
 var curGravityIdx = 2
 
 func main() {
-	g, err := cgame.Init(cterm.TCell)
+	g, err := cgame.Init(cterm.TermBox)
 	if err != nil {
 		panic(err)
 	}

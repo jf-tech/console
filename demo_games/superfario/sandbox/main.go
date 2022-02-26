@@ -27,7 +27,7 @@ type sandbox struct {
 
 func (s *sandbox) main() {
 	var err error
-	s.g, err = cgame.Init(cterm.TCell)
+	s.g, err = cgame.Init(cterm.TermBox)
 	if err != nil {
 		panic(err)
 	}

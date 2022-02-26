@@ -35,7 +35,7 @@ type myGame struct {
 
 func (m *myGame) main() int {
 	var err error
-	m.g, err = cgame.Init(cterm.TCell)
+	m.g, err = cgame.Init(cterm.TermBox)
 	if err != nil {
 		return int(assets.GameResultSystemFailure)
 	}
