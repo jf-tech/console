@@ -72,12 +72,24 @@ func (p *providerTCell) SetCell(x, y int, ch rune, fg, bg Attribute) {
 
 var (
 	keyFromTCell = map[tcell.Key]Key{
-		tcell.KeyUp:    KeyArrowUp,
-		tcell.KeyDown:  KeyArrowDown,
-		tcell.KeyRight: KeyArrowRight,
-		tcell.KeyLeft:  KeyArrowLeft,
-		tcell.KeyEnter: KeyEnter,
-		tcell.KeyEsc:   KeyEsc,
+		tcell.KeyUp:         KeyArrowUp,
+		tcell.KeyDown:       KeyArrowDown,
+		tcell.KeyRight:      KeyArrowRight,
+		tcell.KeyLeft:       KeyArrowLeft,
+		tcell.KeyEnter:      KeyEnter,
+		tcell.KeyEsc:        KeyEsc,
+		tcell.KeyBackspace2: KeyBackspace2,
+		tcell.KeyCtrlA:      KeyCtrlA,
+		tcell.KeyCtrlC:      KeyCtrlC,
+		tcell.KeyCtrlD:      KeyCtrlD,
+		tcell.KeyCtrlE:      KeyCtrlE,
+		tcell.KeyCtrlK:      KeyCtrlK,
+		tcell.KeyCtrlV:      KeyCtrlV,
+		tcell.KeyF3:         KeyF3,
+		tcell.KeyF7:         KeyF7,
+		tcell.KeyF8:         KeyF8,
+		tcell.KeyF9:         KeyF9,
+		tcell.KeyF10:        KeyF10,
 	}
 )
 

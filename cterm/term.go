@@ -114,6 +114,18 @@ const (
 	KeyArrowLeft
 	KeyEnter
 	KeyEsc
+	KeyBackspace2
+	KeyCtrlA
+	KeyCtrlC
+	KeyCtrlD
+	KeyCtrlE
+	KeyCtrlK
+	KeyCtrlV
+	KeyF3
+	KeyF7
+	KeyF8
+	KeyF9
+	KeyF10
 )
 
 // PollEvent blocks until an event is ready, and then returns it.

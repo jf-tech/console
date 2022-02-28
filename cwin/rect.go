@@ -34,6 +34,14 @@ func (r Rect) ToOrigin() Rect {
 	return r.MoveDelta(-r.X, -r.Y)
 }
 
+func (r Rect) Range(f func(x, y int)) {
+	for y := 0; y < r.H; y++ {
+		for x := 0; x < r.W; x++ {
+			f(r.X+x, r.Y+y)
+		}
+	}
+}
+
 func (r Rect) String() string {
 	return fmt.Sprintf("(%d,%d,%d,%d)", r.X, r.Y, r.W, r.H)
 }

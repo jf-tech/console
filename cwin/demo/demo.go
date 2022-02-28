@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	provider := cterm.TCell
+	provider := cterm.TermBox
 	sys, err := cwin.Init(provider)
 	if err != nil {
 		panic(err)
