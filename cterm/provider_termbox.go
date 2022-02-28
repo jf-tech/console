@@ -58,6 +58,18 @@ var (
 		termbox.KeyArrowLeft:  KeyArrowLeft,
 		termbox.KeyEnter:      KeyEnter,
 		termbox.KeyEsc:        KeyEsc,
+		termbox.KeyBackspace2: KeyBackspace2,
+		termbox.KeyCtrlA:      KeyCtrlA,
+		termbox.KeyCtrlC:      KeyCtrlC,
+		termbox.KeyCtrlD:      KeyCtrlD,
+		termbox.KeyCtrlE:      KeyCtrlE,
+		termbox.KeyCtrlK:      KeyCtrlK,
+		termbox.KeyCtrlV:      KeyCtrlV,
+		termbox.KeyF3:         KeyF3,
+		termbox.KeyF7:         KeyF7,
+		termbox.KeyF8:         KeyF8,
+		termbox.KeyF9:         KeyF9,
+		termbox.KeyF10:        KeyF10,
 	}
 )
 
