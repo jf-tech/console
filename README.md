@@ -1,4 +1,4 @@
-# Terminal/Console Window System, Game Engine, and Games
+# Terminal/Console Window UI System, Game Engine, and Games in Go
 
 ### Completed demo games:
 - 1942
