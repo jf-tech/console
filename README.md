@@ -2,6 +2,7 @@
 
 Completed demo games:
 - 1942
+![](./demo_games/1942/resources/1942.gif)
 - Tetris
 - Pushly (Sokoban)
 
