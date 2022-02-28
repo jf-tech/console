@@ -15,15 +15,25 @@
 
 ### Game engine `cgame` demos:
 
-- Gravity
+- Gravity (Gravity Animation + Collision Detection)
 
-- Particle
+![](./cgame/demo/resources/gravity.gif)
 
-- Waypoint
+- Particle (Collision Detection)
 
-- Explosion
+![](./cgame/demo/resources/particle.gif)
 
-- Frame
+- Waypoint Animation
+
+![](./cgame/demo/resources/waypoint.gif)
+
+- Explosion Animation
+
+![](./cgame/demo/resources/explosion.gif)
+
+- Frame Animation
+
+![](./cgame/demo/resources/frame.gif)
 
 ### Games In progress:
 - Super Fario (remake of Super Mario)
